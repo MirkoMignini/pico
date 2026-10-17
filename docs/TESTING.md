@@ -12,7 +12,7 @@ pnpm check && pnpm build && pnpm test
 git diff --check
 ```
 
-Build first: CLI, crash-recovery and worker fixtures import `dist/`. Tests use temporary instances and synthetic data; model/OAuth/Bot responses are generally mocked. Some tests run actual Node/Python/Bash and available Ruby/Perl subprocesses, native document conversion, authenticated Unix HTTP/SSE and the TUI with a simulated terminal. Those checks do not establish live provider entitlement, physical-terminal rendering, semantic accuracy or OS isolation.
+Build first: CLI, crash-recovery and worker fixtures import `dist/`. Subprocess-heavy CLI tests allow multiple cold starts with explicit test deadlines and per-command limits, not automatic retries. Tests use temporary instances and synthetic data; model/OAuth/Bot responses are generally mocked. Some tests run actual Node/Python/Bash and available Ruby/Perl subprocesses, native document conversion, authenticated Unix HTTP/SSE and the TUI with a simulated terminal. Those checks do not establish live provider entitlement, physical-terminal rendering, semantic accuracy or OS isolation.
 
 For a focused suite:
 

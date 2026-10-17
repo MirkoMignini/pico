@@ -81,6 +81,7 @@ it('keeps public CI credential-free, pinned and ordered with one explicit audit 
   expect(parse(readFileSync(join(root, 'pnpm-workspace.yaml'), 'utf8')).auditConfig).toBeUndefined();
   const dependabot = parse(readFileSync(join(root, '.github/dependabot.yml'), 'utf8'));
   expect(dependabot.updates.map((update: Record<string, string>) => update['package-ecosystem'])).toEqual(['npm', 'github-actions']);
+  expect(dependabot.updates[0].ignore).toEqual([{ 'dependency-name': '@types/node', 'update-types': ['version-update:semver-major'] }]);
 });
 
 it('ships a self-contained, accessible SVG logo without active or external image content', () => {

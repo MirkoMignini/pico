@@ -21,4 +21,4 @@ it('imports, inspects, executes and privately exports a standard skill through t
     const destination=join(s.root,'text-statistics.zip');expect(await cli('export','text-statistics',destination)).toEqual({saved:true});expect(statSync(destination).mode&0o777).toBe(0o600);expect(archivePackage(readFileSync(destination)).hash).toBe(imported.hash);
     await expect(cli('export','text-statistics',destination)).rejects.toThrow();expect(archivePackage(readFileSync(destination)).hash).toBe(imported.hash);
   } finally { await service.close();await s.runtime.close();s.store.close();rmSync(s.root,{recursive:true,force:true}); }
-});
+}, 30_000);
