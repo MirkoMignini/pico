@@ -1,0 +1,14 @@
+title = "Pico secret scanning"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+  [[rules.allowlists]]
+  description = "Extraction-prompt prose, not a credential"
+  condition = "AND"
+  paths = ['''(^|/)src/memory\.ts$''']
+  regexTarget = "match"
+  regexes = ['''^keys for third parties, quoted/fictional $''']

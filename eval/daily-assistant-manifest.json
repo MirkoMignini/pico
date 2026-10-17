@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "protocol": "daily-assistant-v1",
+  "frozenBeforeFirstRun": true,
+  "files": {
+    "daily-assistant.json": "907205c4ae24d64cfc186a499bec36471a1b8009de557671451f63d43d6cd4d9",
+    "daily-assistant-gold.json": "998324e9693cf0901a12d08d4023c5c96bfbd1b082c886cf9895ad26b741f690"
+  },
+  "note": "Synthetic prompts and gold frozen before the first daily-suite execution. Diagnosis consumes this split; preserve failures and use a newly frozen independent protocol before product/model tuning. This is not a preregistered external benchmark."
+}

@@ -1,0 +1,11 @@
+-- Repair pre-release v2 snapshots made before the source-lineage tables were added.
+CREATE TABLE IF NOT EXISTS context_checkpoints(conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE, through INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS skill_reviews(run_id TEXT PRIMARY KEY REFERENCES runs(id) ON DELETE CASCADE, status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL DEFAULT 0, error TEXT);
+CREATE TABLE IF NOT EXISTS run_sources(run_id TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE, source_id TEXT NOT NULL, PRIMARY KEY(run_id,source_id));
+CREATE TABLE IF NOT EXISTS skill_derivations(skill_id TEXT NOT NULL, version INTEGER NOT NULL, run_id TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE, PRIMARY KEY(skill_id,version), FOREIGN KEY(skill_id,version) REFERENCES skills(id,version) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS artifact_derivations(artifact_hash TEXT NOT NULL REFERENCES extension_artifacts(hash) ON DELETE CASCADE, run_id TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE, PRIMARY KEY(artifact_hash,run_id));
+CREATE TABLE IF NOT EXISTS build_derivations(build_id TEXT PRIMARY KEY REFERENCES builds(id) ON DELETE CASCADE, run_id TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS storage_sources(extension_id TEXT NOT NULL,key TEXT NOT NULL,source_id TEXT NOT NULL,PRIMARY KEY(extension_id,key,source_id));
+CREATE TABLE IF NOT EXISTS memory_confirmations(memory_id TEXT PRIMARY KEY REFERENCES memories(id) ON DELETE CASCADE, original_source_id TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS media_derivatives(attachment_id TEXT PRIMARY KEY REFERENCES attachments(id) ON DELETE CASCADE, source_id TEXT NOT NULL, text TEXT NOT NULL, version INTEGER NOT NULL, recorded_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS workflow_versions(id TEXT NOT NULL, version INTEGER NOT NULL, definition TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY(id,version));

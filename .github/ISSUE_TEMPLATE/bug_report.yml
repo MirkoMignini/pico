@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a reproducible problem using synthetic data.
+body:
+  - type: markdown
+    attributes:
+      value: Do not post credentials, private data or raw logs. Report vulnerabilities through the repository Security tab, not public issues.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal synthetic reproduction
+      description: Steps or commands, expected result, and actual result. Redact any diagnostic output.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Pico revision, OS/architecture, Node and pnpm versions, and relevant configuration without secrets.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Checks actually run. Distinguish mocked/local results from authorized live provider or connector behavior.

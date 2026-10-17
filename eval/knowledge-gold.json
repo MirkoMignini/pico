@@ -1,0 +1,1028 @@
+{
+  "protocolVersion": 1,
+  "depth": 10,
+  "supportGate": 0.9,
+  "answerGate": 0.9,
+  "questions": [
+    {
+      "id": "q001",
+      "split": "development",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-400",
+      "files": [
+        "archive-00.md"
+      ],
+      "answer": "ARC-400"
+    },
+    {
+      "id": "q002",
+      "split": "development",
+      "kind": "city",
+      "question": "Where does shipment ARC-400 go?",
+      "files": [
+        "archive-00.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q003",
+      "split": "development",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-400?",
+      "files": [
+        "archive-00.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q004",
+      "split": "development",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-400?",
+      "files": [
+        "archive-00.md"
+      ],
+      "answer": "100"
+    },
+    {
+      "id": "q005",
+      "split": "development",
+      "kind": "date",
+      "question": "When is ARC-400 reviewed?",
+      "files": [
+        "archive-00.md"
+      ],
+      "answer": "2027-05-01"
+    },
+    {
+      "id": "q006",
+      "split": "development",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-400, rather than an unrelated archive?",
+      "files": [
+        "archive-00.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q007",
+      "split": "development",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-401",
+      "files": [
+        "archive-01.md"
+      ],
+      "answer": "ARC-401"
+    },
+    {
+      "id": "q008",
+      "split": "development",
+      "kind": "city",
+      "question": "Where does shipment ARC-401 go?",
+      "files": [
+        "archive-01.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q009",
+      "split": "development",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-401?",
+      "files": [
+        "archive-01.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q010",
+      "split": "development",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-401?",
+      "files": [
+        "archive-01.md"
+      ],
+      "answer": "117"
+    },
+    {
+      "id": "q011",
+      "split": "development",
+      "kind": "date",
+      "question": "When is ARC-401 reviewed?",
+      "files": [
+        "archive-01.md"
+      ],
+      "answer": "2027-05-02"
+    },
+    {
+      "id": "q012",
+      "split": "development",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-401, rather than an unrelated archive?",
+      "files": [
+        "archive-01.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q013",
+      "split": "development",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-402",
+      "files": [
+        "archive-02.md"
+      ],
+      "answer": "ARC-402"
+    },
+    {
+      "id": "q014",
+      "split": "development",
+      "kind": "city",
+      "question": "Where does shipment ARC-402 go?",
+      "files": [
+        "archive-02.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q015",
+      "split": "development",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-402?",
+      "files": [
+        "archive-02.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q016",
+      "split": "development",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-402?",
+      "files": [
+        "archive-02.md"
+      ],
+      "answer": "134"
+    },
+    {
+      "id": "q017",
+      "split": "development",
+      "kind": "date",
+      "question": "When is ARC-402 reviewed?",
+      "files": [
+        "archive-02.md"
+      ],
+      "answer": "2027-05-03"
+    },
+    {
+      "id": "q018",
+      "split": "development",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-402, rather than an unrelated archive?",
+      "files": [
+        "archive-02.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q019",
+      "split": "development",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-403",
+      "files": [
+        "archive-03.md"
+      ],
+      "answer": "ARC-403"
+    },
+    {
+      "id": "q020",
+      "split": "development",
+      "kind": "city",
+      "question": "Where does shipment ARC-403 go?",
+      "files": [
+        "archive-03.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q021",
+      "split": "development",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-403?",
+      "files": [
+        "archive-03.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q022",
+      "split": "development",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-403?",
+      "files": [
+        "archive-03.md"
+      ],
+      "answer": "151"
+    },
+    {
+      "id": "q023",
+      "split": "development",
+      "kind": "date",
+      "question": "When is ARC-403 reviewed?",
+      "files": [
+        "archive-03.md"
+      ],
+      "answer": "2027-05-04"
+    },
+    {
+      "id": "q024",
+      "split": "development",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-403, rather than an unrelated archive?",
+      "files": [
+        "archive-03.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q025",
+      "split": "development",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-404",
+      "files": [
+        "archive-04.md"
+      ],
+      "answer": "ARC-404"
+    },
+    {
+      "id": "q026",
+      "split": "development",
+      "kind": "city",
+      "question": "Where does shipment ARC-404 go?",
+      "files": [
+        "archive-04.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q027",
+      "split": "development",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-404?",
+      "files": [
+        "archive-04.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q028",
+      "split": "development",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-404?",
+      "files": [
+        "archive-04.md"
+      ],
+      "answer": "168"
+    },
+    {
+      "id": "q029",
+      "split": "development",
+      "kind": "date",
+      "question": "When is ARC-404 reviewed?",
+      "files": [
+        "archive-04.md"
+      ],
+      "answer": "2027-05-05"
+    },
+    {
+      "id": "q030",
+      "split": "development",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-404, rather than an unrelated archive?",
+      "files": [
+        "archive-04.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q031",
+      "split": "development",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-405",
+      "files": [
+        "archive-05.md"
+      ],
+      "answer": "ARC-405"
+    },
+    {
+      "id": "q032",
+      "split": "development",
+      "kind": "city",
+      "question": "Where does shipment ARC-405 go?",
+      "files": [
+        "archive-05.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q033",
+      "split": "development",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-405?",
+      "files": [
+        "archive-05.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q034",
+      "split": "development",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-405?",
+      "files": [
+        "archive-05.md"
+      ],
+      "answer": "185"
+    },
+    {
+      "id": "q035",
+      "split": "development",
+      "kind": "date",
+      "question": "When is ARC-405 reviewed?",
+      "files": [
+        "archive-05.md"
+      ],
+      "answer": "2027-05-06"
+    },
+    {
+      "id": "q036",
+      "split": "development",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-405, rather than an unrelated archive?",
+      "files": [
+        "archive-05.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q037",
+      "split": "heldout",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-406",
+      "files": [
+        "archive-06.md"
+      ],
+      "answer": "ARC-406"
+    },
+    {
+      "id": "q038",
+      "split": "heldout",
+      "kind": "city",
+      "question": "Where does shipment ARC-406 go?",
+      "files": [
+        "archive-06.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q039",
+      "split": "heldout",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-406?",
+      "files": [
+        "archive-06.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q040",
+      "split": "heldout",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-406?",
+      "files": [
+        "archive-06.md"
+      ],
+      "answer": "202"
+    },
+    {
+      "id": "q041",
+      "split": "heldout",
+      "kind": "date",
+      "question": "When is ARC-406 reviewed?",
+      "files": [
+        "archive-06.md"
+      ],
+      "answer": "2027-05-07"
+    },
+    {
+      "id": "q042",
+      "split": "heldout",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-406, rather than an unrelated archive?",
+      "files": [
+        "archive-06.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q043",
+      "split": "heldout",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-407",
+      "files": [
+        "archive-07.md"
+      ],
+      "answer": "ARC-407"
+    },
+    {
+      "id": "q044",
+      "split": "heldout",
+      "kind": "city",
+      "question": "Where does shipment ARC-407 go?",
+      "files": [
+        "archive-07.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q045",
+      "split": "heldout",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-407?",
+      "files": [
+        "archive-07.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q046",
+      "split": "heldout",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-407?",
+      "files": [
+        "archive-07.md"
+      ],
+      "answer": "219"
+    },
+    {
+      "id": "q047",
+      "split": "heldout",
+      "kind": "date",
+      "question": "When is ARC-407 reviewed?",
+      "files": [
+        "archive-07.md"
+      ],
+      "answer": "2027-05-08"
+    },
+    {
+      "id": "q048",
+      "split": "heldout",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-407, rather than an unrelated archive?",
+      "files": [
+        "archive-07.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q049",
+      "split": "heldout",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-408",
+      "files": [
+        "archive-08.md"
+      ],
+      "answer": "ARC-408"
+    },
+    {
+      "id": "q050",
+      "split": "heldout",
+      "kind": "city",
+      "question": "Where does shipment ARC-408 go?",
+      "files": [
+        "archive-08.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q051",
+      "split": "heldout",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-408?",
+      "files": [
+        "archive-08.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q052",
+      "split": "heldout",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-408?",
+      "files": [
+        "archive-08.md"
+      ],
+      "answer": "236"
+    },
+    {
+      "id": "q053",
+      "split": "heldout",
+      "kind": "date",
+      "question": "When is ARC-408 reviewed?",
+      "files": [
+        "archive-08.md"
+      ],
+      "answer": "2027-05-09"
+    },
+    {
+      "id": "q054",
+      "split": "heldout",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-408, rather than an unrelated archive?",
+      "files": [
+        "archive-08.md"
+      ],
+      "answer": "Roma"
+    },
+    {
+      "id": "q055",
+      "split": "heldout",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-409",
+      "files": [
+        "archive-09.md"
+      ],
+      "answer": "ARC-409"
+    },
+    {
+      "id": "q056",
+      "split": "heldout",
+      "kind": "city",
+      "question": "Where does shipment ARC-409 go?",
+      "files": [
+        "archive-09.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q057",
+      "split": "heldout",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-409?",
+      "files": [
+        "archive-09.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q058",
+      "split": "heldout",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-409?",
+      "files": [
+        "archive-09.md"
+      ],
+      "answer": "253"
+    },
+    {
+      "id": "q059",
+      "split": "heldout",
+      "kind": "date",
+      "question": "When is ARC-409 reviewed?",
+      "files": [
+        "archive-09.md"
+      ],
+      "answer": "2027-05-10"
+    },
+    {
+      "id": "q060",
+      "split": "heldout",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-409, rather than an unrelated archive?",
+      "files": [
+        "archive-09.md"
+      ],
+      "answer": "Firenze"
+    },
+    {
+      "id": "q061",
+      "split": "heldout",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-410",
+      "files": [
+        "archive-10.md"
+      ],
+      "answer": "ARC-410"
+    },
+    {
+      "id": "q062",
+      "split": "heldout",
+      "kind": "city",
+      "question": "Where does shipment ARC-410 go?",
+      "files": [
+        "archive-10.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q063",
+      "split": "heldout",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-410?",
+      "files": [
+        "archive-10.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q064",
+      "split": "heldout",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-410?",
+      "files": [
+        "archive-10.md"
+      ],
+      "answer": "270"
+    },
+    {
+      "id": "q065",
+      "split": "heldout",
+      "kind": "date",
+      "question": "When is ARC-410 reviewed?",
+      "files": [
+        "archive-10.md"
+      ],
+      "answer": "2027-05-11"
+    },
+    {
+      "id": "q066",
+      "split": "heldout",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-410, rather than an unrelated archive?",
+      "files": [
+        "archive-10.md"
+      ],
+      "answer": "Genova"
+    },
+    {
+      "id": "q067",
+      "split": "heldout",
+      "kind": "identifier",
+      "question": "Find exact reference ARC-411",
+      "files": [
+        "archive-11.md"
+      ],
+      "answer": "ARC-411"
+    },
+    {
+      "id": "q068",
+      "split": "heldout",
+      "kind": "city",
+      "question": "Where does shipment ARC-411 go?",
+      "files": [
+        "archive-11.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q069",
+      "split": "heldout",
+      "kind": "italian",
+      "question": "Qual è la destinazione della spedizione ARC-411?",
+      "files": [
+        "archive-11.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q070",
+      "split": "heldout",
+      "kind": "amount",
+      "question": "What is the approved amount for ARC-411?",
+      "files": [
+        "archive-11.md"
+      ],
+      "answer": "287"
+    },
+    {
+      "id": "q071",
+      "split": "heldout",
+      "kind": "date",
+      "question": "When is ARC-411 reviewed?",
+      "files": [
+        "archive-11.md"
+      ],
+      "answer": "2027-05-12"
+    },
+    {
+      "id": "q072",
+      "split": "heldout",
+      "kind": "negation",
+      "question": "Which city is authorized for ARC-411, rather than an unrelated archive?",
+      "files": [
+        "archive-11.md"
+      ],
+      "answer": "Verona"
+    },
+    {
+      "id": "q073",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Who coordinates Aster?",
+      "files": [
+        "policy-en.txt"
+      ],
+      "answer": "Elena Rossi"
+    },
+    {
+      "id": "q074",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Chi coordina il progetto Aster?",
+      "files": [
+        "policy-en.txt"
+      ],
+      "answer": "Elena Rossi"
+    },
+    {
+      "id": "q075",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Where is the Nebbia warehouse?",
+      "files": [
+        "regole-italiano.txt"
+      ],
+      "answer": "Torino"
+    },
+    {
+      "id": "q076",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Qual è il budget di Nebbia?",
+      "files": [
+        "regole-italiano.txt"
+      ],
+      "answer": "842"
+    },
+    {
+      "id": "q077",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "What is the emergency docking place?",
+      "files": [
+        "long.pdf"
+      ],
+      "answer": "Cobalt Pier 17"
+    },
+    {
+      "id": "q078",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "What is the controlled cached total?",
+      "files": [
+        "ledger.xlsx"
+      ],
+      "answer": "531"
+    },
+    {
+      "id": "q079",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Where is the meeting?",
+      "files": [
+        "meeting.pptx"
+      ],
+      "answer": "Ravenna"
+    },
+    {
+      "id": "q080",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "What is the reserve code?",
+      "files": [
+        "manual.epub"
+      ],
+      "answer": "LANTERN-64"
+    },
+    {
+      "id": "q081",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "What is the amount for Vela, not Vera?",
+      "files": [
+        "columns.pdf"
+      ],
+      "answer": "529"
+    },
+    {
+      "id": "q082",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "What is the footnote qualification?",
+      "files": [
+        "annotations.docx"
+      ],
+      "answer": "domestic orders"
+    },
+    {
+      "id": "q083",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "When does the Aster launch occur?",
+      "files": [
+        "policy-en.txt"
+      ],
+      "answer": "2027-03-18"
+    },
+    {
+      "id": "q084",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Who is responsible for Nebbia?",
+      "files": [
+        "regole-italiano.txt"
+      ],
+      "answer": "Giulia Serra"
+    },
+    {
+      "id": "q085",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Find CSV-305",
+      "files": [
+        "quoted.csv"
+      ],
+      "answer": "CSV-305"
+    },
+    {
+      "id": "q086",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Who is the supplier for DOC-501?",
+      "files": [
+        "contract.docx"
+      ],
+      "answer": "Vela Labs"
+    },
+    {
+      "id": "q087",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "How much is PDF-901?",
+      "files": [
+        "digital.pdf"
+      ],
+      "answer": "472"
+    },
+    {
+      "id": "q088",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Which city is ITA-304?",
+      "files": [
+        "annotazione-città.md"
+      ],
+      "answer": "Siena"
+    },
+    {
+      "id": "q089",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Find ODS-802",
+      "files": [
+        "prices.ods"
+      ],
+      "answer": "ODS-802"
+    },
+    {
+      "id": "q090",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Find ODP-803",
+      "files": [
+        "venue.odp"
+      ],
+      "answer": "ODP-803"
+    },
+    {
+      "id": "q091",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Find RTF-804",
+      "files": [
+        "letter.rtf"
+      ],
+      "answer": "RTF-804"
+    },
+    {
+      "id": "q092",
+      "split": "heldout",
+      "kind": "semantic",
+      "question": "Find HTML-303",
+      "files": [
+        "page.html"
+      ],
+      "answer": "HTML-303"
+    },
+    {
+      "id": "q093",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "Compare the Aster and Nebbia budgets",
+      "files": [
+        "policy-en.txt",
+        "regole-italiano.txt"
+      ],
+      "answer": "731;842"
+    },
+    {
+      "id": "q094",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "Which Aster budget is effective after 2027-06-01?",
+      "files": [
+        "revised-policy.md"
+      ],
+      "answer": "901"
+    },
+    {
+      "id": "q095",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "Read every packing item",
+      "files": [
+        "packing.md"
+      ],
+      "answer": "passport;jacket;tickets"
+    },
+    {
+      "id": "q096",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "What is written in SCAN-991?",
+      "files": [
+        "scan.pdf"
+      ],
+      "answer": null
+    },
+    {
+      "id": "q097",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "What is the unknown submarine PIN?",
+      "files": [],
+      "answer": null
+    },
+    {
+      "id": "q098",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "What did the silent audio say?",
+      "files": [
+        "silence.wav"
+      ],
+      "answer": null
+    },
+    {
+      "id": "q099",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "What is the original PDF page coordinate for PDF-901?",
+      "files": [
+        "digital.pdf"
+      ],
+      "answer": null
+    },
+    {
+      "id": "q100",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "What is the approved not the rejected Aster amount?",
+      "files": [
+        "policy-en.txt"
+      ],
+      "answer": "731"
+    },
+    {
+      "id": "q101",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "Who coordinates Aster and Nebbia?",
+      "files": [
+        "policy-en.txt",
+        "regole-italiano.txt"
+      ],
+      "answer": "Elena Rossi;Giulia Serra"
+    },
+    {
+      "id": "q102",
+      "split": "heldout",
+      "kind": "multi_or_unavailable",
+      "question": "What is the current AST-104 revised allocation?",
+      "files": [
+        "revised-policy.md"
+      ],
+      "answer": "901"
+    }
+  ]
+}

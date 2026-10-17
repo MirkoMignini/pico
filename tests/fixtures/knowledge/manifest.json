@@ -1,0 +1,437 @@
+{
+  "seed": 712,
+  "fixtures": [
+    {
+      "file": "diagram.png",
+      "hash": "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4",
+      "bytes": 1659,
+      "expectedText": "",
+      "expectedOutcome": "needs_ocr"
+    },
+    {
+      "file": "packing.md",
+      "hash": "c22cf65d7ea64c01e772e3504a979b9ff62773b7d1d7ba3fa368f8bcb3b7e5aa",
+      "bytes": 89,
+      "expectedText": "PACK-712",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "policy-en.txt",
+      "hash": "bc5cb34c282462206de8912046d6574018940c9b62f9496bbda1bdf94c55854f",
+      "bytes": 188,
+      "expectedText": "AST-104",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "regole-italiano.txt",
+      "hash": "0b2b26e06c81bd1f9dd4d56438cfff91bdd18b5926858df6075cc2c0639c65b1",
+      "bytes": 167,
+      "expectedText": "NEB-205",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "injection.txt",
+      "hash": "b9254f308dddc27833f800c3802f5e3bf4ffeb2edad4c936ecba49a1e143490e",
+      "bytes": 188,
+      "expectedText": "INJ-808",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "dati.json",
+      "hash": "4a9b47cb66ac89bb104903ae4917758ee640130299efca6ffa3e7d7ac9881418",
+      "bytes": 59,
+      "expectedText": "JSON-301",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "records.tsv",
+      "hash": "56bb6902ca407bfec4ad75f4c86391fffb7fafefcba9d78d2235ea24bfbddad9",
+      "bytes": 40,
+      "expectedText": "TSV-302",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "page.html",
+      "hash": "5b5d0585d830321d3b46bb4fee10948e8e72cfb7ec7cefeed6397967d14c7dfd",
+      "bytes": 174,
+      "expectedText": "HTML-303",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-00.md",
+      "hash": "0969a7fab7fe3d1beba9db270c6753683ae3f3a9f4963ec1c0de35d8a4b7c3ed",
+      "bytes": 144,
+      "expectedText": "ARC-400",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-01.md",
+      "hash": "56135ffac666a777c706198ebe5180f59e92b79f6e8cd04f8160b2f2fae7089b",
+      "bytes": 147,
+      "expectedText": "ARC-401",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-02.md",
+      "hash": "88593411cc291568673c306e36db762668d3ca7b9c713d86752e707649358cdb",
+      "bytes": 146,
+      "expectedText": "ARC-402",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-03.md",
+      "hash": "f11cb63159a86236121c394997a983679b6bb2a878653a7c393cab170abec02f",
+      "bytes": 146,
+      "expectedText": "ARC-403",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-04.md",
+      "hash": "4630c9f84a4c603f8976d01c5e17e34ff754e41b56eb0fca50b678f1991c15ae",
+      "bytes": 144,
+      "expectedText": "ARC-404",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-05.md",
+      "hash": "dfadb7750297e20c97683a272daf429f5d62b0a2b79a452c4c883f2d622b1e03",
+      "bytes": 147,
+      "expectedText": "ARC-405",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-06.md",
+      "hash": "c8a8cdb86bbe4626f4c30d2650cbf852a942d14cf974f0a8d175d66e1fcdcb0d",
+      "bytes": 146,
+      "expectedText": "ARC-406",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-07.md",
+      "hash": "23b53953a4e33e10a1b7c61871f5a8b5fb8beb03c6ec6e894b037a8c0d3cc994",
+      "bytes": 146,
+      "expectedText": "ARC-407",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-08.md",
+      "hash": "64fa2bb66dc5c609bee0f9a4ae03ca3af79c1bd073f3c4997f85db8339523ebe",
+      "bytes": 144,
+      "expectedText": "ARC-408",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-09.md",
+      "hash": "8c434b3f7b9c9c7a0b54b064ee89202d51f9045cffad3e277a90a2cc3e901c75",
+      "bytes": 147,
+      "expectedText": "ARC-409",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-10.md",
+      "hash": "7445de230644a4dc7cba89944010b55b4cfc029c6b1bace848437ab2d2961512",
+      "bytes": 147,
+      "expectedText": "ARC-410",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "archive-11.md",
+      "hash": "5c8cd1257585de0ef83904d9223a69292c5e7e7c7ba0dc336a4dc102a29f7f76",
+      "bytes": 147,
+      "expectedText": "ARC-411",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "revised-policy.md",
+      "hash": "fff3d960abd37a240fef653af2865e5b0410084350c28bf49e00cdb5e3e8fb0f",
+      "bytes": 155,
+      "expectedText": "AST-104-R2",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "annotazione-città.md",
+      "hash": "a5b78ece6c531766bc1aea742fa28eada91e4adc50d905910ea37bde81f064e6",
+      "bytes": 67,
+      "expectedText": "ITA-304",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "quoted.csv",
+      "hash": "96f60775264f82f3b8c3b027d9ffba4a67fc01731e000001c459b5b3b504e4fb",
+      "bytes": 92,
+      "expectedText": "CSV-305",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "contract.docx",
+      "hash": "b4cba42c64b3709c5da0a803f48c4c3ba926013aba4f60c67e2cf73f23d73779",
+      "bytes": 38761,
+      "expectedText": "DOC-501",
+      "expectedOutcome": "ready",
+      "assetHashes": [
+        "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4"
+      ]
+    },
+    {
+      "file": "annotations.docx",
+      "hash": "49b771da25a4347a8d3cbb8dd10a90ff561f1571f50c03a38d7376a01edcacd0",
+      "bytes": 39490,
+      "expectedText": "FN-502",
+      "expectedOutcome": "ready",
+      "assetHashes": [
+        "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4"
+      ],
+      "inspectAnnotations": true
+    },
+    {
+      "file": "contract.docm",
+      "hash": "a968ac72f721c256df7687ac014c2281d1ccfabc2bbb5b46851302080f1639bf",
+      "bytes": 39498,
+      "expectedText": "DOC-501",
+      "expectedOutcome": "ready",
+      "assetHashes": [
+        "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4"
+      ],
+      "variant": "macro-enabled package without executable macros"
+    },
+    {
+      "file": "ledger.xlsx",
+      "hash": "cc8330d46d10d01c6c864deb3f4d987947955fce15c1b3ed3bb181e083ef6a56",
+      "bytes": 5949,
+      "expectedText": "XLS-601",
+      "expectedOutcome": "ready",
+      "cachedFormula": 531
+    },
+    {
+      "file": "ledger.xlsm",
+      "hash": "a0e589b1ebfb401efa95faa0be26f2c76b8a6d51b3f5799d706cc39e432df6cb",
+      "bytes": 5963,
+      "expectedText": "XLS-601",
+      "expectedOutcome": "ready",
+      "variant": "macro-enabled package without executable macros"
+    },
+    {
+      "file": "meeting.pptx",
+      "hash": "4cf6305df239d8b1fd61befb410e92ef9983c9a20eec82dbb6e7d1af3f7b37dc",
+      "bytes": 35885,
+      "expectedText": "PPT-701",
+      "expectedOutcome": "ready",
+      "assetHashes": [
+        "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4"
+      ],
+      "speakerNotes": "NOTES-702"
+    },
+    {
+      "file": "meeting.pptm",
+      "hash": "3506a52b8cbc4c4197df68490e05d0c88d4ae584677af08cd64585306880dd29",
+      "bytes": 35901,
+      "expectedText": "PPT-701",
+      "expectedOutcome": "ready",
+      "assetHashes": [
+        "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4"
+      ],
+      "variant": "container content-type variant, no executable macros"
+    },
+    {
+      "file": "meeting.ppsx",
+      "hash": "ca7e366a495c47b6d9471b67e898cc4f731f29eeddbcc127a0cf1a62f0200473",
+      "bytes": 35885,
+      "expectedText": "PPT-701",
+      "expectedOutcome": "ready",
+      "assetHashes": [
+        "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4"
+      ],
+      "variant": "container content-type variant, no executable macros"
+    },
+    {
+      "file": "meeting.ppsm",
+      "hash": "53224d0baf7cd85ffeb9eed30617b438b20d36420065b97f050c00d7c0bce402",
+      "bytes": 35903,
+      "expectedText": "PPT-701",
+      "expectedOutcome": "ready",
+      "assetHashes": [
+        "3f4d14756f4efa0419b3253bb807a13cf5ce4ef573d8327a7e31c38f3eda73a4"
+      ],
+      "variant": "container content-type variant, no executable macros"
+    },
+    {
+      "file": "contract.odt",
+      "hash": "89f533a880f9288c9016882f735fb0d85f390419b2029bf5e1421ee06c7fcbc2",
+      "bytes": 1488,
+      "expectedText": "ODT-801",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "prices.ods",
+      "hash": "7d01dd53f97a0c0f2acbc88339dfe0f1bb344c9d4fd23c88bae388875aa5326e",
+      "bytes": 1598,
+      "expectedText": "ODS-802",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "venue.odp",
+      "hash": "038c72f2fb2c1b9d873057c500ab07380fd0757f954c33e849049fc98bcae08a",
+      "bytes": 1684,
+      "expectedText": "ODP-803",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "letter.rtf",
+      "hash": "03d9bd49f0d48f1d5ac9eebe1c70d3c610ee541361cad4153373a52b5d167e51",
+      "bytes": 88,
+      "expectedText": "RTF-804",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "manual.epub",
+      "hash": "1aa1b1e07cd8631d34df1bc18ca9dcf2da1a2487c5fe09e5c34dfb7f318324b9",
+      "bytes": 930,
+      "expectedText": "EPUB-805",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "digital.pdf",
+      "hash": "4f58c3203491e18304f33fcf54903d0a8566be419ef4e6559856cec4e20ea2c6",
+      "bytes": 1387,
+      "expectedText": "PDF-901",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "long.pdf",
+      "hash": "034c07e01444c5d599dab56288de5ff099802dbf794b01d817f27267ae7b13b6",
+      "bytes": 29840,
+      "expectedText": "LONG-902",
+      "expectedOutcome": "ready"
+    },
+    {
+      "file": "columns.pdf",
+      "hash": "36d7cef26935e0cb0ee3510e16c931cd7f6288f562eebc17e0e5b0f9338a891b",
+      "bytes": 1452,
+      "expectedText": "COLUMN-903",
+      "expectedOutcome": "ready",
+      "limitation": "Reading order is not a verified layout coordinate"
+    },
+    {
+      "file": "scan.pdf",
+      "hash": "e9be42a6a49812d53552cb216fad02892084eb157a767e8f34fa220cbc2c3580",
+      "bytes": 3262,
+      "expectedText": "",
+      "expectedOutcome": "needs_ocr"
+    },
+    {
+      "file": "mixed.pdf",
+      "hash": "bbdc465a7ec9e07cd6ef358b1af9bfd5f9f37f8ea817d7ee88fa6475fee63a59",
+      "bytes": 3722,
+      "expectedText": "",
+      "expectedOutcome": "needs_ocr"
+    },
+    {
+      "file": "encrypted.pdf",
+      "hash": "198173c8220ad00bf91992e664c7357de09b3d3f4bd994d72cc7387bdeb20f86",
+      "bytes": 1417,
+      "expectedText": "",
+      "expectedOutcome": "encrypted"
+    },
+    {
+      "file": "malformed.pdf",
+      "hash": "5aaecbe6da9578a66f710cad1fca792f4402d75a640498e5e031d31973a6634d",
+      "bytes": 18,
+      "expectedText": "",
+      "expectedOutcome": "malformed"
+    },
+    {
+      "file": "unsupported.bin",
+      "hash": "563da99347e0b596e9fd075565947a050cd893a038fab1aec227b46551b399e9",
+      "bytes": 18,
+      "expectedText": "",
+      "expectedOutcome": "unsupported_extraction"
+    },
+    {
+      "file": "silence.wav",
+      "hash": "56d4af65701c26df20bd4021eda95b6e830348ce3a746086079fe89285548dc9",
+      "bytes": 16044,
+      "expectedText": "",
+      "expectedOutcome": "unsupported_extraction"
+    },
+    {
+      "file": "public-text.doc",
+      "hash": "0d7c077cf4b49939a05ccd5f8012164649752be0c5841fa50da6258e0517e6e5",
+      "bytes": 20480,
+      "expectedText": "",
+      "expectedOutcome": "ready",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/doc/text.doc",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    },
+    {
+      "file": "public-sheet.xls",
+      "hash": "1b3fc8f35f4c7ad6bb4dcf9b9f1fdf4ddf1f4c7f2f6748f33b7948204f940136",
+      "bytes": 7168,
+      "expectedText": "",
+      "expectedOutcome": "ready",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/xls/sheet.xls",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    },
+    {
+      "file": "public-pres.ppt",
+      "hash": "8b92d2304598dafc977ff309095aa405151ac741d3374b3d5a214377b57765b3",
+      "bytes": 464384,
+      "expectedText": "",
+      "expectedOutcome": "ready",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/ppt/pres.ppt",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    },
+    {
+      "file": "public-handmade-sheet.xlsb",
+      "hash": "6f965c3d4c9c9d4028c8e2bb8409c28473cd6310c4af05266cf54f4852f94fbf",
+      "bytes": 1602,
+      "expectedText": "",
+      "expectedOutcome": "ready",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/xlsb/handmade-sheet.xlsb",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    },
+    {
+      "file": "public-handmade-utf16.csv",
+      "hash": "069d375757165ef6285bf82bf22c72dc525c2e1881678a4e5aac1c6de6c5f907",
+      "bytes": 62,
+      "expectedText": "",
+      "expectedOutcome": "ready",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/csv/handmade-utf16.csv",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    },
+    {
+      "file": "public-handmade-semicolon.csv",
+      "hash": "93528d417f224c4fb46e8409f1b8af8a32bcb3a76cee2f9e6765d8de6e2eeb42",
+      "bytes": 30,
+      "expectedText": "",
+      "expectedOutcome": "ready",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/csv/handmade-semicolon.csv",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    },
+    {
+      "file": "public-handmade-altpath.docx",
+      "hash": "fb77751c25853f876f9cda0b819819f690c4baadf080c1170ad06ffc98e52545",
+      "bytes": 1998,
+      "expectedText": "",
+      "expectedOutcome": "ready",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/docx/handmade-altpath.docx",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    },
+    {
+      "file": "public-zipbomb--errors.docx",
+      "hash": "132715bbfe9f82b5a5e4e9ea21375dbd32d00300fc127facb73c2214dd2512c2",
+      "bytes": 196603,
+      "expectedText": "",
+      "expectedOutcome": "resource_limited",
+      "source": "https://github.com/firecrawl/anydoc/blob/261fc257d17c3eab0f673be31c408fd9fdc2171a/tests/fixtures/abuse/zipbomb--errors.docx",
+      "license": "MIT",
+      "retrieved": "2026-10-10"
+    }
+  ]
+}

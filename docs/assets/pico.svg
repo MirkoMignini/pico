@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="152" viewBox="0 0 480 152" role="img" aria-labelledby="title description">
+  <title id="title">Pico</title>
+  <desc id="description">A smiling teal speech bubble with a small violet spark, beside the Pico wordmark.</desc>
+  <defs>
+    <linearGradient id="bubble" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="478" height="150" rx="28" fill="#111827" stroke="#334155"/>
+  <path d="M46 34h52a22 22 0 0 1 22 22v32a22 22 0 0 1-22 22H72l-25 16 4-16h-5a22 22 0 0 1-22-22V56a22 22 0 0 1 22-22Z" fill="url(#bubble)"/>
+  <circle cx="55" cy="67" r="5" fill="#0f172a"/>
+  <circle cx="88" cy="67" r="5" fill="#0f172a"/>
+  <path d="M57 85q15 12 30 0" fill="none" stroke="#0f172a" stroke-width="4" stroke-linecap="round"/>
+  <path d="m123 17 5 12 12 5-12 5-5 12-5-12-12-5 12-5Z" fill="#c4b5fd"/>
+  <text x="155" y="89" fill="#f8fafc" font-size="64" font-weight="700" letter-spacing="-2" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif">Pico</text>
+  <text x="158" y="119" fill="#cbd5e1" font-size="16" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif">Your space. Your assistant.</text>
+</svg>

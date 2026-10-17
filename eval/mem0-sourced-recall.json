@@ -1,0 +1,21 @@
+{
+  "protocol": "New independently frozen sourced-recall validation after a generic candidate-versus-evidence clarification; depth 10; no confirmed facts seeded",
+  "validation": {
+    "messages": [
+      { "id": "e1", "session": "profile", "text": "I live in Enna and my favourite hobby is birdwatching.", "facts": [["owner", "Enna"], ["owner", "birdwatching"]] },
+      { "id": "e2", "session": "friends", "text": "My friend Elio prefers black coffee. I prefer decaf coffee instead.", "facts": [["elio", "black coffee"], ["owner", "decaf"]] },
+      { "id": "e3", "session": "travel", "text": "I reserved a ferry to Olbia for 2027-02-16. My booking reference is FERRY-6385. This journey has not happened yet.", "facts": [["owner", "Olbia"], ["owner", "2027-02-16"], ["owner", "FERRY-6385"]] },
+      { "id": "e4", "session": "food", "text": "I sometimes avoid spinach because I find it bitter, but I have not been diagnosed with a spinach allergy.", "facts": [["owner", "spinach"], ["owner", "bitter"]] }
+    ],
+    "questions": [
+      { "id": "v1", "question": "Where do I live?", "sources": ["e1"], "aliases": ["Enna"], "forbidden": [], "abstain": false },
+      { "id": "v2", "question": "What is my favourite hobby?", "sources": ["e1"], "aliases": ["birdwatching"], "forbidden": [], "abstain": false },
+      { "id": "v3", "question": "What coffee does Elio prefer, and what coffee do I prefer?", "sources": ["e2"], "aliases": ["Elio", "black", "decaf"], "forbidden": [], "abstain": false },
+      { "id": "v4", "question": "Where and on which date is my reserved ferry journey?", "sources": ["e3"], "aliases": ["Olbia", "2027-02-16"], "forbidden": [], "abstain": false },
+      { "id": "v5", "question": "What is my ferry booking reference?", "sources": ["e3"], "aliases": ["FERRY-6385"], "forbidden": [], "abstain": false },
+      { "id": "v6", "question": "Why do I sometimes avoid spinach?", "sources": ["e4"], "aliases": ["bitter"], "forbidden": [], "abstain": false },
+      { "id": "a1", "question": "What is my blood type?", "sources": [], "aliases": [], "forbidden": [], "abstain": true },
+      { "id": "a2", "question": "What diagnosed food allergy do I have?", "sources": [], "aliases": [], "forbidden": [], "abstain": true }
+    ]
+  }
+}

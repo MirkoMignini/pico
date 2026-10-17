@@ -1,0 +1,17 @@
+name: Feature request
+description: Describe a concrete problem and the smallest useful improvement.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Use a generic example, not personal data or credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Smallest useful solution
+      description: Describe the intended behavior and any simpler alternatives considered.
+    validations:
+      required: true

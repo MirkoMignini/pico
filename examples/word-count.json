@@ -1,0 +1,7 @@
+{
+  "sdk": 2,
+  "id": "word-count",
+  "version": "1.0.0",
+  "description": "Count words in supplied text.",
+  "source": "export default function(pico) { pico.registerTool({ name: 'word_count', label: 'Word count', description: 'Count words in supplied text.', parameters: pico.Type.Object({ text: pico.Type.String({ maxLength: 10000 }) }, { additionalProperties: false }), async execute(_callId, { text }) { const words = text.trim() ? text.trim().split(/\\s+/).length : 0; return { content: [{ type: 'text', text: String(words) }], details: { words } }; } }); }"
+}

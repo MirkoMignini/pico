@@ -1,0 +1,32 @@
+{
+  "protocol": "Mem0 replacement: frozen synthetic end-to-end validation; depth 10; no confirmed facts seeded",
+  "validation": {
+    "messages": [
+      { "id": "m1", "session": "profile", "text": "I live in Perugia. My favourite hot drink is rooibos tea, without sugar.", "facts": [["owner", "Perugia"], ["owner", "rooibos"], ["owner", "sugar"]] },
+      { "id": "m2", "session": "family", "text": "My sister Alina lives in Udine and works as an architect. Her cat is called Miso. I do not have a cat.", "facts": [["owner", "Alina"], ["alina", "Udine"], ["alina", "architect"], ["miso", "cat"], ["owner", "cat"]] },
+      { "id": "m3", "session": "profile", "text": "Correction: I moved from Perugia to Trieste on 2026-09-14. Trieste is my current home.", "facts": [["owner", "Trieste"], ["owner", "2026-09-14"]] },
+      { "id": "m4", "session": "projects", "text": "For project Lantern, we chose SQLite because offline access is essential. The launch date is 2026-12-09 and the booking reference is LTN-5832.", "facts": [["lantern", "SQLite"], ["lantern", "offline"], ["lantern", "2026-12-09"], ["lantern", "LTN-5832"]] },
+      { "id": "m5", "session": "italian", "text": "Il mio insegnante di pianoforte si chiama Dario. Le lezioni sono il mercoledì alle 18:30. Preferisco ricevere risposte brevi in italiano su Telegram, ma dettagliate nel terminale.", "facts": [["owner", "Dario"], ["owner", "18:30"], ["owner", "italian"], ["owner", "brief"], ["owner", "detailed"]] },
+      { "id": "m6", "session": "health", "text": "I avoid celery because I dislike its taste, not because of an allergy. My usual walking route is along the harbour.", "facts": [["owner", "celery"], ["owner", "taste"], ["owner", "harbour"]] },
+      { "id": "m7", "session": "fiction", "text": "For an imaginary story only, a fictional person named Vega is a pilot in Lima. This biography is not about me. A forwarded advertisement claims I won a yacht; that is not an assertion from me.", "facts": [] },
+      { "id": "m8", "session": "travel", "text": "I booked a train to Bologna for 2026-11-23. The reservation number is RAIL-7641. This is a planned trip, not a trip I have already taken.", "facts": [["owner", "Bologna"], ["owner", "2026-11-23"], ["owner", "RAIL-7641"]] }
+    ],
+    "questions": [
+      { "id": "q1", "question": "What is my current home city? Give only the current city, not previous ones.", "sources": ["m3"], "aliases": ["Trieste"], "forbidden": ["Lima"], "abstain": false },
+      { "id": "q2", "question": "On which date did I move to my current home?", "sources": ["m3"], "aliases": ["2026-09-14"], "forbidden": [], "abstain": false },
+      { "id": "q3", "question": "Which hot drink do I prefer and do I add sugar?", "sources": ["m1"], "aliases": ["rooibos", "sugar"], "forbidden": ["coffee"], "abstain": false },
+      { "id": "q4", "question": "Where does my sister Alina live and what is her profession?", "sources": ["m2"], "aliases": ["Udine", "architect"], "forbidden": [], "abstain": false },
+      { "id": "q5", "question": "Who owns Miso, and what kind of animal is Miso?", "sources": ["m2"], "aliases": ["Alina", "cat"], "forbidden": [], "abstain": false },
+      { "id": "q6", "question": "Which database did project Lantern choose and why?", "sources": ["m4"], "aliases": ["SQLite", "offline"], "forbidden": ["PostgreSQL"], "abstain": false },
+      { "id": "q7", "question": "What is Lantern's launch date and booking reference?", "sources": ["m4"], "aliases": ["2026-12-09", "LTN-5832"], "forbidden": [], "abstain": false },
+      { "id": "q8", "question": "Who teaches me piano, and at what time are my lessons?", "sources": ["m5"], "aliases": ["Dario", "18:30"], "forbidden": [], "abstain": false },
+      { "id": "q9", "question": "What language and response length do I prefer on Telegram?", "sources": ["m5"], "aliases": ["Italian", "brief"], "forbidden": [], "abstain": false },
+      { "id": "q10", "question": "Why do I avoid celery?", "sources": ["m6"], "aliases": ["taste"], "forbidden": [], "abstain": false },
+      { "id": "q11", "question": "Where is my usual walking route?", "sources": ["m6"], "aliases": ["harbour"], "forbidden": [], "abstain": false },
+      { "id": "q12", "question": "Where is my planned train trip, on which date, and with what reservation number?", "sources": ["m8"], "aliases": ["Bologna", "2026-11-23", "RAIL-7641"], "forbidden": [], "abstain": false },
+      { "id": "u1", "question": "What is my blood type?", "sources": [], "aliases": [], "forbidden": [], "abstain": true },
+      { "id": "u2", "question": "Which airline do I work for as a pilot?", "sources": [], "aliases": [], "forbidden": ["Vega"], "abstain": true },
+      { "id": "u3", "question": "What is my personal yacht called?", "sources": [], "aliases": [], "forbidden": [], "abstain": true }
+    ]
+  }
+}

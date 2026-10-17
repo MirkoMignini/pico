@@ -1,0 +1,22 @@
+{
+  "protocol": "Independent canonical-owner and elicited-reply validation, frozen before execution after Mem0 user-alias adapter fix; depth 10, no accepted facts seeded",
+  "validation": {
+    "messages": [
+      { "id": "c1", "session": "preferences", "text": "I prefer email replies in French, and my favourite colour is indigo.", "facts": [["owner", "French"], ["owner", "indigo"]] },
+      { "id": "c2", "session": "people", "text": "My friend Rina speaks Czech. I speak French, not Czech.", "facts": [["owner", "Rina"], ["rina", "Czech"], ["owner", "French"]] },
+      { "id": "c3", "session": "fitness", "text": "I am training for the Raven Hill trail race on 2027-03-21. My race entry code is RHT-2196.", "facts": [["owner", "Raven Hill"], ["owner", "2027-03-21"], ["owner", "RHT-2196"]] },
+      { "id": "c4", "session": "elicitation", "text": "Please ask which train station I normally use.", "facts": [] },
+      { "id": "c5", "session": "elicitation", "text": "The Santa Rosa station.", "facts": [["owner", "Santa Rosa"]] }
+    ],
+    "questions": [
+      { "id": "s1", "question": "In which language do I prefer email replies?", "sources": ["c1"], "aliases": ["French"], "forbidden": [], "abstain": false },
+      { "id": "s2", "question": "What is my favourite colour?", "sources": ["c1"], "aliases": ["indigo"], "forbidden": [], "abstain": false },
+      { "id": "s3", "question": "What language does Rina speak, and what language do I speak?", "sources": ["c2"], "aliases": ["Rina", "Czech", "French"], "forbidden": [], "abstain": false },
+      { "id": "s4", "question": "Which race am I training for and on what date is it?", "sources": ["c3"], "aliases": ["Raven Hill", "2027-03-21"], "forbidden": [], "abstain": false },
+      { "id": "s5", "question": "What is my race entry code?", "sources": ["c3"], "aliases": ["RHT-2196"], "forbidden": [], "abstain": false },
+      { "id": "s6", "question": "Which train station do I normally use?", "sources": ["c5"], "aliases": ["Santa Rosa"], "forbidden": [], "abstain": false },
+      { "id": "w1", "question": "What is my driving licence number?", "sources": [], "aliases": [], "forbidden": [], "abstain": true },
+      { "id": "w2", "question": "What is my pet rabbit's name?", "sources": [], "aliases": [], "forbidden": [], "abstain": true }
+    ]
+  }
+}

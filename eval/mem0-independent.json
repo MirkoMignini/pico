@@ -1,0 +1,25 @@
+{
+  "protocol": "Independent Mem0 final-build validation, frozen after synthetic tied-vector infrastructure repair and before execution; source depth remains 10",
+  "validation": {
+    "messages": [
+      { "id": "i1", "session": "hobbies", "text": "I volunteer at the Lido community garden on Saturdays. I am learning the bassoon with teacher Elisa. My lessons cost 27 euros each.", "facts": [["owner", "Lido"], ["owner", "Saturday"], ["owner", "bassoon"], ["owner", "Elisa"], ["owner", "27"]] },
+      { "id": "i2", "session": "relatives", "text": "My cousin Teo is a paramedic in Modena. His bicycle is silver. My own bicycle is orange, not silver.", "facts": [["owner", "Teo"], ["teo", "paramedic"], ["teo", "Modena"], ["teo", "silver"], ["owner", "orange"]] },
+      { "id": "i3", "session": "work", "text": "Our project Kestrel uses Rust to keep memory usage predictable. Its review meeting is scheduled for 2026-11-18. The access reference is KST-9264.", "facts": [["kestrel", "Rust"], ["kestrel", "predictable"], ["kestrel", "2026-11-18"], ["kestrel", "KST-9264"]] },
+      { "id": "i4", "session": "preferences", "text": "La mia colazione preferita è pane e marmellata di albicocche. Il mio cane si chiama Nori. Non ho un gatto.", "facts": [["owner", "apricot"], ["owner", "Nori"], ["owner", "cat"]] },
+      { "id": "i5", "session": "preferences", "text": "An update to my breakfast preference: I now prefer oatmeal with pears, instead of bread with apricot jam.", "facts": [["owner", "oatmeal"], ["owner", "pears"]] },
+      { "id": "i6", "session": "boundaries", "text": "For a made-up novel, an invented astronaut named Sera lives on Mars. This is not my biography. I have never stated my passport number in this conversation.", "facts": [] }
+    ],
+    "questions": [
+      { "id": "r1", "question": "Where and on which day do I volunteer?", "sources": ["i1"], "aliases": ["Lido", "Saturday"], "forbidden": [], "abstain": false },
+      { "id": "r2", "question": "Which instrument am I learning, who teaches me, and how much does each lesson cost?", "sources": ["i1"], "aliases": ["bassoon", "Elisa", "27"], "forbidden": [], "abstain": false },
+      { "id": "r3", "question": "Where does my cousin work and what job does he do?", "sources": ["i2"], "aliases": ["Modena", "paramedic"], "forbidden": [], "abstain": false },
+      { "id": "r4", "question": "What colour is my bicycle and what colour is Teo's bicycle?", "sources": ["i2"], "aliases": ["orange", "silver", "Teo"], "forbidden": [], "abstain": false },
+      { "id": "r5", "question": "What programming language does Kestrel use and why?", "sources": ["i3"], "aliases": ["Rust", "predictable"], "forbidden": [], "abstain": false },
+      { "id": "r6", "question": "When is Kestrel's review meeting and what is its access reference?", "sources": ["i3"], "aliases": ["2026-11-18", "KST-9264"], "forbidden": [], "abstain": false },
+      { "id": "r7", "question": "What is my current favourite breakfast? Give only the current preference.", "sources": ["i5"], "aliases": ["oatmeal", "pears"], "forbidden": [], "abstain": false },
+      { "id": "r8", "question": "What is my dog's name, and do I have a cat?", "sources": ["i4"], "aliases": ["Nori", "cat"], "forbidden": [], "abstain": false },
+      { "id": "z1", "question": "What is my passport number?", "sources": [], "aliases": [], "forbidden": [], "abstain": true },
+      { "id": "z2", "question": "Which space agency employs me as an astronaut?", "sources": [], "aliases": [], "forbidden": [], "abstain": true }
+    ]
+  }
+}

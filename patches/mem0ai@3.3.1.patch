@@ -1,0 +1,198 @@
+diff --git a/dist/oss/index.js b/dist/oss/index.js
+index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4e92b73b0 100644
+--- a/dist/oss/index.js
++++ b/dist/oss/index.js
+@@ -14366,6 +14366,7 @@ var OracleAIVectorSearch = class {
+ // src/oss/src/utils/factory.ts
+ var EmbedderFactory = class {
+   static create(provider, config) {
++    if (provider === "pico") return config.model;
+     switch (provider.toLowerCase()) {
+       case "openai":
+         return new OpenAIEmbedder(config);
+@@ -14397,6 +14398,7 @@ var EmbedderFactory = class {
+ };
+ var LLMFactory = class {
+   static create(provider, config) {
++    if (provider === "pico") return config.client;
+     switch (provider.toLowerCase()) {
+       case "openai":
+         return new OpenAILLM(config);
+@@ -14442,6 +14444,7 @@ var LLMFactory = class {
+ };
+ var VectorStoreFactory = class {
+   static create(provider, config) {
++    if (provider === "pico") return config.instance(config.collectionName);
+     switch (provider.toLowerCase()) {
+       case "memory":
+         return new MemoryVectorStore(config);
+@@ -17376,6 +17379,7 @@ var Memory = class _Memory {
+     return parts.join("&");
+   }
+   async _initializeTelemetry() {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await captureClientEvent("init", this, {
+@@ -17402,6 +17406,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _captureEvent(methodName, additionalData = {}) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await captureClientEvent(methodName, this, {
+@@ -17414,6 +17419,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayFirstRunNotice(triggerFunction) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayFirstRunNotice(this, triggerFunction);
+@@ -17421,6 +17427,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayDecayUsageNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayDecayUsageNotice(this, trigger);
+@@ -17428,6 +17435,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayTemporalUsageNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayTemporalUsageNotice(this, trigger);
+@@ -17435,6 +17443,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayScaleThresholdNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayScaleThresholdNotice(this, trigger);
+@@ -17442,6 +17451,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayPerformanceSlowQueryNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayPerformanceSlowQueryNotice(this, trigger);
+@@ -17637,12 +17647,12 @@ var Memory = class _Memory {
+         { type: "json_object" }
+       );
+     } catch (e) {
+-      console.error("LLM extraction failed:", e);
++      if (this.config.llm.provider !== "pico") console.error("LLM extraction failed:", e);
+       throw new LLMError(`LLM extraction failed: ${e}`, { cause: e });
+     }
+     let extractedMemories = [];
+     try {
+-      const cleanResponse = extractJson(response);
++      const cleanResponse = this.config.llm.provider === "pico" ? response : extractJson(response);
+       if (cleanResponse && cleanResponse.trim()) {
+         try {
+           const parsed = AdditiveExtractionSchema.parse(
+diff --git a/dist/oss/index.mjs b/dist/oss/index.mjs
+index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1af7cf54e 100644
+--- a/dist/oss/index.mjs
++++ b/dist/oss/index.mjs
+@@ -14272,6 +14272,7 @@ var OracleAIVectorSearch = class {
+ // src/oss/src/utils/factory.ts
+ var EmbedderFactory = class {
+   static create(provider, config) {
++    if (provider === "pico") return config.model;
+     switch (provider.toLowerCase()) {
+       case "openai":
+         return new OpenAIEmbedder(config);
+@@ -14303,6 +14304,7 @@ var EmbedderFactory = class {
+ };
+ var LLMFactory = class {
+   static create(provider, config) {
++    if (provider === "pico") return config.client;
+     switch (provider.toLowerCase()) {
+       case "openai":
+         return new OpenAILLM(config);
+@@ -14348,6 +14350,7 @@ var LLMFactory = class {
+ };
+ var VectorStoreFactory = class {
+   static create(provider, config) {
++    if (provider === "pico") return config.instance(config.collectionName);
+     switch (provider.toLowerCase()) {
+       case "memory":
+         return new MemoryVectorStore(config);
+@@ -17282,6 +17285,7 @@ var Memory = class _Memory {
+     return parts.join("&");
+   }
+   async _initializeTelemetry() {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await captureClientEvent("init", this, {
+@@ -17308,6 +17312,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _captureEvent(methodName, additionalData = {}) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await captureClientEvent(methodName, this, {
+@@ -17320,6 +17325,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayFirstRunNotice(triggerFunction) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayFirstRunNotice(this, triggerFunction);
+@@ -17327,6 +17333,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayDecayUsageNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayDecayUsageNotice(this, trigger);
+@@ -17334,6 +17341,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayTemporalUsageNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayTemporalUsageNotice(this, trigger);
+@@ -17341,6 +17349,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayScaleThresholdNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayScaleThresholdNotice(this, trigger);
+@@ -17348,6 +17357,7 @@ var Memory = class _Memory {
+     }
+   }
+   async _displayPerformanceSlowQueryNotice(trigger) {
++    if (this.config.llm.provider === "pico") return;
+     try {
+       await this._getTelemetryId();
+       await displayPerformanceSlowQueryNotice(this, trigger);
+@@ -17543,12 +17553,12 @@ var Memory = class _Memory {
+         { type: "json_object" }
+       );
+     } catch (e) {
+-      console.error("LLM extraction failed:", e);
++      if (this.config.llm.provider !== "pico") console.error("LLM extraction failed:", e);
+       throw new LLMError(`LLM extraction failed: ${e}`, { cause: e });
+     }
+     let extractedMemories = [];
+     try {
+-      const cleanResponse = extractJson(response);
++      const cleanResponse = this.config.llm.provider === "pico" ? response : extractJson(response);
+       if (cleanResponse && cleanResponse.trim()) {
+         try {
+           const parsed = AdditiveExtractionSchema.parse(

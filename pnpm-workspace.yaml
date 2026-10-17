@@ -1,0 +1,6 @@
+minimumReleaseAgeExclude:
+  - cron-parser@5.10.2
+overrides:
+  'node-llama-cpp>simple-git': 4.0.2
+patchedDependencies:
+  mem0ai@3.3.1: patches/mem0ai@3.3.1.patch

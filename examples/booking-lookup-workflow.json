@@ -1,0 +1,8 @@
+{
+  "id": "booking-lookup",
+  "description": "Read retained booking evidence and search the configured read-only mailbox; no remote changes.",
+  "steps": [
+    { "tool": "memory_search", "args": { "query": "upcoming travel booking changes" } },
+    { "tool": "mail_search", "args": { "query": "newer_than:30d subject:booking" } }
+  ]
+}
