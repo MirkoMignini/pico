@@ -139,6 +139,7 @@ it('imports screenshots and downloads from original receipts without reconnectin
   const imageArgs = { server: 'browser', sourceId: screenshot.sourceId, contentIndex: 1 };
   const image = await invoke(s, 'import', imageArgs);
   expect(await invoke(s, 'import', imageArgs)).toMatchObject({ attachmentId: image.attachmentId, documentId: image.documentId });
+  expect(await invoke(s, 'import', { contentIndex: 1, sourceId: screenshot.sourceId, server: 'browser' })).toMatchObject({ attachmentId: image.attachmentId, documentId: image.documentId });
   expect(s.runtime.knowledge.document(image.documentId)).toMatchObject({ source_id: screenshot.sourceId, channel: 'integration' });
   expect(s.store.get('SELECT source_id,mime FROM attachments WHERE id=?', image.attachmentId)).toEqual({ source_id: screenshot.sourceId, mime: 'image/png' });
   const pdf = await invoke(s, 'import', { server: 'browser', sourceId: download.sourceId, file: 'report.pdf' });

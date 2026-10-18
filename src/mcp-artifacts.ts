@@ -49,7 +49,7 @@ export async function importMcpArtifact(core: Runtime, server: McpServer, args: 
     if (block?.type !== 'image' || typeof block.data !== 'string' || !/^image\/(png|jpeg|gif|webp)$/.test(block.mimeType ?? '') || block.data.length > Math.ceil(core.store.config.limits.attachmentBytes / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(block.data)) throw new Error('Select a bounded supported image block from the original MCP result');
     bytes = Buffer.from(block.data, 'base64'); mime = block.mimeType!; name = `screenshot.${mime.slice(6)}`;
   }
-  const submission = `mcp:${server.id}:${hash(json(args))}`, attachmentId = hash(submission);
+  const submission = `mcp:${server.id}:${hash(json([args.sourceId, args.file ?? null, args.contentIndex ?? null, args.mime ?? null]))}`, attachmentId = hash(submission);
   if (core.store.get('SELECT id FROM documents WHERE submission=? AND deleted_at IS NOT NULL', submission) || core.store.get('SELECT hash FROM deletions WHERE hash=?', hash(`document-content:${hash(bytes)}`))) throw new Error('Previously deleted or forgotten MCP content cannot be re-imported');
   core.store.linkSource(context.runId, args.sourceId);
   core.media.save(bytes, name, mime, context.conversationId, false, attachmentId);

@@ -14,7 +14,6 @@ const common = {
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1000, maximum: 600_000 })),
   maxBytes: Type.Optional(Type.Integer({ minimum: 1024, maximum: 20_000_000 })),
   artifactDirectory: Type.Optional(Type.String({ minLength: 1, maxLength: 4000 })),
-
   protocol: Type.Optional(Type.Union([Type.Literal('legacy'), Type.Literal('auto'), object({ pin: Type.String({ pattern: '^20\\d{2}-\\d{2}-\\d{2}$' }) })]))
 };
 export const McpServerSchema = Type.Union([
