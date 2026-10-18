@@ -6,6 +6,9 @@ import { ConfigSchema, validate, type Config } from './contracts.js';
 
 export function privateDirectory(path: string): string {
   mkdirSync(path, { recursive: true, mode: 0o700 });
+  return existingPrivateDirectory(path);
+}
+export function existingPrivateDirectory(path: string): string {
   const stat = lstatSync(path);
   if (!stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== process.getuid?.()) throw new Error('Instance directory must be owned by this OS user and not a symlink');
   if ((stat.mode & 0o077) !== 0) throw new Error('Instance directory is not private: chmod 700 required');
@@ -19,9 +22,12 @@ export function atomicWrite(path: string, content: string | Uint8Array): void {
   const dir = openSync(dirname(path), 'r');
   try { fsyncSync(dir); } finally { closeSync(dir); }
 }
-export function readPrivate(path: string): string {
+export function assertPrivateFile(path: string): void {
   const stat = lstatSync(path);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.uid !== process.getuid?.() || (stat.mode & 0o077) !== 0) throw new Error(`Unsafe permissions: ${path}`);
+}
+export function readPrivate(path: string): string {
+  assertPrivateFile(path);
   return readFileSync(path, 'utf8');
 }
 export function initialize(path: string, name: string): Config {
@@ -42,7 +48,7 @@ export function initialize(path: string, name: string): Config {
   return config;
 }
 export function loadConfig(path: string): { root: string; config: Config; token: string; socket: string } {
-  const root = privateDirectory(resolve(path));
+  const root = existingPrivateDirectory(resolve(path));
   const raw = JSON.parse(readPrivate(join(root, 'config.json'))) as Record<string, unknown>;
   // Read retired configuration as historical data; do not rewrite it or grant native authority.
   if (raw && typeof raw === 'object' && 'sandbox' in raw) {

@@ -74,6 +74,11 @@ it('keeps public CI credential-free, pinned and ordered with one explicit audit 
       if (step.uses!.startsWith('actions/checkout@')) expect(step.with?.['persist-credentials']).toBe(false);
     }
   }
+  expect(workflow.jobs.release.if).toBe("startsWith(github.ref, 'refs/tags/v')");
+  expect(workflow.jobs.release.needs).toEqual(['verify', 'secrets']);
+  expect(workflow.jobs.release.permissions).toEqual({ contents: 'write' });
+  expect(workflow.jobs.release.steps.at(-1).run).toContain('--verify-tag --draft');
+  expect(workflow.jobs.release.steps.at(-1).run).not.toContain('--clobber');
   const scan = workflow.jobs.secrets.steps;
   expect(scan[0].with['fetch-depth']).toBe(0);
   expect(scan.at(-1).run).toContain('--redact');

@@ -41,6 +41,27 @@ async function selectLegacyEphemeral(s: Awaited<ReturnType<typeof connected>>) {
   await s.ui.submit(`/sessions ${session.id}`);
 }
 
+it('shows local setup/readiness without inference and defaults explicit model tests to cancellation', async () => {
+  const s = await connected(), calls = vi.spyOn(s.client, 'rpc');
+  await s.ui.submit('/readiness'); const report = s.ui.transcript.render(100).map(safeTerminal).join('\n');
+  expect(report).toContain('authenticated unverified'); expect(report).toContain('tested not-run');
+  const menu = s.ui.submit('/setup'); await s.see('Model API key'); s.screen.input('\x1b'); await menu;
+  const test = s.ui.submit('/auth test'); await s.see('Cancel (default)'); s.screen.input('\r'); await test;
+  expect(calls.mock.calls.some(([op]) => op === 'auth.test')).toBe(false); expect(s.faux.state.callCount).toBe(0);
+  expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]);
+  await selectLegacyEphemeral(s); await s.ui.submit('/readiness'); await expect(s.ui.submit('/auth test')).rejects.toThrow('Ephemeral');
+});
+it('tests the selected conversation model rather than silently using a different default/account', async () => {
+  const s = await connected(), conversationId = (s.ui as any).session.id;
+  await s.client.rpc('model.default', { provider: 'deepseek', id: 'deepseek-flash' });
+  const complete = vi.spyOn(s.service.runtime.models, 'complete');
+  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pico is connected.')])]);
+  const test = s.ui.submit('/auth test'); await s.see('Cancel (default)'); s.screen.input('\x1b[B'); s.screen.input('\r'); await test;
+  expect(complete).toHaveBeenCalledOnce(); expect(complete.mock.calls[0]?.[2]).toEqual(JSON.parse((s.ui as any).session.model));
+  expect(await s.client.rpc('readiness', { conversationId })).toMatchObject({ items: expect.arrayContaining([expect.objectContaining({ id: 'model', tested: 'passed' }), expect.objectContaining({ id: 'background-model', credential: 'missing', tested: 'not-run' })]) });
+  expect(s.faux.state.callCount).toBe(1); expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]);
+});
+
 it.each([false, true])('cycles sent messages with Up/Down and restores the draft without replay (ephemeral=%s)', async ephemeral => {
   const s = await connected(); if (ephemeral) await selectLegacyEphemeral(s);
   const first = 'First message 漢字', latest = 'Latest message 👋';
@@ -293,7 +314,7 @@ it('removes manual memory commands from help/completion and rejects them without
 
 it('keeps only basic and safety/admin commands and rejects feature shortcuts without RPC or inference', async () => {
   const s = await connected(), calls = vi.spyOn(s.client, 'rpc');
-  expect(COMMANDS).toEqual(['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit']);
+  expect(COMMANDS).toEqual(['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','readiness','doctor','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit']);
   const removed = ['status','knowledge','memory','prefer','correct','learn','workflows','agenda','reminders','web','images','approve-action'];
   for (const name of removed) { expect(COMMANDS).not.toContain(name); expect(HELP).not.toContain(`/${name}`); }
   expect(HELP).toContain('Talk to Pico'); expect(HELP).toContain('new extension builds need no confirmation'); expect(HELP).toContain('run immediately with full OS access');

@@ -3,13 +3,16 @@ import { StringDecoder } from 'node:string_decoder';
 import { spawn } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { loadConfig } from './config.js';
+import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import type { OutputEvent } from './contracts.js';
 
 export class Client {
   private unsubscribe: (() => void) | undefined;
   readonly socket: string; readonly token: string;
   constructor(readonly root: string) { const settings = loadConfig(root); this.socket = settings.socket; this.token = settings.token; }
-  rpc<T = unknown>(op: string, args: Record<string, unknown> = {}): Promise<T> {
+  rpc<T = unknown>(op: string, args: Record<string, unknown> = {}, timeoutMs = 330_000): Promise<T> {
     return new Promise((resolve,reject) => {
       const body = JSON.stringify({ op,args });
       const request = httpRequest({ socketPath: this.socket, path: '/rpc', method: 'POST', headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, response => {
@@ -19,7 +22,8 @@ export class Client {
         response.on('data',chunk => { bytes += chunk.length; if (bytes > 30_000_000) { request.destroy(new Error('Response too large')); return; } chunks.push(chunk); });
         response.on('end',() => { try { const data = JSON.parse(Buffer.concat(chunks).toString()) as { ok: boolean; result: T; error: string }; data.ok ? resolve(data.result) : reject(new Error(data.error)); } catch (error) { reject(error); } });
       });
-      request.on('error',reject); request.setTimeout(330_000,() => request.destroy(new Error('Daemon operation timed out; inspect durable status before retrying consequential actions'))); request.end(body);
+      const timer = setTimeout(() => request.destroy(new Error('Daemon operation timed out; inspect durable status before retrying consequential actions')), timeoutMs);
+      request.once('close', () => clearTimeout(timer)); request.on('error',reject); request.end(body);
     });
   }
   async ensureDaemon(): Promise<void> {
@@ -28,7 +32,8 @@ export class Client {
       if (status.extensionsExecution?.mode !== 'in-process') throw new Error('A legacy extension-worker daemon is already running. Ask its operator to upgrade/restart it; it will not be replaced automatically.');
     };
     try { await check(); return; } catch (error) { if (!['ENOENT','ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error; }
-    const daemon = spawn(process.execPath,[new URL('./cli.js',import.meta.url).pathname,'--instance',this.root,'serve'], { detached: true, stdio: 'ignore', env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: process.env.LANG ?? 'en_US.UTF-8' } });
+    if (existsSync(join(this.root, 'service.json'))) throw new Error('This instance has an installed service. Use pico --instance PATH service start; a detached replacement will not be spawned.');
+    const daemon = spawn(process.execPath,[fileURLToPath(new URL('./cli.js',import.meta.url)),'--instance',this.root,'serve'], { detached: true, stdio: 'ignore', env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: process.env.LANG ?? 'en_US.UTF-8' } });
     daemon.unref();
     for (let i = 0; i < 100; i++) { await sleep(100); try { await check(); return; } catch (error) { if (!['ENOENT','ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error; } }
     throw new Error('Daemon startup failed. Run `pico --instance PATH serve` for its diagnostic; an existing authority is never replaced.');

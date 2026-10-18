@@ -1,6 +1,6 @@
 # Deployment and recovery
 
-For one trusted local owner, run Pico natively. The daemon uses authenticated Unix HTTP/SSE, not a public HTTP listener. A managed installation still needs an operator/service supervisor to keep it alive across machine restarts.
+For one trusted local owner, run Pico natively. The daemon uses authenticated Unix HTTP/SSE, not a public HTTP listener. Use the explicit [per-user service helpers](INSTALLATION.md#install-an-explicit-per-user-service) for launchd/systemd, or an independently managed supervisor. Native user services start with a user login/session; they are not system-wide boot services. Versioned installs, redacted diagnostics and safe restart instructions are in [installation/operations](INSTALLATION.md).
 
 ```sh
 node dist/cli.js --instance PRIVATE_INSTANCE serve
@@ -65,6 +65,8 @@ Pause/cancel/update stops pending or superseded work but cannot undo accepted ef
 Use `/notifications`, current schedule state and actual operation receipts before retrying. Interrupted tool intentions are not automatically replayed; a pure interrupted stream may require another model request. Cancellation also covers preparation/retrieval, but does not undo charges.
 
 ## Upgrades
+
+For managed native installations, see the [versioned upgrade/rollback procedure](INSTALLATION.md#upgrade-and-rollback). Installing/selecting code does not restart any owner; service restart requires closed TUI clients, idle work and explicit ephemeral-loss acknowledgment. Database downgrade is never automatic.
 
 1. Make an application backup and protect the latest deletion ledger/credential recovery material.
 2. Stop the original daemon/container gracefully when idle. A restart loses ephemeral sessions; preserve drafts/dialogs and active work.

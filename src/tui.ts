@@ -7,6 +7,8 @@ import type { ImageReference } from './images.js';
 import type { AuthType } from '@earendil-works/pi-ai';
 import { authEventText, loginProvider } from './auth-client.js';
 import { McpCredentialsSchema, mcpSettings } from './mcp-contracts.js';
+import { ReadinessSchema, formatReadiness, type Readiness } from './readiness.js';
+import { doctor, formatDoctor } from './doctor.js';
 
 const color = (code: number | string) => (value: string) => {
   const prefix = `\x1b[${code}m`;
@@ -61,7 +63,7 @@ function toolResultText(result: unknown): string {
   const details = debugJson(metadata);
   return `${text}${details === '{}' ? '' : `\n\nMetadata\n${details}`}`;
 }
-export const COMMANDS = ['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit'];
+export const COMMANDS = ['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','readiness','doctor','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit'];
 export const HELP = `**Pico** — Enter sends when idle (drafts stay editable while working) · ↑/↓ recalls sent messages · Alt+Enter inserts a line · Ctrl+O expands/collapses all debug boxes · Ctrl+T selects a box · click a box header to toggle · PgUp/PgDn scroll · Escape interrupts/cancels dialogs · /quit exits the client (daemon stays alive)
 
 /new · /sessions [id] · /model [provider/id] · /model default provider/id · /thinking [level|Ctrl+S default]
@@ -69,7 +71,7 @@ export const HELP = `**Pico** — Enter sends when idle (drafts stay editable wh
 /skills [read name [path]|import path|enable name|disable name|delete name|rollback name version|approve id version hash]
 Use $skill-name in chat to explicitly activate an installed skill. Drop standard packages in PRIVATE_INSTANCE/skills/NAME/SKILL.md, or ask Pico to create/import one. Prefer skills for calculators/utilities; extensions are for integrations and daemon lifecycle. Scripts run with OS-user access, not in a sandbox.
 /approve approval-id artifact-hash (after reviewing exact code and permissions)
-/setup · /channels [telegram setup] · /telegram [status|check] · /settings [setting] · /reload
+/setup · /readiness (local evidence, no probes) · /doctor (redacted local diagnostics) · /channels [telegram setup] · /telegram [status|check] · /settings [setting] · /reload
 /login [provider] · /logout [provider] — Pi's built-in API-key/subscription setup
 /auth [key provider|secret name|chatgpt|codex|accounts|select account|status|test]
 /mcp [setup|status|catalog|requests|actions] · /mcp [secret|connect|disconnect|auth|cancel|logout|ping] SERVER · /mcp [approve|respond] ID
@@ -453,6 +455,8 @@ export class ChatUI implements PicoChannel {
     const show = async (op:string,args:Record<string,unknown>={}) => this.notice(`\`\`\`json\n${JSON.stringify(await this.client.rpc(op,args),null,2)}\n\`\`\``);
     if (name === '/quit') { this.close(); return; }
     if (name === '/help') { this.notice(HELP); return; }
+    if (name === '/readiness') { if (arg) throw new Error('Use /readiness without arguments'); await this.showReadiness(); return; }
+    if (name === '/doctor') { if (arg) throw new Error('Use /doctor without arguments'); this.notice(formatDoctor(await doctor(this.client.root))); return; }
     if (name === '/setup') { if (arg) throw new Error('Use /setup without arguments'); await this.configure(() => this.setupMenu()); return; }
     if (name === '/login' || name === '/logout') {
       if (arg && !/^[a-z0-9-]{1,80}$/.test(arg)) throw new Error('Use /login or /logout with only a provider ID; never inline credentials');
@@ -559,7 +563,8 @@ export class ChatUI implements PicoChannel {
       else if (action === 'secret') await this.configure(() => this.saveSecret(value));
       else if (action === 'select' && value) await this.configure(() => show('auth.select', { account: value }));
       else if (['chatgpt','codex'].includes(action!) && !value) await this.configure(() => this.login(action === 'codex' ? 'openai-codex' : 'openai', 'oauth'));
-      else if (!value && ['test','status','accounts',''].includes(action!)) await show(action === 'test' ? 'auth.test' : action === 'accounts' ? 'auth.accounts' : 'auth.status');
+      else if (!value && action === 'test') await this.configure(() => this.testModel());
+      else if (!value && ['status','accounts',''].includes(action!)) await show(action === 'accounts' ? 'auth.accounts' : 'auth.status');
       else throw new Error('Use /login, /logout, or /auth key provider|secret name|chatgpt|codex|accounts|select account|status|test'); return;
     }
     throw new Error('Unknown command. /help lists basic controls; ask Pico in chat for everything else.');
@@ -570,7 +575,21 @@ export class ChatUI implements PicoChannel {
     this.setupBusy = true; this.updateActivity();
     try { await task(); } finally { this.setupBusy = false; this.updateActivity(); }
   }
+  private async showReadiness(): Promise<void> {
+    this.notice(formatReadiness(validate<Readiness>(ReadinessSchema, await this.client.rpc('readiness', this.session ? { conversationId: this.session.id } : {}))));
+  }
+  private async testModel(): Promise<void> {
+    const choice = await this.choose([
+      { value: 'no', label: 'Cancel (default)', description: 'No network request, inference or charge' },
+      { value: 'yes', label: 'Test selected conversation model once', description: 'Sends one fixed synthetic prompt via the selected Pico account; may charge. No personal context or tools.' }
+    ], undefined, 'Explicit live model test — provider charges may apply');
+    if (choice !== 'yes') return;
+    const result = await this.client.rpc<{ tested: string }>('auth.test', { conversationId: this.session!.id });
+    this.notice(`Model test ${result.tested}. This proves neither memory quality nor connector delivery; OAuth/account changes invalidate the observation.`);
+    await this.showReadiness();
+  }
   private async setupMenu(): Promise<void> {
+    await this.showReadiness();
     const choice = await this.choose([
       { value: 'telegram', label: 'Telegram', description: 'Guided channel setup with masked token entry' },
       { value: 'login', label: 'Model authentication', description: 'Pi built-in providers, including ChatGPT and Codex subscriptions' },
@@ -583,9 +602,13 @@ export class ChatUI implements PicoChannel {
       { value: 'search', label: 'Web search', description: 'DuckDuckGo without a key, or optional vault-backed Brave (may be metered)' },
       { value: 'settings', label: 'Settings', description: 'Timezone, model, quiet hours, retention and integrations' },
       { value: 'secrets', label: 'Service credentials', description: 'Masked entry for existing service secrets' },
+      { value: 'readiness', label: 'Readiness overview', description: 'Configured, credential, authentication, reachability and actual test evidence; no probes' },
+      { value: 'test', label: 'Test selected model', description: 'Explicit one-shot synthetic inference; asks before a potentially billed call' },
       { value: 'apply', label: 'Apply saved settings', description: 'Reload the backend using saved settings' }
     ]);
-    if (choice === 'telegram') await this.telegramSetup();
+    if (choice === 'readiness') await this.showReadiness();
+    else if (choice === 'test') await this.testModel();
+    else if (choice === 'telegram') await this.telegramSetup();
     else if (choice === 'api') await this.login(undefined, 'api_key');
     else if (choice === 'login') await this.login();
     else if (choice === 'integrations') await this.integrationSetup();

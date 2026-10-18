@@ -21,6 +21,8 @@
     "test:memory:live": "node scripts/validate-memory.mjs",
     "test:memory:stress": "node --max-old-space-size=128 scripts/stress-memory.mjs",
     "start": "node dist/cli.js",
+    "install:local": "node scripts/install.mjs",
+    "release:pack": "node scripts/release.mjs",
     "dev": "pnpm build && node dist/cli.js --instance \"$HOME/.local/share/pico-dev\" chat",
     "dev:workspace": "bash scripts/dev.sh workspace",
     "dev:up": "bash scripts/dev.sh up",

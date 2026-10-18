@@ -245,7 +245,7 @@ it('actual executable creates/searches/downloads durable notes without provider 
   const root=mkdtempSync(join(tmpdir(),'pico-knowledge-cli-'));const config=initialize(root,'Synthetic CLI knowledge');delete config.embeddings;config.limits.backgroundIntervalMs=3_600_000;atomicWrite(join(root,'config.json'),JSON.stringify(config));
   const cli=async(...args:string[])=>JSON.parse((await promisify(execFile)(process.execPath,[join(import.meta.dirname,'..','dist','cli.js'),'--instance',root,...args],{timeout:15_000})).stdout);
   let pid:number|undefined;
-  try{pid=(await cli('status')).pid;const n=await cli('rpc','knowledge',JSON.stringify({action:'create',title:'Executable note',markdown:'CLI-520 durable.',submission:'executable'}));const found=await cli('knowledge','search','CLI-520');expect(found.results[0].documentId).toBe(n.id);const output=join(root,'download.md');await cli('knowledge','original',n.id,output);expect(readFileSync(output,'utf8')).toBe('CLI-520 durable.');}
+  try{await cli('rpc','health');pid=(await cli('status')).pid;const n=await cli('rpc','knowledge',JSON.stringify({action:'create',title:'Executable note',markdown:'CLI-520 durable.',submission:'executable'}));const found=await cli('knowledge','search','CLI-520');expect(found.results[0].documentId).toBe(n.id);const output=join(root,'download.md');await cli('knowledge','original',n.id,output);expect(readFileSync(output,'utf8')).toBe('CLI-520 durable.');}
   finally{if(pid){process.kill(pid,'SIGTERM');await waitFor(()=>{try{process.kill(pid!,0);return false;}catch{return true;}},10_000);}rmSync(root,{recursive:true,force:true});}
 },30_000);
 it('channel attachment intake registers a durable converter job through the real RPC path',async()=>{
