@@ -45,7 +45,7 @@ The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://gi
 
 ## Optional interactive browser
 
-For JavaScript-driven or authenticated sites, use the opt-in [browser MCP prototype](BROWSER.md), not `web_fetch`. A separately installed trusted Playwright server uses a dedicated profile; every preset tool needs exact terminal approval. Human login/CAPTCHA handoff, bounded file-backed snapshot reads and source-linked screenshot/download imports reuse MCP and normal attachments. This is not a native browser subsystem, seamless automation or an execution sandbox.
+For JavaScript-driven or authenticated sites, use the opt-in [browser MCP prototype](BROWSER.md), not `web_fetch`. A separately installed trusted Playwright server uses a dedicated profile; its exact tool allowlist runs autonomously from trusted owner chat, including Telegram, without per-action approval. Effects stay journaled as effects and failed/uncertain calls are not replayed. Human login/CAPTCHA handoff, bounded file-backed snapshot reads and source-linked screenshot/download imports reuse MCP and normal attachments. This is not a native browser subsystem, seamless automation or an execution sandbox.
 
 ## Existing image replies
 
@@ -69,7 +69,7 @@ Private PNG files follow media retention; synthetic prompt/model/source metadata
 
 ## MCP integrations
 
-[MCP](MCP.md) connects explicitly configured trusted servers over stdio, Streamable HTTP or legacy SSE, exposing selected tools plus resources/templates, prompts and argument completion. Private header/environment credentials and OAuth are separate from chat. Server read-only hints never grant permission: unknown effects need exact single-use owner-terminal approval; optional sampling and elicitation require fresh responses. Restricted/ephemeral work cannot dispatch MCP. Server output is evidence, not owner instructions or proof of success. Local servers are not sandboxed; remote services retain their own data and cost policies.
+[MCP](MCP.md) connects explicitly configured trusted servers over stdio, Streamable HTTP or legacy SSE, exposing selected tools plus resources/templates, prompts and argument completion. Private header/environment credentials and OAuth are separate from chat. Server read-only hints never grant permission: effects not explicitly delegated through exact `autonomousTools` need single-use owner-terminal approval; optional sampling and elicitation require fresh responses. Restricted/ephemeral work cannot dispatch MCP. Server output is evidence, not owner instructions or proof of success. Local servers are not sandboxed; remote services retain their own data and cost policies.
 
 ## Verification limits
 

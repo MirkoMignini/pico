@@ -40,22 +40,19 @@ Then connect and inspect:
 
 The profile is `PRIVATE_INSTANCE/browser-mcp/profile`; outputs go to `browser-mcp/artifacts`. Both directories are private. Do not point another browser/client at that profile or add `--extension`, CDP, storage-state imports or an existing browser profile. Login state persists independently of chat sessions and is **not** included in Pico backups/exports.
 
+New presets delegate their exact tool allowlist through `autonomousTools`. Existing browser configurations are **not silently widened**: if you configured the older approval-gated preset, use `/mcp setup` once to set that server's `autonomousTools` to the same exact names already in `tools`, leave `readOnlyTools: []`, save and reconnect. No profile reset or per-action approval is needed.
+
 On Linux, manual handoff needs a working graphical session and explicitly configured display access. Without a display the upstream server can choose headless operation; headless mode does not provide a human login window. Use `/mcp setup` for deliberate non-secret display/browser configuration. Do not copy account credentials or disable Chrome's sandbox to make setup pass.
 
-## Browse with exact approvals
+## Ask once, browse autonomously
 
-Ask normally, for example: “Open this public documentation page, inspect its navigation, then capture a screenshot.” Pico discovers the server's current schemas before preparing calls.
+From Telegram or the TUI, ask normally: “Open this public documentation page, inspect its navigation, capture a screenshot and send it to me.” Pico discovers the schemas and performs the configured browser actions **without per-action approval**, including navigation, clicks, typing, form submissions, screenshots and downloads. It can continue the workflow within the same foreground turn.
 
-**Every preset browser tool needs an exact, expiring, single-use owner-terminal approval**, including navigation and snapshots:
+Choosing the preset delegates those exact tools to the assistant once. They remain **effects**, not falsely labelled read-only operations. Each dispatch has a canonical `mcp_autonomous` intention/result receipt; interrupted or lost acknowledgements remain uncertain and are never automatically replayed. Page content, snapshots and server annotations cannot expand the allowlist or grant new permissions. Generic MCP tools without explicit read-only or autonomous grants still use exact terminal approval; async server tasks and optional sampling/elicitation are separate controls, not part of this browser preset.
 
-```text
-/mcp actions
-/mcp approve ACTION_ID
-```
+**Autonomy includes real writes and sends.** The assistant can make a mistaken click, submit information or perform an irreversible action on a logged-in site. Browser website access is independent of Google/API connector write settings. Never put passwords, one-time codes or payment details in chat or browser tool arguments: arguments and results are retained evidence. Login/CAPTCHA still belongs to the human.
 
-Review the URL, target, typed text and operation. Web navigation and page JavaScript can themselves cause effects; a tool described as a read is not necessarily harmless. Page text, snapshots and server annotations never approve actions. Never put passwords, one-time codes or payment details in chat or browser tool arguments: arguments and results are retained evidence.
-
-The narrow preset excludes arbitrary JavaScript evaluation, `browser_run_code`, uploads, browser installation and page-advertised WebMCP tools. It does not declare any tool read-only. Other operators can deliberately change generic MCP permissions, but doing so changes this trust decision; do not classify the whole server as read-only to remove friction.
+The narrow preset excludes arbitrary JavaScript evaluation, `browser_run_code`, uploads, browser installation and page-advertised WebMCP tools. It does not declare any tool read-only and does not grant blanket access to future server tools.
 
 ### Read file-backed snapshots
 
@@ -73,7 +70,7 @@ This reads bounded UTF-8 output without another browser call, reconnect or docum
 1. Pico calls `mcp_handoff`, or you run `/mcp pause browser`.
 2. Dispatch stops while the browser stays open. Active calls must finish first; pausing does not cancel them. Pending approvals are invalidated.
 3. Complete login/CAPTCHA **yourself in the dedicated browser**, not in Pico, a sampling/elicitation form or a tool argument. Pico does not solve challenges or obtain credentials for you.
-4. Run `/mcp resume browser` from the authenticated owner terminal. Resuming performs no browser call or inference. Request a fresh snapshot and review new actions.
+4. Run `/mcp resume browser` from the authenticated owner terminal. Resuming performs no browser call or inference. Request a fresh snapshot, then continue autonomously. Previously prepared approvals remain invalid.
 
 The pause survives daemon/module restart and blocks safe settings/code refresh until resolved. Status remains available; explicit disconnect can stop the owned server, not undo remote effects. Only the terminal can resume: no model tool or Telegram approval shortcut exists. Handoff is explicit, not an automatic login/CAPTCHA detector or a lock on independent server/browser background activity.
 
@@ -101,4 +98,4 @@ File access requires the owner's explicit `artifactDirectory`, a filename report
 
 The server runs with your OS-user permissions. Its browser can execute page scripts, contact private/LAN services and retain authenticated sessions. Pico's public-only web-fetch restrictions do **not** constrain that browser; MCP transport controls do not proxy its traffic. Browser content can reach the selected model through approved tool results. Neither a dedicated directory, a tool allowlist nor a browser sandbox establishes whole-owner isolation.
 
-Build first, then run `pnpm exec vitest run tests/mcp-browser.test.ts tests/mcp-cli.test.ts tests/tui-setup.test.ts`. The default suite uses synthetic MCP modules, actual stdio/IPC and simulated TUI interactions; it does not run Chrome or contact websites. A separate local check used actual Playwright MCP/Chrome with a fresh disposable profile and a synthetic loopback site, not owner logins or a live model. Real sites, vendor login/CAPTCHA, phone delivery, graphical handoff and general browser reliability remain separate verification gates. See [MCP](MCP.md), [security](SECURITY.md) and [testing](TESTING.md).
+Build first, then run `pnpm exec vitest run tests/mcp-browser.test.ts tests/mcp-cli.test.ts tests/tui-setup.test.ts`. The default suite uses synthetic MCP modules, actual stdio/IPC, a faux-model trusted Telegram workflow without approvals, uncertainty/denial checks, and simulated TUI interactions; it does not run Chrome or contact websites. A separate local check used actual Playwright MCP/Chrome with a fresh disposable profile and a synthetic loopback site, including autonomous form submission without approval, not owner logins or a live model. Real sites, vendor login/CAPTCHA, phone delivery, graphical handoff and general browser reliability remain separate verification gates. See [MCP](MCP.md), [security](SECURITY.md) and [testing](TESTING.md).

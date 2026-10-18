@@ -133,7 +133,7 @@ async function main(): Promise<void> {
       const settings = browserSettings(root, current.settings, server);
       prepareBrowserDirectories(root);
       await client.rpc('extensions.configure', { id: 'mcp', settings });
-      print({ saved: true, next: '/mcp connect browser; /mcp catalog browser. All browser tools need exact approval. Login/CAPTCHA: /mcp pause browser, interact manually, /mcp resume browser.' });
+      print({ saved: true, next: '/mcp connect browser; /mcp catalog browser. Selected browser tools execute autonomously, including writes/sends, without per-action approval. Login/CAPTCHA: /mcp pause browser, interact manually, /mcp resume browser.' });
     } else if (action === 'configure') {
       if (!server) throw new Error('Use mcp configure SETTINGS.json|- (non-secret settings only)');
       const raw = server === '-' ? await stdinText(1_000_000) : await (async () => { const path = resolve(server), info = await stat(path); if (!info.isFile() || info.size > 1_000_000) throw new Error('MCP settings file exceeds limits'); return readFile(path, 'utf8'); })();

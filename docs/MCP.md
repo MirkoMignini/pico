@@ -71,7 +71,7 @@ A local server uses the same common fields, replacing HTTP fields with:
 }
 ```
 
-`tools: []` disables execution while allowing discovery. Omit `tools` to expose all discovered tools; **all still need approval unless their exact name is also in `readOnlyTools`**. Server `readOnlyHint`, descriptions, prompt messages and roots never grant authority or confinement. Declaring a tool read-only is your explicit delegated trust, not verification that the server cannot write.
+`tools: []` disables execution while allowing discovery. Omit `tools` to expose all discovered tools; **all still need approval unless their exact name is in `readOnlyTools` or explicitly delegated through `autonomousTools`**. Server `readOnlyHint`, descriptions, prompt messages and roots never grant authority or confinement. Declaring a tool read-only is your explicit delegated trust, not verification that the server cannot write. `autonomousTools` grants exact selected tools direct execution **including effects** without per-action approval; every name must also be explicitly in `tools` and cannot overlap `readOnlyTools`. The browser preset delegates its narrow tool allowlist this way. Saving settings never silently widens an older configuration.
 
 Stdio gets a disposable HOME/XDG directory and a scrubbed environment: PATH, temporary directories, UTF-8 locale and explicitly configured variables. It does not inherit provider keys, `NODE_OPTIONS`, shell profiles or owner application credentials. Use masked credentials for secret environment values. Commands run without a shell; no implicit `$VARIABLE` expansion. An explicitly selected command such as `npx` can itself download/execute software: that is an operator trust decision, not Pico installing a server.
 
@@ -80,7 +80,7 @@ Stdio `auto`/pin probing happens **in the same owned process**, not a disposable
 ### Configuration reference
 
 - IDs: lowercase letter followed by up to 31 lowercase letters/digits/hyphens; unique within the instance; at most 64 servers.
-- Common: `id`, `enabled`, optional exact `tools`/`readOnlyTools`, `resources`/`prompts` (default true), local-file `roots`, `sampling`/`elicitation` (default false), `timeoutMs` (1,000–600,000), `maxBytes` (1,024–20,000,000), optional `artifactDirectory` (an absolute private directory explicitly authorizing receipt-reported local output reads/imports), `protocol` (`legacy`, `auto` or a version pin).
+- Common: `id`, `enabled`, optional exact `tools`/`readOnlyTools`/`autonomousTools`, `resources`/`prompts` (default true), local-file `roots`, `sampling`/`elicitation` (default false), `timeoutMs` (1,000–600,000), `maxBytes` (1,024–20,000,000), optional `artifactDirectory` (an absolute private directory explicitly authorizing receipt-reported local output reads/imports), `protocol` (`legacy`, `auto` or a version pin).
 - Stdio: `transport: "stdio"`, `command`, optional `args`, absolute `cwd` and non-secret `env`.
 - HTTP/SSE: `transport: "http"` or `"sse"`, exact `url`, optional non-secret `headers`, `allowPrivateNetwork`, `oauth`.
 - OAuth: optional `clientId`, `issuer`, `grantType` (`authorization_code` or `client_credentials`), `callbackPort`, `scope`, `clientMetadataUrl`. Pre-registered clients require an explicit issuer; client-credentials also requires a client ID. A fixed callback port is useful for pre-registered redirect URIs.
@@ -118,7 +118,9 @@ For client-credentials, explicitly select `grantType: "client_credentials"`, `cl
 
 After setup, ask Pico normally. It can use `mcp_catalog` and either a namespaced tool or `mcp_call`. Generic tools also include `mcp_resource`, `mcp_prompt`, `mcp_complete`, `mcp_tasks` and `mcp_status`. Namespaced tools accept an `arguments` object matching the catalog's original input schema.
 
-Unknown/non-read tool calls return a **prepared action**, not an executed result:
+Exact owner-delegated `autonomousTools` execute directly and retain effect history and canonical `mcp_autonomous` receipts. Failed/interrupted calls are uncertain, not safe to replay. Owner-declared reads remain separate. The [browser preset](BROWSER.md) uses autonomous execution so a trusted Telegram request can complete without terminal approvals.
+
+Tools without either grant (and all async task requests) return a **prepared action**, not an executed result:
 
 ```text
 /mcp actions

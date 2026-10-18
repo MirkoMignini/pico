@@ -723,10 +723,10 @@ export class ChatUI implements PicoChannel {
     if (entrypoint === undefined) return;
     const current = await this.client.rpc<{ settings: unknown }>('extensions.setup', { id: 'mcp' });
     const settings = browserSettings(this.client.root, current.settings, entrypoint);
-    if (await this.reviewAction(`Trusted browser MCP preset — not a sandbox. Uses installed Chrome and a private Pico-only profile, never existing browser sessions. All tools require exact approval. No browser or server starts now.\n${JSON.stringify(settings.servers.at(-1), null, 2)}`) !== 'yes') return;
+    if (await this.reviewAction(`Trusted browser MCP preset — not a sandbox. Uses installed Chrome and a private Pico-only profile, never existing browser sessions. Delegates the selected browser tools to act autonomously without per-action approval, including writes and sends. Review this trust decision once. No browser or server starts now.\n${JSON.stringify(settings.servers.at(-1), null, 2)}`) !== 'yes') return;
     prepareBrowserDirectories(this.client.root);
     await this.client.rpc('extensions.configure', { id: 'mcp', settings });
-    this.notice('Browser preset saved. /mcp connect browser, then /mcp catalog browser. Login/CAPTCHA must be manual: /mcp pause browser, use the dedicated browser, /mcp resume browser. Never put credentials in chat.');
+    this.notice('Autonomous browser preset saved. /mcp connect browser, then ask normally in Telegram or chat: selected browser actions need no per-action approval. Login/CAPTCHA must be manual: /mcp pause browser, use the dedicated browser, /mcp resume browser. Never put credentials in chat.');
   }
   private async integrationSetup(moduleId?:string):Promise<void>{
     if(!moduleId){const modules=await this.client.rpc<{id:string;setup?:boolean}[]>('extensions.list');moduleId=await this.choose(modules.filter(module=>module.setup).map(module=>({value:module.id,label:module.id,description:'Configure extension-owned accounts and permissions'})));}

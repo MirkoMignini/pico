@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { fauxAssistantMessage, fauxText, fauxToolCall } from '@earendil-works/pi-ai';
-import { cpSync, existsSync, lstatSync, linkSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,9 +17,10 @@ const instances: ReturnType<typeof setup>[] = [];
 const directories: string[] = [];
 const entrypoint = fileURLToPath(new URL('./fixtures/mcp-browser-server.mjs', import.meta.url));
 const invoke = <T = any>(s: ReturnType<typeof setup>, name: string, args: Record<string, unknown> = {}): Promise<T> => rpc(s.runtime, { op: `extensions.mcp.${name}`, args }) as Promise<T>;
-async function instance() {
+async function instance(autonomous = false) {
   const s = setup('synthetic-browser'); instances.push(s); await s.runtime.start();
   const settings = browserSettings(s.root, { servers: [] }, entrypoint); prepareBrowserDirectories(s.root);
+  if (!autonomous) settings.servers[0]!.autonomousTools = [];
   await rpc(s.runtime, { op: 'extensions.configure', args: { id: 'mcp', settings } });
   await invoke(s, 'connect', { server: 'browser' }); return s;
 }
@@ -42,6 +43,7 @@ it('creates only an explicit narrow preset, with a private dedicated profile and
   const browser = settings.servers[1]!;
   expect(browser).toMatchObject({ id: 'browser', readOnlyTools: [], artifactDirectory: join(s.root, 'browser-mcp', 'artifacts'), cwd: join(s.root, 'browser-mcp', 'artifacts') });
   expect('args' in browser && browser.args).toEqual(expect.arrayContaining(['--user-data-dir', join(s.root, 'browser-mcp', 'profile'), '--no-webmcp']));
+  expect(browser.autonomousTools).toEqual(browser.tools);
   expect(browser.tools).not.toEqual(expect.arrayContaining(['browser_run_code']));
   expect(browser.tools).not.toContain('browser_evaluate'); expect(browser.tools).not.toContain('browser_file_upload');
   expect(existsSync(join(s.root, 'browser-mcp'))).toBe(false);
@@ -55,7 +57,58 @@ it('creates only an explicit narrow preset, with a private dedicated profile and
   expect(s.faux.state.callCount).toBe(0);
 });
 
-it('requires exact approval even for snapshots and advertised reads; blocks code execution and uploads', async () => {
+it('requires explicit exact autonomous grants and never treats delegated effects as reads', () => {
+  const server = { id: 'browser', enabled: true, transport: 'stdio', command: process.execPath, tools: ['browser_click'], autonomousTools: ['browser_click'] };
+  expect(mcpSettings({ servers: [server] }).servers[0]?.autonomousTools).toEqual(['browser_click']);
+  for (const invalid of [{ ...server, tools: undefined }, { ...server, autonomousTools: ['*'] }, { ...server, readOnlyTools: ['browser_click'] }, { ...server, surprise: true }]) expect(() => mcpSettings({ servers: [invalid] })).toThrow();
+});
+
+it('completes a trusted Telegram browser workflow autonomously, preserving effect receipts and linked forgetting', async () => {
+  const s = await instance(true);
+  const last = (request: any) => JSON.parse(request.messages.findLast((message: any) => message.role === 'toolResult').content[0].text);
+  s.faux.appendResponses([
+    loadTools('mcp_call', 'mcp_artifact_read', 'mcp_import'),
+    fauxAssistantMessage([fauxToolCall('mcp_call', { server: 'browser', name: 'browser_navigate', arguments: { url: 'https://example.invalid' } })], { stopReason: 'toolUse' }),
+    request => { expect(last(request).prepared).not.toBe(true); return fauxAssistantMessage([fauxToolCall('mcp_call', { server: 'browser', name: 'browser_snapshot', arguments: {} })], { stopReason: 'toolUse' }); },
+    request => fauxAssistantMessage([fauxToolCall('mcp_artifact_read', { server: 'browser', sourceId: last(request).originalResultSourceId, file: 'page.yml' })], { stopReason: 'toolUse' }),
+    request => { expect(last(request).text).toContain('[ref=e2]'); return fauxAssistantMessage([fauxToolCall('mcp_call', { server: 'browser', name: 'browser_take_screenshot', arguments: {} })], { stopReason: 'toolUse' }); },
+    request => fauxAssistantMessage([fauxToolCall('mcp_import', { server: 'browser', sourceId: last(request).originalResultSourceId, contentIndex: 1 })], { stopReason: 'toolUse' }),
+    fauxAssistantMessage([fauxText('Synthetic screenshot imported without approval.')])
+  ]);
+  const run = await s.runtime.ingest({ conversationId: s.runtime.newConversation().id, requestId: 'autonomous-browser-telegram', text: 'Open the synthetic report and retain a screenshot.' }, { ...source, channel: 'telegram', identity: '7001' });
+  await waitFor(() => !['queued', 'running'].includes(s.runtime.run(run.id).status));
+  expect(s.runtime.run(run.id).status, s.runtime.run(run.id).error).toBe('completed');
+  expect((await invoke(s, 'actions.list')).total).toBe(0);
+  expect(s.store.all("SELECT status FROM operations WHERE tool='mcp_autonomous'")).toEqual([{ status: 'completed' }, { status: 'completed' }, { status: 'completed' }]);
+  expect(JSON.parse(readFileSync(join(s.root, 'browser-mcp', 'artifacts', 'navigations.json'), 'utf8'))).toEqual({ navigations: 1 });
+  expect(s.runtime.extensions.toolHistoryPolicy(mcpToolName('browser', 'browser_snapshot'))).toBe('effect');
+  expect(s.runtime.extensions.tools().find(tool => tool.name === mcpToolName('browser', 'browser_snapshot'))?.description).toContain('autonomous execution');
+  expect((await invoke(s, 'catalog', { server: 'browser', kind: 'tools' })).entries.find((tool: any) => tool.name === 'browser_snapshot').policy).toBe('owner-delegated-effects');
+  const image = s.store.get<{ id: string; source_id: string }>('SELECT id,source_id FROM documents')!;
+  expect(s.runtime.memory.source(image.source_id)?.actor).toBe('tool:mcp_autonomous');
+  await s.runtime.deleteKnowledge(image.id, true);
+  expect(s.store.all('SELECT id FROM attachments')).toEqual([]);
+  expect(s.runtime.memory.source(image.source_id)).toBeUndefined();
+});
+
+it('denies autonomous browser effects in restricted/foreign contexts and cannot grant autonomy through call arguments', async () => {
+  const s = await instance(true), args = { server: 'browser', name: 'browser_navigate', arguments: { url: 'https://example.invalid' } };
+  const context = { ownerId: s.config.ownerId, instanceId: s.config.instanceId, runId: crypto.randomUUID(), conversationId: '', source, mode: 'foreground' as const };
+  for (const invalid of [{ ...context, mode: 'ephemeral' as const }, { ...context, mode: 'scheduled' as const }, { ...context, mode: 'review' as const }, { ...context, source: { ...source, trustedOwner: false } }, { ...context, ownerId: 'foreign-owner' }]) await expect(s.runtime.extensions.invoke('mcp_call', args, invalid, 'denied', async () => { throw new Error('unexpected'); }, undefined, undefined, undefined, true)).rejects.toThrow();
+  await expect(s.runtime.extensions.invoke('mcp_call', args, context, 'repair-denied', async () => { throw new Error('unexpected'); }, undefined, undefined, undefined, false)).rejects.toThrow('restricted');
+  await expect(invoke(s, 'call', { ...args, autonomousTools: ['browser_navigate'] })).rejects.toThrow('Invalid input');
+  expect(existsSync(join(s.root, 'browser-mcp', 'artifacts', 'navigations.json'))).toBe(false);
+});
+
+it('journals an autonomous effect before dispatch and keeps a lost acknowledgement uncertain without replay', async () => {
+  const s = await instance(true);
+  await expect(invoke(s, 'call', { server: 'browser', name: 'browser_navigate', arguments: { url: 'lost-ack' } })).rejects.toThrow('acceptance is uncertain');
+  expect(s.store.all("SELECT status,result FROM operations WHERE tool='mcp_autonomous'")).toEqual([{ status: 'uncertain', result: null }]);
+  expect(JSON.parse(readFileSync(join(s.root, 'browser-mcp', 'artifacts', 'navigations.json'), 'utf8'))).toEqual({ navigations: 1 });
+  expect((await invoke(s, 'actions.list')).total).toBe(0);
+});
+
+it('keeps exact approval when the owner has not delegated tools, regardless of server read hints', async () => {
   const s = await instance();
   const result = await invoke(s, 'call', { server: 'browser', name: 'browser_snapshot', arguments: {} });
   expect(result.prepared).toBe(true);

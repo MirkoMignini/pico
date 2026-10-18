@@ -16,7 +16,7 @@ function original(core: Runtime, server: McpServer, sourceId: string, toolName: 
   const first = receipt.content?.[0];
   if (receipt.isError || first?.type !== 'text' || !first.text) throw new Error('MCP receipt has no successful result');
   const result = JSON.parse(first.text) as McpResult;
-  if (result.origin !== `external:mcp:${server.id}` || typeof result.mcpTool !== 'string' || !['mcp_call', 'mcp_approved', toolName(result.mcpTool)].includes(operation.tool)) throw new Error('Receipt is not a tool result from the selected MCP server');
+  if (result.origin !== `external:mcp:${server.id}` || typeof result.mcpTool !== 'string' || !['mcp_call', 'mcp_approved', 'mcp_autonomous', toolName(result.mcpTool)].includes(operation.tool)) throw new Error('Receipt is not a tool result from the selected MCP server');
   return { operation, operationId, result };
 }
 function artifact(core: Runtime, server: McpServer, file: string, result: McpResult): Buffer {

@@ -26,7 +26,7 @@
 | **Plan and remind** | Local appointments, a combined agenda, and durable reminders that do not depend on model availability. |
 | **Share selectively** | First-version [family links](docs/FAMILY.md) between same-host instances: explicitly authorized reminders and per-list read/edit access, without sharing private memory or owner credentials. |
 | **Chat where you work** | A streaming terminal UI and optional private Telegram bot with text, voice messages, spoken replies, photos, documents and more. [Explore channels](#channels); more are planned. |
-| **Research the web** | DuckDuckGo search, optional Brave, captured pages and bounded read-only research. Optional [browser MCP prototype](docs/BROWSER.md) for dynamic pages, with a dedicated profile, exact approvals and human login handoff. |
+| **Research the web** | DuckDuckGo search, optional Brave, captured pages and bounded read-only research. Optional [browser MCP prototype](docs/BROWSER.md) for dynamic pages, with a dedicated profile, autonomous actions and human login handoff. |
 | **Connect selectively** | Optional Gmail, Google Docs, Calendar, Contacts, Drive, Sheets and Tasks. Google writes start disabled and require exact owner approval. |
 | **Connect MCP servers** | Use selected external tools, resources and prompts through the [MCP client](#mcp-integrations), over stdio, Streamable HTTP or legacy SSE, with private credentials/OAuth and owner-controlled approvals. |
 | **Add useful skills** | Standard Agent Skills packages with scripts/assets, chat creation and imports. Trusted extensions handle persistent integrations and daemon hooks. |
@@ -65,7 +65,7 @@ Lists stay in their owner's instance; **“shared” means read/write unless you
 - **Tools and data:** namespaced tools with schema validation, resource/template discovery and reads, reusable prompts, argument completion, progress and change notifications.
 - **Connections and accounts:** local stdio processes, Streamable HTTP and legacy HTTP/SSE; private environment/header credentials or OAuth with PKCE, token refresh and explicit client-credentials grants.
 - **Optional interactions:** owner-reviewed form/URL elicitation and bounded text sampling, explicit advisory roots and experimental legacy tasks. Sampling is off by default and can charge your selected model.
-- **Owner-controlled effects:** only exact tools explicitly declared read-only can execute directly. Other tool calls prepare an expiring, single-use action for `/mcp approve ACTION_ID`; server annotations never grant permission. MCP tool dispatch is denied in ephemeral, scheduled and other restricted work.
+- **Owner-controlled effects:** exact owner-declared reads and explicitly delegated `autonomousTools` can execute directly. Autonomous browser tools may write/send without per-action approval and remain journaled effects. Other tool calls prepare an expiring, single-use action for `/mcp approve ACTION_ID`; server annotations never grant permission. MCP tool dispatch is denied in ephemeral, scheduled and other restricted work.
 
 Start in the TUI, replacing `SERVER` with an ID from your saved configuration:
 
@@ -203,7 +203,7 @@ Keep personal skills in the private instance, not this repository. The [English 
 | [Telegram/channels](docs/CHANNELS.md) · [Google](docs/GOOGLE.md) | Integration setup, routing, capabilities and approval boundaries. |
 | [Family collaboration](docs/FAMILY.md) | Same-host owner pairing, consented reminders, shared checklists, revocation and first-version limits. |
 | [Attachment research](docs/ATTACHMENTS-RESEARCH.md) | Phone-first, app-by-app capture taxonomy, basic/advanced processing proposals, sources and current limitations—not a shipped-feature guide. |
-| [MCP](docs/MCP.md) · [Browser](docs/BROWSER.md) | Trusted servers, exact approvals, dedicated browser profiles, human handoff and source-linked imports. |
+| [MCP](docs/MCP.md) · [Browser](docs/BROWSER.md) | Trusted servers, exact grants/approvals, autonomous browser profiles, human handoff and source-linked imports. |
 | [Skills](docs/SKILLS.md) · [Extension SDK](docs/SDK.md) | Reusable packages, scripts, trusted integrations and workflows. |
 | [Security](docs/SECURITY.md) · [Deployment](docs/DEPLOYMENT.md) | Trust, retention, backups, recovery and optional containers. |
 | [Demo](docs/DEMO.md) · [Development](docs/DEVELOPMENT.md) · [Testing](docs/TESTING.md) | No-credentials examples, contributor tools, verification and its limits. |

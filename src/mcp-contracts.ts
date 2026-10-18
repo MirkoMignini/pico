@@ -8,6 +8,7 @@ const common = {
   id: McpIdSchema, enabled: Type.Boolean(),
   tools: Type.Optional(Type.Array(name, { maxItems: 2000, uniqueItems: true })),
   readOnlyTools: Type.Optional(Type.Array(name, { maxItems: 2000, uniqueItems: true })),
+  autonomousTools: Type.Optional(Type.Array(name, { maxItems: 2000, uniqueItems: true })),
   resources: Type.Optional(Type.Boolean()), prompts: Type.Optional(Type.Boolean()),
   roots: Type.Optional(Type.Array(object({ uri: Type.String({ minLength: 1, maxLength: 4000 }), name: Type.Optional(name) }), { maxItems: 100 })),
   sampling: Type.Optional(Type.Boolean()), elicitation: Type.Optional(Type.Boolean()),
@@ -49,6 +50,10 @@ export function mcpSettings(raw: unknown): McpSettings {
   for (const server of settings.servers) {
     if (ids.has(server.id)) throw new Error('Duplicate MCP server ID');
     ids.add(server.id);
+    for (const tool of server.autonomousTools ?? []) {
+      if (!server.tools?.includes(tool)) throw new Error('Autonomous MCP tools must be exact names in the explicit tools allowlist');
+      if (server.readOnlyTools?.includes(tool)) throw new Error('Autonomous MCP effects must not also be classified as read-only');
+    }
     if (server.artifactDirectory && (!server.artifactDirectory.startsWith('/') || /[\x00-\x1f\x7f]/.test(server.artifactDirectory))) throw new Error('MCP artifact directory must be an explicit absolute path');
     for (const root of server.roots ?? []) {
       const uri = new URL(root.uri);

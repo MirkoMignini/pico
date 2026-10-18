@@ -168,6 +168,13 @@ it('cancels a real stdio call and kills only its owned server process group on d
   expect((await invoke(s, 'status')).servers[0].state).toBe('not_connected');
 });
 
+it('keeps async MCP task creation behind exact approval even for an autonomous tool grant', async () => {
+  const s = await instance({ tools: ['write.record'], readOnlyTools: [], autonomousTools: ['write.record'] });
+  const prepared = await invoke(s, 'call', { server: 'fixture', name: 'write.record', arguments: { text: 'synthetic async task' }, task: { ttl: 60000 } });
+  expect(prepared.prepared).toBe(true);
+  expect(s.store.all("SELECT id FROM operations WHERE tool='mcp_autonomous'")).toEqual([]);
+});
+
 it('supports experimental legacy tasks, with terminal approval for creation and cancellation', async () => {
   const s = await instance();
   expect(await invoke(s, 'tasks', { server: 'fixture', action: 'list' })).toMatchObject({ tasks: [{ taskId: 'synthetic-task' }] });

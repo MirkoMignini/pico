@@ -114,11 +114,11 @@ Setup/application does not run a search, image or model probe. [Feature behavior
 
 ## MCP servers
 
-Use `/mcp setup` for trusted stdio/HTTP/SSE servers, `/mcp secret SERVER` for masked credential JSON, `/mcp auth SERVER` for explicit OAuth consent and `/mcp connect SERVER` to connect now. No servers or credentials are discovered/imported automatically. Enabled servers connect on startup; stdio is executable OS-user code, not a sandbox. Select exact tools and read-only access deliberately; everything else needs `/mcp approve ACTION_ID`. Optional sampling/elicitation needs a separate `/mcp respond REQUEST_ID`, and sampling can charge the selected model. [Configuration, CLI, capabilities and limits](MCP.md).
+Use `/mcp setup` for trusted stdio/HTTP/SSE servers, `/mcp secret SERVER` for masked credential JSON, `/mcp auth SERVER` for explicit OAuth consent and `/mcp connect SERVER` to connect now. No servers or credentials are discovered/imported automatically. Enabled servers connect on startup; stdio is executable OS-user code, not a sandbox. Select exact tools and read-only access deliberately. Exact `autonomousTools` delegate effects without per-action approval; other tools need `/mcp approve ACTION_ID`. Optional sampling/elicitation needs a separate `/mcp respond REQUEST_ID`, and sampling can charge the selected model. [Configuration, CLI, capabilities and limits](MCP.md).
 
 ### Optional interactive browser
 
-`/mcp browser` reviews an explicitly installed Playwright MCP entrypoint and a dedicated Pico-only profile; it installs and starts nothing. Connect with `/mcp connect browser`. All preset browser tools need exact approval, and login/CAPTCHA requires manual handoff using `/mcp pause browser` and terminal-only `/mcp resume browser`. Never reuse an existing browser profile or paste login secrets into chat. [Installation, use, imports and limits](BROWSER.md).
+`/mcp browser` reviews an explicitly installed Playwright MCP entrypoint and a dedicated Pico-only profile; it installs and starts nothing. Connect with `/mcp connect browser`. The preset delegates its exact browser tool allowlist for autonomous execution, including writes/sends, without per-action approval from Telegram or the TUI. Login/CAPTCHA still requires manual handoff using `/mcp pause browser` and terminal-only `/mcp resume browser`. Never reuse an existing browser profile or paste login secrets into chat. [Installation, use, imports and limits](BROWSER.md).
 
 ## Google and other settings
 
