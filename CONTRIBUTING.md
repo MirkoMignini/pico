@@ -15,6 +15,18 @@ Build before tests: subprocess fixtures import compiled JavaScript from `dist/`.
 
 Use synthetic data and a disposable instance, never your operational assistant. The optional [development workspace](docs/DEVELOPMENT.md) provides separate TUI, daemon, logs and checks tabs. Do not start another daemon for an instance already in use.
 
+## Documentation site
+
+The [documentation site](https://mirkomignini.github.io/pico/) uses the existing `docs/*.md` guides directly. Edit those files, not generated HTML. The homepage and navigation live in `docs/index.md` and `docs/.vitepress/config.mts`; research proposals and internal comparisons are intentionally excluded. Links to source, fixtures and other repository-only files stay on GitHub.
+
+```sh
+pnpm docs:dev      # Local authoring preview
+pnpm docs:build    # Production build plus local links, anchors and asset checks
+pnpm docs:preview  # Serve the production build
+```
+
+The Documentation workflow checks every PR and publishes GitHub Pages after every push to `main`, including documentation-only updates. Failed builds do not replace the published site. Pages uses GitHub Actions as its deployment source; `workflow_dispatch` permits a manual rebuild. No provider credentials, instance data or running Pico daemon are needed.
+
 ## Making a change
 
 - Follow the existing TypeScript/ESM style, strict schemas and ownership checks. Edit source, not `dist/`, dependencies or caches.

@@ -41,7 +41,7 @@ Captures/read previews can be incomplete; follow cursors. `pico:web:` citations 
 
 Research has only bundled web reads and time—no automatic personal-memory access, writes, delivery, shell or recursive delegation. It shares parent cancellation/budgets, with at most four model requests, eight tool calls and 60 seconds. Logical limits and estimated prices are not invoice caps. Queries/URLs leave the machine; accepted provider requests may charge even after cancellation.
 
-The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://github.com/badlogic/pi-skills/tree/90bb51cae36515a648515b633a81c0c6efc8c74d/brave-search), with its [license notice](licenses/pi-skills.txt) retained.
+The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://github.com/badlogic/pi-skills/tree/90bb51cae36515a648515b633a81c0c6efc8c74d/brave-search), with its [license notice](https://github.com/MirkoMignini/pico/blob/main/docs/licenses/pi-skills.txt) retained.
 
 ## Existing image replies
 

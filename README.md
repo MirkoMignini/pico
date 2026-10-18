@@ -10,7 +10,7 @@
   <a href="#channels">Channels</a> ·
   <a href="#family-collaboration">Family</a> ·
   <a href="#mcp-integrations">MCP</a> ·
-  <a href="#documentation">Documentation</a> ·
+  <a href="https://mirkomignini.github.io/pico/">Documentation</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="LICENSE">MIT license</a>
 </p>
@@ -191,6 +191,8 @@ Pico runs an independent daemon with authenticated HTTP/SSE over a Unix socket. 
 Keep personal skills in the private instance, not this repository. The [English text-statistics sample](examples/skills/text-statistics/SKILL.md) demonstrates the portable format; examples are not installed automatically.
 
 ## Documentation
+
+**[Read the documentation online →](https://mirkomignini.github.io/pico/)** — searchable guides, rebuilt automatically from this repository on every update to `main`.
 
 | Guide | Start here for… |
 | --- | --- |

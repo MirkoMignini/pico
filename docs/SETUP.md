@@ -54,6 +54,8 @@ node dist/cli.js --instance PRIVATE_INSTANCE rpc model.default '{"provider":"PRO
 
 Chat models, embeddings, transcription, speech, image generation and research have separate configuration/cost boundaries. An OpenAI API key can be reused by explicitly enabled OpenAI auxiliary services; dedicated service secrets override it. A subscription token or another provider's key cannot substitute. Usage estimates are not invoices or spending caps.
 
+<a id="chatgptcodex-subscriptions"></a>
+
 ## ChatGPT/Codex subscriptions
 
 Use `/login openai` and select account sign-in, or `/login openai-codex` for Pi's separate Codex provider. Choose a model from that provider with `/model`. Pi owns login/refresh and request handling; account failures do not switch to an API key.
