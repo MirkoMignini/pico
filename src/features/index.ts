@@ -12,6 +12,7 @@ import research from './research.js';
 import planning from './planning.js';
 import images from './images.js';
 import family from './family.js';
+import mcp from './mcp.js';
 
 export function registerFeatures(core: Runtime): void {
   const extensions = core.extensions;
@@ -28,4 +29,5 @@ export function registerFeatures(core: Runtime): void {
   extensions.registerBuiltin('planning', planning);
   extensions.registerBuiltin('images', images);
   extensions.registerBuiltin('family', family);
+  extensions.registerBuiltin('mcp', api => mcp(api, core));
 }

@@ -1,7 +1,7 @@
 import { Type, type Static, type TSchema } from 'typebox';
 import { Value } from 'typebox/value';
 
-export const object = (properties: Record<string, TSchema>) => Type.Object(properties, { additionalProperties: false });
+export const object = <T extends Record<string, TSchema>>(properties: T) => Type.Object(properties, { additionalProperties: false });
 const text = Type.String({ minLength: 1, maxLength: 32_000 });
 // Pi's thinking levels; the model clamps the selected level to what it supports.
 export const ThinkingLevelSchema = Type.Union([

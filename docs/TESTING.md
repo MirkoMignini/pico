@@ -80,6 +80,12 @@ The check never attaches to deployed owners, borrows credentials, enables Telegr
 
 This is a **real local process/transport/scheduler check**, not live model interpretation, real Telegram delivery, deployment isolation or cross-host federation. A live model/Telegram trial needs separately approved accounts and synthetic data. The [manual walkthrough](FAMILY.md#manual-acceptance-walkthrough) gives exact prompts and observable outcomes for owners to verify after pairing.
 
+## MCP interoperability
+
+After building, `pnpm exec vitest run tests/mcp.test.ts tests/mcp-oauth.test.ts tests/mcp-network.test.ts tests/mcp-cli.test.ts` exercises actual disposable stdio processes/process-group cleanup, legacy and modern HTTP, legacy SSE, paginated catalogs, resources/prompts/completion, input/output validation, exact single-use approvals, task wire compatibility, credential binding/redaction and restricted-mode denials. The OAuth suite uses actual local HTTP discovery, registration, PKCE callbacks, issuer/state rejection, token refresh and client-credentials with synthetic accounts. `tests/tui-setup.test.ts` covers masked MCP entry and ephemeral/admin denials. Sampling uses a faux model; no vendor login or billed inference is proven.
+
+The separately authorized `pnpm test:mcp:live` checks public credential-free Microsoft Learn and DeepWiki tool discovery and read calls, using new disposable stores only. It accepts no existing instance or credential arguments, installs no MCP servers, invokes no Pico model, preserves failures in a private temporary report and follows canonical receipts for large results instead of replaying calls. Public service availability, actual vendor OAuth, real model interpretation and production reliability remain separate gates. `node scripts/check-mcp-live.mjs --help` is inert; `--run` is required for network/process work. See [MCP](MCP.md).
+
 ## Live trials require authorization
 
 Never run live calls merely to complete the default check command. Obtain authorization for the exact provider/account and any metered auxiliary services. Use a separate synthetic store, not owner data. Credentials may be used only through the explicitly selected Pico credential service, never copied or discovered from ambient tools.

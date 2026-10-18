@@ -9,6 +9,7 @@
   <a href="#what-pico-can-do">Features</a> ·
   <a href="#channels">Channels</a> ·
   <a href="#family-collaboration">Family</a> ·
+  <a href="#mcp-integrations">MCP</a> ·
   <a href="#documentation">Documentation</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="LICENSE">MIT license</a>
@@ -26,7 +27,8 @@
 | **Share selectively** | First-version [family links](docs/FAMILY.md) between same-host instances: explicitly authorized reminders and per-list read/edit access, without sharing private memory or owner credentials. |
 | **Chat where you work** | A streaming terminal UI and optional private Telegram bot with text, voice messages, spoken replies, photos, documents and more. [Explore channels](#channels); more are planned. |
 | **Research the web** | DuckDuckGo search, optional Brave, captured pages and bounded read-only research. |
-| **Connect selectively** | Optional Gmail, Google Docs, Calendar, Contacts, Drive, Sheets and Tasks. Remote writes start disabled and require exact owner approval. |
+| **Connect selectively** | Optional Gmail, Google Docs, Calendar, Contacts, Drive, Sheets and Tasks. Google writes start disabled and require exact owner approval. |
+| **Connect MCP servers** | Use selected external tools, resources and prompts through the [MCP client](#mcp-integrations), over stdio, Streamable HTTP or legacy SSE, with private credentials/OAuth and owner-controlled approvals. |
 | **Add useful skills** | Standard Agent Skills packages with scripts/assets, chat creation and imports. Trusted extensions handle persistent integrations and daemon hooks. |
 
 Everyday use is conversational:
@@ -56,6 +58,30 @@ Lists stay in their owner's instance; **“shared” means read/write unless you
 
 [Pairing and permissions](docs/FAMILY.md) · [Step-by-step manual checks](docs/FAMILY.md#manual-acceptance-walkthrough) · [Disposable local integration check](docs/TESTING.md#family-collaboration)
 
+## MCP integrations
+
+**Bring selected tools and data sources into your assistant.** Pico is a Model Context Protocol **client**, built on the official TypeScript SDK; it does not expose Pico itself as an MCP server. Configure trusted servers, then ask Pico to use their capabilities in ordinary conversation.
+
+- **Tools and data:** namespaced tools with schema validation, resource/template discovery and reads, reusable prompts, argument completion, progress and change notifications.
+- **Connections and accounts:** local stdio processes, Streamable HTTP and legacy HTTP/SSE; private environment/header credentials or OAuth with PKCE, token refresh and explicit client-credentials grants.
+- **Optional interactions:** owner-reviewed form/URL elicitation and bounded text sampling, explicit advisory roots and experimental legacy tasks. Sampling is off by default and can charge your selected model.
+- **Owner-controlled effects:** only exact tools explicitly declared read-only can execute directly. Other tool calls prepare an expiring, single-use action for `/mcp approve ACTION_ID`; server annotations never grant permission. MCP tool dispatch is denied in ephemeral, scheduled and other restricted work.
+
+Start in the TUI, replacing `SERVER` with an ID from your saved configuration:
+
+```text
+/mcp setup
+/mcp connect SERVER
+/mcp status
+/mcp catalog SERVER
+```
+
+No servers are installed or connected by default. Saving settings does not connect immediately; enabled servers connect on daemon startup or when explicitly requested. If needed, enter credential JSON only through `/mcp secret SERVER` (masked) and complete browser consent with `/mcp auth SERVER`. The [setup examples](docs/MCP.md#setup) include a public, credential-free Microsoft Learn server; the selected Pico model still has its own inference costs.
+
+**Trusted servers, not a sandbox.** Local servers run with your OS-user permissions; remote servers receive your arguments and apply their own retention/cost policies. Declaring a tool read-only is delegated trust, not proof that a server cannot write. Returned content is evidence, never permission, and cancellation cannot undo accepted effects.
+
+[Full capabilities and configuration](docs/MCP.md) · [CLI/RPC and approvals](docs/MCP.md#cli-and-rpc) · [Verification and limits](docs/MCP.md#verification)
+
 ## Channels
 
 **Two channels today: the terminal UI (TUI) and Telegram, with more to come.** Both connect to the same private Pico instance and its memory, documents, skills and enabled integrations, while keeping separate conversations. Choose the TUI for detailed inspection and administration, or Telegram to carry your assistant with you. The daemon keeps running independently of the terminal client.
@@ -71,8 +97,8 @@ A streaming, keyboard-first workspace for chatting with Pico and managing your i
 | **Saved conversations** | Start with `/new`, switch with `/sessions`, and recover history and active-run state after reconnecting. New chats do not erase shared memory. |
 | **Model controls** | Choose accounts/models and reasoning levels; see the current model, thinking level, context estimate and integration status. |
 | **Images** | Preview retained and generated images in supported terminals, with labelled fallbacks otherwise. Image generation requires separate setup. |
-| **Setup and credentials** | Guided provider, Telegram and Google setup; masked secret entry; settings and idle reloads without leaving the TUI. Secrets stay out of chat. |
-| **Administration** | Manage skills/extensions, review exact approval requests, approve eligible Google writes, inspect notifications, and create backups/exports. |
+| **Setup and credentials** | Provider, Telegram, Google and MCP setup; masked secret entry, browser consent, settings and idle reloads without leaving the TUI. Secrets stay out of chat. |
+| **Administration** | Manage skills/extensions and MCP connections, review exact Google/MCP action approvals and optional MCP interaction requests, inspect notifications, and create backups/exports. |
 | **Work and notifications** | Follow progress and background notifications, request cancellation with Escape or `/stop`, and detach with `/quit` without stopping the daemon. |
 
 The TUI is text-first: it does not record/play voice or upload a file from a typed path. Import host documents through the [operator CLI](docs/KNOWLEDGE.md#operator-commands), or attach them in Telegram. See [essential controls](#essential-controls) below.
@@ -142,6 +168,7 @@ See [setup](docs/SETUP.md) for provider accounts, costs, settings, Telegram and 
 | `/setup`, `/settings`, `/reload` | Configure services and apply saved settings. `/reload` does not deploy code. |
 | `/stop`, `/notifications` | Request cancellation or inspect delivery state. |
 | `/skills`, `/extensions` | Inspect and administer installed packages/modules. |
+| `/mcp setup`, `/mcp status` | Configure trusted MCP servers, credentials and tool approvals. |
 | `/backup`, `/export` | Manage private owner data. |
 | `/help`, `/quit` | Show controls or leave the client without stopping the daemon. |
 
@@ -155,7 +182,7 @@ Pico runs an independent daemon with authenticated HTTP/SSE over a Unix socket. 
 - **Self-hosted is not offline.** Selected model providers and enabled connectors receive the data needed for their work and have separate retention policies. Pico does not silently switch accounts/providers or borrow ambient credentials.
 - **Saved chats are retained.** Forgetting removes linked managed derivatives and protects restores with tombstones; it cannot erase provider copies, downloaded files or OS snapshots. Backups exclude the credential vault and need a separate credential-recovery plan.
 - **Actions have consequences.** Routine local writes and generated skills/extensions need no mandatory confirmation. Cancellation cannot undo an accepted write, delivery or charge; uncertain effects are not safe to replay.
-- **Executable code is trusted.** Extensions run inside the daemon; skill scripts run as the OS user. Neither is sandboxed. They can read accessible files/credentials, use the network and damage data. Syntax checks are not a security audit.
+- **Executable code is trusted.** Extensions run inside the daemon; skill scripts and local MCP servers run as the OS user. None is sandboxed. They can read accessible files/credentials, use the network and damage data. Syntax checks are not a security audit.
 
 Keep personal skills in the private instance, not this repository. The [English text-statistics sample](examples/skills/text-statistics/SKILL.md) demonstrates the portable format; examples are not installed automatically.
 
@@ -169,6 +196,7 @@ Keep personal skills in the private instance, not this repository. The [English 
 | [Telegram/channels](docs/CHANNELS.md) · [Google](docs/GOOGLE.md) | Integration setup, routing, capabilities and approval boundaries. |
 | [Family collaboration](docs/FAMILY.md) | Same-host owner pairing, consented reminders, shared checklists, revocation and first-version limits. |
 | [Attachment research](docs/ATTACHMENTS-RESEARCH.md) | Phone-first, app-by-app capture taxonomy, basic/advanced processing proposals, sources and current limitations—not a shipped-feature guide. |
+| [MCP](docs/MCP.md) | Trusted servers, tools/resources/prompts, OAuth, exact approvals and interoperability checks. |
 | [Skills](docs/SKILLS.md) · [Extension SDK](docs/SDK.md) | Reusable packages, scripts, trusted integrations and workflows. |
 | [Security](docs/SECURITY.md) · [Deployment](docs/DEPLOYMENT.md) | Trust, retention, backups, recovery and optional containers. |
 | [Demo](docs/DEMO.md) · [Development](docs/DEVELOPMENT.md) · [Testing](docs/TESTING.md) | No-credentials examples, contributor tools, verification and its limits. |

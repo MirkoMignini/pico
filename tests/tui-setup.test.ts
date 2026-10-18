@@ -293,7 +293,7 @@ it('removes manual memory commands from help/completion and rejects them without
 
 it('keeps only basic and safety/admin commands and rejects feature shortcuts without RPC or inference', async () => {
   const s = await connected(), calls = vi.spyOn(s.client, 'rpc');
-  expect(COMMANDS).toEqual(['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','settings','reload','integrations','mail','backup','export','login','logout','quit']);
+  expect(COMMANDS).toEqual(['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit']);
   const removed = ['status','knowledge','memory','prefer','correct','learn','workflows','agenda','reminders','web','images','approve-action'];
   for (const name of removed) { expect(COMMANDS).not.toContain(name); expect(HELP).not.toContain(`/${name}`); }
   expect(HELP).toContain('Talk to Pico'); expect(HELP).toContain('new extension builds need no confirmation'); expect(HELP).toContain('run immediately with full OS access');
@@ -1153,6 +1153,22 @@ it('configures optional Brave through a masked vault dialog and applies the prov
   expect(calls).toHaveBeenCalledWith('secret.set',{name:'brave.searchKey',value:'synthetic-private-brave-key'});expect(s.service.runtime.store.config.search).toEqual({provider:'brave'});
   expect(await s.service.runtime.credentials.secret('brave.searchKey')).toBe('synthetic-private-brave-key');expect(s.faux.state.callCount).toBe(0);
   for(const table of ['messages','runs','web_sources'])expect(s.service.runtime.store.all(`SELECT * FROM ${table}`)).toEqual([]);
+});
+
+it('uses masked MCP credentials without chat/inference and rejects inline answers or ephemeral connections', async () => {
+  const s = await connected();
+  await s.client.rpc('extensions.configure', { id: 'mcp', settings: { servers: [{ id: 'fixture', enabled: false, transport: 'stdio', command: '/usr/bin/false' }] } });
+  const secret = s.ui.submit('/mcp secret fixture'); await s.see('fixture: credential JSON');
+  s.replace('{"env":{"OPERATOR_TOKEN":"synthetic-masked-mcp-token"}}'); s.ui.tui.renderNow(true);
+  expect(s.screen.output).not.toContain('synthetic-masked-mcp-token'); s.screen.input('\r'); await secret;
+  expect(await s.service.runtime.credentials.secret('extensions.mcp.fixture')).toContain('synthetic-masked-mcp-token');
+  expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]); expect(s.faux.state.callCount).toBe(0);
+  await expect(s.ui.submit('/mcp secret fixture inline-token')).rejects.toThrow('never inline');
+  await expect(s.ui.submit('/mcp respond request inline-answer')).rejects.toThrow('never inline');
+  await selectLegacyEphemeral(s);
+  await expect(s.ui.submit('/mcp connect fixture')).rejects.toThrow('Ephemeral');
+  await expect(s.ui.submit('/mcp catalog fixture')).rejects.toThrow('Ephemeral');
+  await expect(s.ui.submit('/mcp respond pending')).rejects.toThrow('ephemeral');
 });
 
 it('cancels search setup without saving and rejects retired commands without sending inline keys', async () => {

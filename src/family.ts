@@ -23,7 +23,7 @@ export const FamilyCardSchema = object({ version: Type.Literal(1), instanceId: u
 interface Card { version: 1; instanceId: string; ownerId: string; name: string; publicKey: string; socket: string }
 export const FamilyAddSchema = object({ card: FamilyCardSchema, alias: label, allowReminders: Type.Boolean() });
 export const FamilyMemberSchema = object({ member });
-const actionSchemas = [
+const actionSchemas: import('typebox').TObject[] = [
   object({ action: Type.Literal('members') }),
   object({ action: Type.Literal('shares'), member: Type.Optional(member), ...page }),
   object({ action: Type.Literal('create'), member, ...listCreate, permission }),

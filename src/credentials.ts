@@ -36,7 +36,8 @@ export class Credentials implements CredentialStore {
     const api=['openai.embeddingKey','openai.mediaKey','openai.imageKey','openai.speechKey'].includes(name)?data.entries['openai-api']:undefined;
     return data.secrets[name]??(api?.type==='api_key'?api.key:undefined);
   }
-  setSecret(name: string, value: string): Promise<void> { return this.serialized(async () => { const data = this.load(); data.secrets[name] = value; atomicWrite(this.path, JSON.stringify(data)); }); }
+  setSecret(name: string, value: string, signal?: AbortSignal): Promise<void> { return this.serialized(async () => { signal?.throwIfAborted(); const data = this.load(); data.secrets[name] = value; atomicWrite(this.path, JSON.stringify(data)); }); }
+  deleteSecret(name: string): Promise<void> { return this.serialized(async () => { const data = this.load(); delete data.secrets[name]; atomicWrite(this.path, JSON.stringify(data)); }); }
   selectOpenai(key: string): Promise<void> { return this.serialized(async () => { const data = this.load(); if (!/^(?:openai(?:-api)?|chatgpt:[a-z0-9-]{1,40})$/.test(key) || !data.entries[key]) throw new Error('Unknown OpenAI account'); data.activeOpenai = key; atomicWrite(this.path, JSON.stringify(data)); }); }
   async activeAccount(): Promise<string> { await this.tail; return this.load().activeOpenai ?? 'openai'; }
 }
