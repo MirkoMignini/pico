@@ -31,6 +31,14 @@ Before a release, repeat the default checks from a fresh checkout without copied
 
 The [no-credentials demo](DEMO.md) provides a bounded newcomer walkthrough. Screenshots and examples must use synthetic data; never publish private logs as release evidence.
 
+## Installation, diagnostics and services
+
+`tests/doctor.test.ts` covers non-creating configuration reads, offline/no-inference/no-refresh diagnostics, private-content redaction, actual Unix health IPC, and exact-model/account-bound readiness evidence. `tests/service.test.ts` checks both native service renderers, path escaping, definition ownership, no implicit starts, manager-error handling and actual authenticated idle/client/ephemeral stop refusals. Manager commands in the ordinary suite are simulated, not OS supervision evidence.
+
+`tests/installation.test.ts` uses disposable committed source trees and a synthetic package-manager/build command to verify immutable versions, atomic selection/rollback, failure preservation, source exclusions and checksum packaging without downloading dependencies. This is not a real package-registry installation. A separately executed fresh-prefix installation and actual macOS launchd/Linux systemd trial must be reported separately; CI on a platform alone does not establish service-manager behavior.
+
+No doctor/readiness operation runs provider probes. Explicit model-test fixtures prove the selected account/request boundaries, not vendor access. Real service trials must use unique disposable owner/home/service identities, stop/remove only their own jobs and never install/start or restart an operational owner. Versioned source publication is a maintainer operation: tag CI creates only a draft after Linux/macOS verification and secret scanning; it does not automatically make a public release.
+
 ## Repeated workflows and memory stress
 
 ```sh

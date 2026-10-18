@@ -1,10 +1,12 @@
 # Setup and authentication
 
-Use Node **24.21.0**, pnpm **11.2.2** and a POSIX environment with private files and Unix sockets. Install/build as shown in the [README](../README.md#quickstart). Each private instance has its own owner identity, database, vault and socket. Initialize it only once.
+Use Node **24.21.0**, pnpm **11.2.2** and a POSIX environment with private files and Unix sockets. Use the [versioned installer or source build](INSTALLATION.md). Each private instance has its own owner identity, database, vault and socket. Initialize it only once.
 
 ## TUI-first setup
 
-Open `/setup` in a retained session. Setup dialogs replace the input area and are separate from agent conversation/history. Secrets are masked; never append them to a slash command or paste them into chat. Escape/Ctrl+C cancels a dialog.
+Open `/setup` in a retained session. It first shows local readiness: configuration, stored credentials, verified authentication/reachability and actual tests are distinct. `/readiness` refreshes this evidence without a network probe; `/doctor` gives redacted local diagnostics. Optional services keep their separate checks. See [readiness and verification boundaries](INSTALLATION.md#readiness-is-evidence-not-a-single-green-light).
+
+Setup dialogs replace the input area and are separate from agent conversation/history. Secrets are masked; never append them to a slash command or paste them into chat. Escape/Ctrl+C cancels a dialog.
 
 | Control | Purpose |
 | --- | --- |
@@ -18,9 +20,10 @@ Open `/setup` in a retained session. Setup dialogs replace the input area and ar
 | `/reload` | Apply saved settings while idle, not newly compiled code. |
 | `/channels telegram setup` | Telegram bot token, numeric owner allowlist and reminder recipient. |
 | `/integrations setup google` | Google settings and separate masked secrets. |
-| `/auth test` | An explicit live inference request; may charge. |
+| `/auth test`, `/setup` → Test selected model | A separately confirmed one-shot synthetic test of the current conversation model/account; may charge. |
+| `/readiness`, `/doctor` | Local evidence and redacted diagnostics, without inference/connector probes or automatic repair. |
 
-Saving a credential does not test inference or connector access. Applying settings refuses active turns, background/delivery work, RPC and sign-ins. Retained data survives; **ephemeral sessions are lost**, with a UI warning. Failed application normally keeps the previous runtime and leaves saved settings pending for correction.
+Saving a credential does not test inference or connector access. Model-test observations are bound to the exact selected model/credential and current daemon lifetime, not a general entitlement or quality guarantee. The CLI `auth test` explicitly tests the default model without a TUI confirmation dialog; it may charge. Applying settings refuses active turns, background/delivery work, RPC and sign-ins. Retained data survives; **ephemeral sessions are lost**, with a UI warning. Failed application normally keeps the previous runtime and leaves saved settings pending for correction.
 
 External bot creation, OAuth-client registration, browser consent, deployment and code upgrades are operator tasks, not settings overrides.
 

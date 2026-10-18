@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { secureFile } from './config.js';
 import type { Config } from './contracts.js';
+import { SCHEMA_VERSION } from './version.js';
 
 export const hash = (data: string | Uint8Array): string => createHash('sha256').update(data).digest('hex');
 export const id = (): string => randomUUID();
@@ -33,7 +34,7 @@ export class Store {
     secureFile(file);
     this.db.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000; PRAGMA secure_delete=ON;');
     const version = this.get<{ user_version: number }>('PRAGMA user_version')!.user_version;
-    if (version > 15) throw new Error('Database newer than application; restore the matching build');
+    if (version > SCHEMA_VERSION) throw new Error('Database newer than application; restore the matching build');
     if (version === 0) this.transaction(() => {
       this.db.exec(readFileSync(new URL('../migrations/001.sql', import.meta.url), 'utf8'));
       this.run('INSERT INTO meta VALUES(?,?)', 'ownerId', config.ownerId);

@@ -139,14 +139,17 @@ git clone https://github.com/MirkoMignini/pico.git
 cd pico
 
 # Select the pinned Node and pnpm versions first.
-pnpm install --frozen-lockfile --ignore-scripts
-pnpm check && pnpm build
+# Install into an immutable version directory; no owner/service is created.
+node scripts/install.mjs --prefix "$HOME/.local/share/pico-app"
+export PATH="$HOME/.local/share/pico-app/bin:$PATH"
 
-node dist/cli.js --instance "$HOME/.local/share/pico" init --name "Your name"
-node dist/cli.js --instance "$HOME/.local/share/pico" chat
+pico --instance "$HOME/.local/share/pico" init --name "Your name"
+pico --instance "$HOME/.local/share/pico" chat
 ```
 
-Initialize each directory only once. The chat client starts or reconnects to that instance's daemon; closing the client leaves the daemon running. Keeping it alive across machine restarts is an operator responsibility.
+Initialize each directory only once. The chat client starts or reconnects to that instance's daemon; closing the client leaves the daemon running. Optional `pico --instance PATH service install` / `service start` provide explicit per-user launchd/systemd supervision; installation alone does not start it. `doctor --offline --json` checks local setup without starting a daemon or contacting providers. [Installation, service operation, upgrades and recovery](docs/INSTALLATION.md).
+
+These installer tools require a checkout containing this guide; the original `v0.1.0` tag predates them. For direct source development, use `pnpm install --frozen-lockfile --ignore-scripts && pnpm check && pnpm build`, then `node dist/cli.js` instead of the installed `pico` launcher.
 
 In Pico, open `/setup` to configure your model and optional services. Factory defaults are **DeepSeek Flash** for chat and **OpenAI text-embedding-3-small** for memory embeddings; both can incur charges. For those defaults:
 
@@ -155,7 +158,7 @@ In Pico, open `/setup` to configure your model and optional services. Factory de
 /auth key openai
 ```
 
-Enter keys **only in the separate masked dialogs**, never in chat or command arguments. Use `/login` and `/model` to choose another supported account/model; `/settings embeddings` selects local or disabled embeddings. Local embeddings do not make model-driven memory extraction free or offline. Setup does not itself run an inference test.
+Enter keys **only in the separate masked dialogs**, never in chat or command arguments. Use `/login` and `/model` to choose another supported account/model; `/settings embeddings` selects local or disabled embeddings. Local embeddings do not make model-driven memory extraction free or offline. Setup shows readiness without running inference; an explicit model test requires separate confirmation and may charge.
 
 See [setup](docs/SETUP.md) for provider accounts, costs, settings, Telegram and optional services.
 
@@ -165,7 +168,8 @@ See [setup](docs/SETUP.md) for provider accounts, costs, settings, Telegram and 
 | --- | --- |
 | `/new`, `/sessions` | Start or select a saved conversation. `/new` does not erase memory. |
 | `/model`, `/thinking` | Select the conversation's model and reasoning level. |
-| `/setup`, `/settings`, `/reload` | Configure services and apply saved settings. `/reload` does not deploy code. |
+| `/setup`, `/readiness`, `/doctor` | Guided setup, separate configuration/authentication/test evidence, and redacted local diagnostics. No automatic probes. |
+| `/settings`, `/reload` | Configure services and apply saved settings. `/reload` does not deploy code. |
 | `/stop`, `/notifications` | Request cancellation or inspect delivery state. |
 | `/skills`, `/extensions` | Inspect and administer installed packages/modules. |
 | `/mcp setup`, `/mcp status` | Configure trusted MCP servers, credentials and tool approvals. |
@@ -190,7 +194,8 @@ Keep personal skills in the private instance, not this repository. The [English 
 
 | Guide | Start here for… |
 | --- | --- |
-| [Setup](docs/SETUP.md) | Accounts, masked credentials, settings and optional services. |
+| [Installation/operations](docs/INSTALLATION.md) | Versioned installs, redacted doctor, per-user services, upgrades and recovery. |
+| [Setup](docs/SETUP.md) | Accounts, masked credentials, readiness, settings and optional services. |
 | [Features](docs/FEATURES.md) | Agenda/reminders, web research and images. |
 | [Memory](docs/MEMORY.md) · [Documents](docs/KNOWLEDGE.md) | Sources, extraction, search, notes/lists and forgetting. |
 | [Telegram/channels](docs/CHANNELS.md) · [Google](docs/GOOGLE.md) | Integration setup, routing, capabilities and approval boundaries. |
@@ -200,6 +205,7 @@ Keep personal skills in the private instance, not this repository. The [English 
 | [Skills](docs/SKILLS.md) · [Extension SDK](docs/SDK.md) | Reusable packages, scripts, trusted integrations and workflows. |
 | [Security](docs/SECURITY.md) · [Deployment](docs/DEPLOYMENT.md) | Trust, retention, backups, recovery and optional containers. |
 | [Demo](docs/DEMO.md) · [Development](docs/DEVELOPMENT.md) · [Testing](docs/TESTING.md) | No-credentials examples, contributor tools, verification and its limits. |
+| [OpenClaw/Hermes assessment](docs/COMPARISON.md) | Baseline comparison, gaps, priorities and deliberate non-goals. |
 
 ## Contributing
 

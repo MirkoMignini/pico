@@ -75,6 +75,12 @@ Deletion state/tombstones commit before physical unlink. Cleanup journals recove
 
 Restore verifies owner/instance, SQLite, content hashes and references, applies available deletion history and reconstructs canonical packages. Post-snapshot skill directories are held in private recovery storage, not silently enabled. Snapshot-pending work may have taken effect later: pending deliveries become uncertain, unfinished work interrupted and overdue schedules paused for review. If both the current DB and latest deletion ledger are lost, an older backup may still contain forgotten data. [Recovery procedure](DEPLOYMENT.md#backup-and-restore).
 
+## Local diagnostics and maintenance
+
+`doctor` is an allowlisted, non-starting diagnostic: it omits owner identity, private content/paths, vault values and raw provider/module errors. Offline inspection never opens/migrates SQLite, loads instance code or probes services; online inspection contacts only an already running authenticated Unix `health` endpoint. Detailed `status`, native service logs and arbitrary trusted extensions remain private and outside that redaction guarantee. Readiness distinguishes stored credentials from observed authentication/reachability and exact explicit model-test results; no automatic billed test or credential refresh is performed. See [installation/operations](INSTALLATION.md).
+
+Per-user service installation is explicit and never initializes an owner or restarts it. Managed stop/restart uses authenticated idle-only IPC and refuses open TUI/event streams rather than discarding drafts/dialogs. Ephemeral loss needs acknowledgment. Native manager commands and OS shutdown bypass these application guards; a status snapshot is not a maintenance lock. Service registration is host-local, not a portable credential/backup or new authority boundary. Version selection never downgrades data or replays uncertain effects.
+
 ## Cancellation and receipts
 
 Intention journals precede effects; stable input IDs reject changed-body replay. Lost acknowledgment is **uncertain**, not success or permission to resend. Cancellation includes preparation/retrieval and can stop later model work, but cannot undo accepted writes, sends or charges. Multipart partial acceptance remains uncertain. Explicit retries can duplicate effects.

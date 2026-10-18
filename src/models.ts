@@ -2,6 +2,7 @@ import { clampThinkingLevel, createModels, type AuthInteraction, type AuthType, 
 import { builtinModels } from '@earendil-works/pi-ai/providers/all';
 import { Credentials } from './credentials.js';
 import type { Config, ProviderCapabilities } from './contracts.js';
+import { VERSION } from './version.js';
 
 // Pico's factory default; explicit settings override it, and the model clamps it.
 export const DEFAULT_THINKING_LEVEL: ModelThinkingLevel = 'low';
@@ -39,7 +40,7 @@ export class ModelAccess {
     return model;
   }
   async options(model: Model<any>, signal?: AbortSignal, ephemeral = false): Promise<SimpleStreamOptions> {
-    return { signal, maxTokens: 4096, cacheRetention: ephemeral ? 'none' : 'short', headers: { 'User-Agent': 'Pico/0.1.0' } };
+    return { signal, maxTokens: 4096, cacheRetention: ephemeral ? 'none' : 'short', headers: { 'User-Agent': `Pico/${VERSION}` } };
   }
   async complete(context: Context, signal?: AbortSignal, selection=this.config.model, structured: { json?: boolean; maxTokens?: number } = {}): Promise<AssistantMessage> {
     const model = this.model(selection), options = await this.options(model, signal), thinking = clampThinkingLevel(model, 'off');

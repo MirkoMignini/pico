@@ -12,6 +12,8 @@ import { backup, exportData } from './backup.js';
 import { ImageListSchema, ImageIdentitySchema, ImageShowSchema } from './images.js';
 import { ScheduleSchema, ScheduleManageSchema, type ScheduleAction } from './scheduler.js';
 import { FamilyAddSchema, FamilyMemberSchema } from './family.js';
+import { health } from './health.js';
+import { runtimeReadiness, testModel } from './readiness.js';
 
 const object = (properties: Record<string, import('typebox').TSchema>) => Type.Object(properties, { additionalProperties: false });
 export async function rpc(runtime: Runtime, request: RpcRequest): Promise<unknown> {
@@ -20,6 +22,8 @@ export async function rpc(runtime: Runtime, request: RpcRequest): Promise<unknow
   const owner: Envelope = { ownerId: runtime.store.config.ownerId, instanceId: runtime.store.config.instanceId, conversationId: '', runId: id(), source: { channel: 'terminal', identity: 'owner-ipc', trustedOwner: true }, mode: 'foreground' };
   switch (request.op) {
     case 'status': a(object({})); return runtime.status();
+    case 'health': a(object({})); return health(runtime);
+    case 'readiness': { const input = a<{ conversationId?: string }>(object({ conversationId: Type.Optional(Type.String()) })); return runtimeReadiness(runtime, input.conversationId); }
     case 'settings.get': a(object({}));return loadConfig(runtime.store.root).config;
     case 'settings.update': {const input=a<Record<string,unknown>>(SettingsSchema);const values={...loadConfig(runtime.store.root).config,...input};for(const key of ['thinking','modelThinking','telegram','gmail','embeddings','transcription','speech','search','imageGeneration'])if(values[key as keyof typeof values]===null)delete (values as Record<string,unknown>)[key];const next=validate<Config>(ConfigSchema,values);new Intl.DateTimeFormat('en',{timeZone:next.timezone});if(input.model)runtime.models.model(next.model);if(next.telegram&&!next.telegram.allowedSenders.includes(next.telegram.destination))throw new Error('Telegram destination must be an explicitly allowed owned sender');atomicWrite(join(runtime.store.root,'config.json'),JSON.stringify(next));return {saved:true,restartRequired:true};}
     case 'family.identity': a(object({})); return runtime.family.identity();
@@ -66,7 +70,7 @@ export async function rpc(runtime: Runtime, request: RpcRequest): Promise<unknow
       return { text: response.content.filter(b => b.type === 'text').map(b => b.text).join('\n'), usage: response.usage };
     }
     case 'auth.preflight': a(object({})); return runtime.models.models.checkAuth(runtime.store.config.model.provider);
-    case 'auth.test': { a(object({})); const response = await runtime.models.complete({ messages: [{ role: 'user', content: 'Reply with exactly: Pico is connected.', timestamp: Date.now() }] }, AbortSignal.timeout(30_000)); return { completed: true, content: response.content, usage: response.usage }; }
+    case 'auth.test': { const input = a<{ conversationId?: string }>(object({ conversationId: Type.Optional(Type.String()) })); return testModel(runtime, input.conversationId); }
     case 'secret.status': a(object({})); return Object.fromEntries(await Promise.all(SECRET_NAMES.map(async name => [name, !!await runtime.credentials.secret(name)])));
     case 'secret.set': {
       const input = a<{ name: string; value: string }>(object({ name: Type.Union(SECRET_NAMES.map(value => Type.Literal(value))), value: Type.String({ minLength: 1, maxLength: 4000 }) }));
@@ -137,7 +141,7 @@ async function body(request: IncomingMessage, max: number): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 export async function serve(path: string, options: { runtimeFactory?: (store: Store) => Runtime;
-  channels?: (runtime: Runtime) => Iterable<PicoChannel> | Promise<Iterable<PicoChannel>> } = {}): Promise<{ runtime: Runtime; server: Server; close: () => Promise<void> }> {
+  channels?: (runtime: Runtime) => Iterable<PicoChannel> | Promise<Iterable<PicoChannel>> } = {}): Promise<{ runtime: Runtime; server: Server; close: () => Promise<void>; done: Promise<void> }> {
   const { root, config, token, socket } = loadConfig(path);
   const unlock = acquireLock(root);
   let store: Store;
@@ -147,6 +151,10 @@ export async function serve(path: string, options: { runtimeFactory?: (store: St
     for (const channel of await options.channels?.(target) ?? []) target.channels.register(channel);
   };
   let applying = false, requests = 0;
+  let finish!: () => void, fail!: (error: unknown) => void;
+  const done = new Promise<void>((resolve, reject) => { finish = resolve; fail = reject; });
+  // Consumers may close through an authenticated RPC rather than the local close callback.
+  void done.catch(() => {});
   const streams = new Set<ServerResponse>();
   const broadcast = (event: OutputEvent) => {
     for (const stream of streams) { if (stream.writableLength > 1_000_000) { stream.destroy(); streams.delete(stream); } else stream.write(`data: ${json(event)}\n\n`); }
@@ -167,6 +175,7 @@ export async function serve(path: string, options: { runtimeFactory?: (store: St
       return;
     }
     if (!tokenMatches(request.headers.authorization?.replace(/^Bearer /, '') ?? '', token)) { response.writeHead(401).end('Unauthorized'); return; }
+    if (closed) { response.writeHead(503).end(); return; }
     if (request.method === 'GET' && request.url === '/events') {
       response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); response.write(': connected\n\n');
       streams.add(response); request.on('close', () => streams.delete(response)); return;
@@ -177,6 +186,13 @@ export async function serve(path: string, options: { runtimeFactory?: (store: St
     void (async () => {
       try {
         const input = validate<RpcRequest>(RpcSchema, await body(request, config.limits.attachmentBytes * 2 + 100_000));
+        if (input.op === 'daemon.stop') {
+          const { confirmEphemeral = false } = validate<{ confirmEphemeral?: boolean }>(object({ confirmEphemeral: Type.Optional(Type.Boolean()) }), input.args ?? {});
+          if (requests > 1 || applying || !runtime.canApplySettings || streams.size) throw new Error('Stop refused: finish work/delivery/sign-in and close all TUI/event clients first to preserve drafts and dialogs');
+          if (!confirmEphemeral && runtime.sessions().some(session => session.ephemeral)) throw new Error('Stop would discard ephemeral sessions; explicit confirmation is required');
+          response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }).end(json({ ok: true, result: { stopping: true, warning: 'Ephemeral sessions will be lost; accepted effects cannot be undone' } }));
+          void close().catch(() => {}); return;
+        }
         const result = input.op === 'settings.apply' ? (validate(object({}), input.args ?? {}), await apply()) : await rpc(runtime, input);
         response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }).end(json({ ok: true, result: result ?? null }));
       } catch (error) { response.writeHead(400, { 'Content-Type': 'application/json' }).end(json({ ok: false, error: error instanceof Error ? error.message.slice(0, 8000) : 'Request failed' })); }
@@ -186,7 +202,7 @@ export async function serve(path: string, options: { runtimeFactory?: (store: St
   server.requestTimeout = 330_000;
   if (existsSync(socket)) unlinkSync(socket);
   let closed = false;
-  const close = async () => {
+  const shutdown = async () => {
     if (closed) return; closed = true;
     while (applying) await new Promise(resolve => setTimeout(resolve, 10));
     try { await runtime.close(); }
@@ -194,8 +210,13 @@ export async function serve(path: string, options: { runtimeFactory?: (store: St
       runtime.events.off('output', broadcast);
       for (const stream of streams) stream.end();
       await new Promise<void>(resolve => server.close(() => resolve()));
-      if (existsSync(socket)) unlinkSync(socket); store.close(); unlock();
+      try { if (existsSync(socket)) unlinkSync(socket); store.close(); }
+      finally { unlock(); }
     }
+  };
+  const close = (): Promise<void> => {
+    if (!closed) void shutdown().then(finish, fail);
+    return done;
   };
   const apply = async () => {
     if (closed || requests > 1 || !runtime.canApplySettings) throw new Error('Wait for active operations, queued turns and pending browser sign-ins to finish before applying settings');
@@ -234,5 +255,5 @@ export async function serve(path: string, options: { runtimeFactory?: (store: St
     await runtime.start();
     await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(socket, resolve); }); chmodSync(socket, 0o600);
   } catch (error) { await close(); throw error; }
-  return { get runtime() { return runtime; }, server, close };
+  return { get runtime() { return runtime; }, server, close, done };
 }

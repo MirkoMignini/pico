@@ -15,6 +15,9 @@ import { restore } from './backup.js';
 import { hash, json } from './store.js';
 import { validate } from './contracts.js';
 import { McpCredentialsSchema, mcpSettings } from './mcp-contracts.js';
+import { doctor, formatDoctor } from './doctor.js';
+import { manageService, type ServiceAction } from './service.js';
+import { NODE_VERSION, VERSION } from './version.js';
 
 async function stdinText(limit:number):Promise<string>{const chunks:Buffer[]=[];let bytes=0;for await(const data of process.stdin){bytes+=data.length;if(bytes>limit)throw new Error('Input exceeds supported size');chunks.push(data);}return Buffer.concat(chunks).toString();}
 async function secretInput(prompt: string, signal?: AbortSignal, limit = 4000): Promise<string> {
@@ -66,17 +69,35 @@ async function login(client: Client, providerId?: string, type?: AuthType, accou
   } finally { process.off('SIGINT', cancel); }
 }
 async function main(): Promise<void> {
-  if (process.versions.node.split('.')[0] !== '24') throw new Error('Use the pinned Node.js 24.21.0 LTS runtime (see .node-version)');
-  const { values, positionals } = parseArgs({ options: { instance: { type:'string',short:'i' }, name:{type:'string'}, 'confirm-original-stopped':{type:'boolean'}, 'allow-reminders':{type:'boolean'} }, allowPositionals:true, strict:true });
+  const { values, positionals } = parseArgs({ options: { instance: { type:'string',short:'i' }, name:{type:'string'}, 'confirm-original-stopped':{type:'boolean'}, 'allow-reminders':{type:'boolean'}, help:{type:'boolean',short:'h'}, version:{type:'boolean',short:'v'}, json:{type:'boolean'}, offline:{type:'boolean'}, 'confirm-stop':{type:'boolean'} }, allowPositionals:true, strict:true });
   const root = resolve(values.instance ?? join(homedir(),'.local','share','pico'));
   const [command = 'chat',...args] = positionals;
   const print = (value:unknown) => process.stdout.write(JSON.stringify(value,null,2).replace(/[\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'))+'\n');
+  if (values.version) { process.stdout.write(`Pico ${VERSION}\n`); return; }
+  if (values.help || command === 'help') {
+    process.stdout.write(`Pico ${VERSION} — private personal assistant\n\nUse: pico [--instance PRIVATE_PATH] COMMAND\n\ninit --name NAME         Initialize a NEW private owner once\nchat                     Open TUI; /setup configures services with masked dialogs\nserve                    Run the daemon in the foreground\ndoctor [--offline] [--json]  Redacted checks; never starts a daemon or calls providers\nreadiness                Current setup evidence; requires an already running daemon\nstatus                   Private detailed status; never starts a daemon\nservice install|status|start  Explicit per-user launchd/systemd management\nservice stop|restart|uninstall --confirm-stop  Idle only; close TUI clients first\nbackup | export          Private owner data operations\nrestore BACKUP --confirm-original-stopped  Offline recovery\nlogin | logout | auth | knowledge | skills | extensions | family | mcp | rpc\n\nNode ${NODE_VERSION} is required. Installation/upgrade/recovery: docs/INSTALLATION.md.\nStored credentials do not prove live access. Model/connector tests are explicit and may charge.\n`); return;
+  }
+  if (command === 'doctor') {
+    if (args.length) throw new Error('Use doctor [--offline] [--json] without positional arguments');
+    const report = await doctor(root, !!values.offline); values.json ? print(report) : process.stdout.write(formatDoctor(report));
+    if (!report.ok) process.exitCode = 1; return;
+  }
+  if (process.versions.node !== NODE_VERSION) throw new Error(`Use the pinned Node.js ${NODE_VERSION} runtime (see .node-version)`);
+  if (command === 'service') {
+    if (args.length !== 1 || !['install','status','start','stop','restart','uninstall'].includes(args[0]!)) throw new Error('Use service install|status|start|stop|restart|uninstall; stopping/restarting requires --confirm-stop');
+    print(await manageService(root, args[0] as ServiceAction, { confirmStop: !!values['confirm-stop'] })); return;
+  }
+  if (command === 'status' || command === 'readiness') {
+    if (args.length) throw new Error('Use status or readiness without arguments');
+    print(await new Client(root).rpc(command)); return;
+  }
   if (command === 'init') { print({initialized:true,path:root,...initialize(root,values.name ?? 'Pico')}); return; }
   if (command === 'restore') { if (!args[0]) throw new Error('Use restore BACKUP --confirm-original-stopped with the original stopped'); await restore(root,args[0],values['confirm-original-stopped'] ?? false); print({restored:true,credentials:'Current secret store preserved; excluded from backups'}); return; }
   if (command === 'serve') {
     const daemon = await serve(root);
     process.stdout.write(json({level:'info',event:'daemon_ready',instanceId:daemon.runtime.store.config.instanceId,ownerId:daemon.runtime.store.config.ownerId})+'\n');
-    const close = () => { void daemon.close().then(() => process.exit(0)); };
+    void daemon.done.then(() => process.exit(0), () => { process.stderr.write('Daemon shutdown failed; inspect private state before restarting.\n'); process.exit(1); });
+    const close = () => { void daemon.close().catch(() => {}); };
     process.once('SIGINT',close); process.once('SIGTERM',close); return;
   }
   if(command==='auth'&&['key','secret','chatgpt','codex'].includes(args[0]!)&&args.length>2)throw new Error('Never pass a secret as a command argument. Use the hidden terminal prompt or private piped stdin.');
@@ -143,7 +164,6 @@ async function main(): Promise<void> {
     return;
   }
   if (command === 'chat') { await chat(client); return; }
-  if (command === 'doctor' || command === 'status') { print(await client.rpc('status')); return; }
   if (command === 'backup') { print(await client.rpc('backup')); return; }
   if (command === 'export') { print(await client.rpc('export')); return; }
   if (command === 'login') { print(await login(client, args[0])); return; }
@@ -197,6 +217,6 @@ async function main(): Promise<void> {
     return;
   }
   if (command === 'rpc') { if (!args[0]) throw new Error('Use rpc operation JSON-arguments'); print(await client.rpc(args[0],JSON.parse(args[1]==='-'?await stdinText(20_100_000):args[1]??'{}'))); return; }
-  throw new Error('Commands: init, serve, chat, login, logout, auth, doctor, status, backup, restore, export, knowledge, skills, extensions, family, mcp, rpc');
+  throw new Error('Commands: init, serve, chat, login, logout, auth, doctor, readiness, status, service, backup, restore, export, knowledge, skills, extensions, family, mcp, rpc (--help for usage)');
 }
 main().catch(error => { process.stderr.write(json({level:'error',event:'command_failed',error:error instanceof Error ? error.message : 'Command failed'})+'\n'); process.exitCode=1; });

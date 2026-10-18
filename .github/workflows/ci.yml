@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
   schedule:
@@ -42,6 +43,28 @@ jobs:
         # shortcut: braces 3.0.4 is unpublished; remove this single-advisory exception when available.
         # pnpm persists --ignore only in this disposable runner checkout.
         run: pnpm audit --prod --audit-level high --ignore GHSA-vfj7-8cjw-p6xm
+
+  release:
+    name: Draft versioned source release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [verify, secrets]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Package the tested committed tag
+        run: node scripts/release.mjs --ref "$GITHUB_REF_NAME" --output "$RUNNER_TEMP/pico-release"
+      - name: Create a draft for maintainer review (never overwrite an existing release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/pico-release/* --verify-tag --draft --title "Pico $GITHUB_REF_NAME" --notes "Versioned source release. Review checksums, dependency findings and installation/verification limits before publishing."
 
   secrets:
     name: Secret scan

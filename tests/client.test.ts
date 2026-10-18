@@ -15,6 +15,18 @@ async function fixture(handler: RequestListener) {
   return { server, client };
 }
 
+it('enforces a total RPC deadline without replay even when a server keeps the response active', async () => {
+  let requests = 0;
+  const { server, client } = await fixture((_request, response) => {
+    requests++; response.writeHead(200, { 'Content-Type': 'application/json' }); response.write(' ');
+    const timer = setInterval(() => response.write(' '), 10); response.once('close', () => clearInterval(timer));
+  });
+  vi.useFakeTimers(); const observed = once(server, 'request');
+  const result = client.rpc('health', {}, 100).catch(error => error);
+  await observed; await vi.advanceTimersByTimeAsync(101);
+  expect((await result).message).toContain('timed out'); expect(requests).toBe(1);
+});
+
 it('bounds a stalled SSE handshake and reports one disconnect without retrying the request', async () => {
   const { server, client } = await fixture(() => {}), observed = once(server, 'request');
   let disconnected = 0, connected = 0;
