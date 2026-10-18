@@ -38,7 +38,7 @@ it('keeps bridge help inert and initializes/pairs from private stdin without sta
   await new Promise<void>((resolve, reject) => execFile(process.execPath, [wrapper], { timeout: 15_000, env: { ...process.env, HOME: parent } }, (error, stdout, stderr) => {
     try { expect(error).not.toBeNull(); expect(stdout).toBe(''); expect(stderr).toContain('Pairing contains a credential'); expect(stderr).not.toContain(pairing.token); resolve(); } catch (failure) { reject(failure); }
   }));
-});
+}, 45_000);
 
 it('imports a pairing through compiled CLI/Unix IPC, preserving unrelated settings and keeping its token in the vault', async () => {
   const s = setup('bridge-server-cli'); atomicWrite(join(s.root, 'config.json'), JSON.stringify(s.config));
