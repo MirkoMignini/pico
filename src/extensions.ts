@@ -24,6 +24,7 @@ export interface ExtensionTool<T extends TSchema = TSchema> {
   description: string;
   parameters: T;
   history?: ToolHistoryPolicy;
+  trustedOnly?: boolean;
   execute(callId: string, params: Static<T>, signal: AbortSignal | undefined, onUpdate: AgentToolUpdateCallback | undefined, context: ExtensionContext): Promise<AgentToolResult>;
 }
 export interface ExtensionRpc<T extends TSchema = TSchema> {
@@ -38,6 +39,7 @@ export interface ExtensionSetup {
   read(): unknown;
   save(settings: unknown): void | Promise<void>;
   secrets: { name: string; label: string }[];
+  prepareSecret?(name: string, value: string): string;
 }
 export interface AgendaEntry { id: string; title: string; at: string; end?: string; allDay?: boolean; origin: string; url?: string; location?: string }
 export interface AgendaContribution { items: AgendaEntry[]; truncated: boolean; warnings: string[] }
@@ -66,6 +68,7 @@ export interface ExtensionAPI {
   ingest(channel: string, input: unknown, sender: Omit<Envelope['source'], 'channel'>, mode?: 'foreground' | 'ephemeral', epoch?: number): ReturnType<Channels['ingest']>;
   setStatus(key: string, text?: string): void;
   registerTool<T extends TSchema>(tool: ExtensionTool<T>): void;
+  replaceTools(tools: ExtensionTool[]): void;
   registerRpc<T extends TSchema>(rpc: ExtensionRpc<T>): void;
   registerChannel(channel: PicoChannel): Promise<void>;
   on<E extends keyof Events>(event: E, handler: Events[E]): void;
@@ -128,6 +131,12 @@ export class Extensions {
     const strict = (schema: TSchema) => (schema as { type?: unknown }).type === 'object' && (schema as { additionalProperties?: unknown }).additionalProperties === false;
     const channels = this.channels;
     const current = () => { this.controller.signal.throwIfAborted(); if (!this.active(module) || !module.initializing && this.loaded.get(module.id) !== module) throw new Error('Extension changed or disabled'); };
+    const registerTool = (tool: ExtensionTool) => {
+      if (!/^[a-z][a-z0-9_]{0,63}$/.test(tool.name) || !tool.label || !tool.description || typeof tool.execute !== 'function' || !strict(tool.parameters) || tool.trustedOnly !== undefined && typeof tool.trustedOnly !== 'boolean') throw new Error('Invalid extension tool; require name, label, description, strict object parameters and execute');
+      if (this.reserved.has(tool.name) || this.tools().some(existing => existing.name === tool.name) || module.tools.some(existing => existing.name === tool.name)) throw new Error(`Duplicate/reserved tool name: ${tool.name}`);
+      if (tool.history !== undefined) validate(Type.Union([Type.Literal('read'), Type.Literal('effect'), Type.Record(Type.String({ pattern: '^[a-z][a-z0-9_]{0,99}$' }), Type.Union([Type.Literal('read'), Type.Literal('effect')]), { additionalProperties: false, maxProperties: 100 })]), tool.history);
+      module.tools.push(tool);
+    };
     return { Type, get inputEpoch() { return channels.inputEpoch; }, credentials: Object.freeze({ read: this.credentials.read.bind(this.credentials), modify: this.credentials.modify.bind(this.credentials), delete: this.credentials.delete.bind(this.credentials), secret: async (name: string) => { if (!module.setup?.secrets.some(secret => name === `extensions.${module.id}.${secret.name}`)) validate(Type.Union(SECRET_NAMES.map(name => Type.Literal(name))), name); return this.credentials.secret(name); } }),
       storage: {
         get: <T>(key: string) => { current(); const row = this.store.get<{value:string}>('SELECT value FROM extension_storage WHERE extension_id=? AND key=?',module.id,key); return row ? JSON.parse(row.value) as T : undefined; },
@@ -144,7 +153,7 @@ export class Extensions {
         },
         delete: key => { current(); this.store.transaction(()=>{this.store.run('DELETE FROM extension_storage WHERE extension_id=? AND key=?',module.id,key);this.store.run('DELETE FROM storage_sources WHERE extension_id=? AND key=?',module.id,key);}); }
       },
-      registerSetup: setup => { if (module.setup || !strict(setup.parameters) || !setup.title || setup.secrets.some(secret=>!/^[-a-zA-Z0-9.]{1,64}$/.test(secret.name))) throw new Error('Invalid extension setup'); module.setup=setup; },
+      registerSetup: setup => { if (module.setup || !strict(setup.parameters) || !setup.title || setup.prepareSecret !== undefined && typeof setup.prepareSecret !== 'function' || setup.secrets.some(secret=>!/^[-a-zA-Z0-9.]{1,64}$/.test(secret.name))) throw new Error('Invalid extension setup'); module.setup=setup; },
       agenda: (range,context,signal) => this.agenda(range,context,signal),
       ingest: (channel, input, sender, mode, epoch) => { current(); if (!module.channels.has(channel)) throw new Error('Channel does not belong to this module'); return this.channels.ingest(channel, input, sender, mode, epoch); },
       setStatus: (key, text) => {
@@ -155,12 +164,12 @@ export class Extensions {
         else { module.statusKeys.delete(key); if (!this.statusTexts.delete(key)) return; }
         this.channels.runtime.emit({ type: 'extension_status', data: { key, text: value ?? null } });
       },
-      registerTool: tool => {
-      if (!/^[a-z][a-z0-9_]{0,63}$/.test(tool.name) || !tool.label || !tool.description || typeof tool.execute !== 'function' || !strict(tool.parameters)) throw new Error('Invalid extension tool; require name, label, description, strict object parameters and execute');
-      if (this.reserved.has(tool.name) || this.tools().some(existing => existing.name === tool.name) || module.tools.some(existing => existing.name === tool.name)) throw new Error(`Duplicate/reserved tool name: ${tool.name}`);
-      if(tool.history!==undefined)validate(Type.Union([Type.Literal('read'),Type.Literal('effect'),Type.Record(Type.String({pattern:'^[a-z][a-z0-9_]{0,99}$'}),Type.Union([Type.Literal('read'),Type.Literal('effect')]),{additionalProperties:false,maxProperties:100})]),tool.history);
-      module.tools.push(tool as ExtensionTool);
-    }, registerRpc: rpc => {
+      registerTool: tool => registerTool(tool as ExtensionTool),
+      replaceTools: tools => {
+        current(); const previous = module.tools; module.tools = [];
+        try { for (const tool of tools) registerTool(tool); }
+        catch (error) { module.tools = previous; throw error; }
+      }, registerRpc: rpc => {
       if (!/^[a-z][a-z0-9.-]{0,79}$/.test(rpc.name) || !strict(rpc.parameters) || typeof rpc.execute !== 'function' || !module.builtin && !rpc.name.startsWith(`extensions.${module.id}.`)) throw new Error('Invalid extension RPC; require module namespace and strict object parameters');
       if ([...this.loaded.values(), module].some(existing => existing.rpcs.some(entry => entry.name === rpc.name))) throw new Error('Duplicate extension RPC');
       module.rpcs.push(rpc as ExtensionRpc);
@@ -208,7 +217,8 @@ export class Extensions {
   }
   async setupSecret(moduleId: string, name: string, value: string): Promise<void> {
     const module=this.loaded.get(moduleId); if (!module?.setup || !this.active(module) || !module.setup.secrets.some(secret=>secret.name===name) || !value || value.length>16_000) throw new Error('Invalid extension secret');
-    await this.credentials.setSecret(`extensions.${moduleId}.${name}`,value);
+    const prepared = module.setup.prepareSecret ? module.setup.prepareSecret(name, value) : value;
+    await this.track(this.credentials.setSecret(`extensions.${moduleId}.${name}`, prepared));
   }
   async agenda(range: {from:string;to:string;timezone:string},context: Envelope,signal?: AbortSignal): Promise<AgendaContribution> {
     if (context.ownerId!==this.store.config.ownerId || context.instanceId!==this.store.config.instanceId) throw new Error('Agenda ownership mismatch');
@@ -400,9 +410,10 @@ export class Extensions {
   async invoke(name: string, input: unknown, context: Envelope, callId: string, callTool: (name: string, args: Record<string, unknown>, signal: AbortSignal) => Promise<AgentToolResult>, signal?: AbortSignal, onUpdate?: AgentToolUpdateCallback, services?: (signal: AbortSignal, assertCurrent: () => void) => ExtensionServices, writesAllowed=false): Promise<AgentToolResult> {
     if (context.ownerId !== this.store.config.ownerId || context.instanceId !== this.store.config.instanceId) throw new Error('Ownership mismatch');
     const module = [...this.loaded.values()].find(module => this.active(module) && module.tools.some(tool => tool.name === name));
-    if (!module?.builtin && (context.mode !== 'foreground' || !context.source.trustedOwner)) throw new Error('Native extensions require trusted retained foreground work');
+    if ((!module?.builtin || module.tools.find(tool => tool.name === name)?.trustedOnly) && (context.mode !== 'foreground' || !context.source.trustedOwner)) throw new Error('Native extensions require trusted retained foreground work');
     if (!module) throw new Error('Extension tool disabled, missing, or legacy; use a registered tool name');
     const tool = module.tools.find(tool => tool.name === name)!;
+    if (tool.trustedOnly && !writesAllowed) throw new Error('Trusted-only extension tool denied in restricted execution');
     const combined = signal ? AbortSignal.any([signal, this.controller.signal]) : this.controller.signal;
     combined.throwIfAborted(); const args = validate(tool.parameters, input);
     let open = true;

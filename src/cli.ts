@@ -13,6 +13,8 @@ import type { AuthProvider } from './contracts.js';
 import { authEventText, loginProvider } from './auth-client.js';
 import { restore } from './backup.js';
 import { hash, json } from './store.js';
+import { validate } from './contracts.js';
+import { McpCredentialsSchema, mcpSettings } from './mcp-contracts.js';
 
 async function stdinText(limit:number):Promise<string>{const chunks:Buffer[]=[];let bytes=0;for await(const data of process.stdin){bytes+=data.length;if(bytes>limit)throw new Error('Input exceeds supported size');chunks.push(data);}return Buffer.concat(chunks).toString();}
 async function secretInput(prompt: string, signal?: AbortSignal, limit = 4000): Promise<string> {
@@ -68,7 +70,7 @@ async function main(): Promise<void> {
   const { values, positionals } = parseArgs({ options: { instance: { type:'string',short:'i' }, name:{type:'string'}, 'confirm-original-stopped':{type:'boolean'}, 'allow-reminders':{type:'boolean'} }, allowPositionals:true, strict:true });
   const root = resolve(values.instance ?? join(homedir(),'.local','share','pico'));
   const [command = 'chat',...args] = positionals;
-  const print = (value:unknown) => process.stdout.write(JSON.stringify(value,null,2).replace(/[\u202a-\u202e\u2066-\u2069]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'))+'\n');
+  const print = (value:unknown) => process.stdout.write(JSON.stringify(value,null,2).replace(/[\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'))+'\n');
   if (command === 'init') { print({initialized:true,path:root,...initialize(root,values.name ?? 'Pico')}); return; }
   if (command === 'restore') { if (!args[0]) throw new Error('Use restore BACKUP --confirm-original-stopped with the original stopped'); await restore(root,args[0],values['confirm-original-stopped'] ?? false); print({restored:true,credentials:'Current secret store preserved; excluded from backups'}); return; }
   if (command === 'serve') {
@@ -78,6 +80,7 @@ async function main(): Promise<void> {
     process.once('SIGINT',close); process.once('SIGTERM',close); return;
   }
   if(command==='auth'&&['key','secret','chatgpt','codex'].includes(args[0]!)&&args.length>2)throw new Error('Never pass a secret as a command argument. Use the hidden terminal prompt or private piped stdin.');
+  if (command === 'mcp' && args[0] === 'secret' && args.length !== 2) throw new Error('Use mcp secret SERVER; never pass credentials as arguments. Use the hidden prompt or private stdin.');
   if (['login','logout'].includes(command) && (args.length > 1 || args[0] && !/^[a-z0-9-]{1,80}$/.test(args[0]))) throw new Error('Use login or logout with only a provider ID; never inline credentials');
   const client = new Client(root); await client.ensureDaemon();
   if (command === 'family') {
@@ -96,6 +99,47 @@ async function main(): Promise<void> {
       print(await client.rpc('family.revoke', { member: value }));
     } else if (action === 'members' || action === 'receipts') print(await client.rpc(`family.${action}`));
     else throw new Error('Family: identity OUTPUT.json, add CARD.json --name ALIAS [--allow-reminders], members, receipts, revoke MEMBER');
+    return;
+  }
+  if (command === 'mcp') {
+    const [action = 'status', server, value, ...extra] = args;
+    if (extra.length || value && !['call', 'read', 'prompt', 'tasks'].includes(action)) throw new Error('Unexpected MCP arguments; credentials belong only in the masked secret prompt');
+    const invoke = (name: string, input: Record<string, unknown> = {}) => client.rpc(`extensions.mcp.${name}`, input);
+    if (action === 'configure') {
+      if (!server) throw new Error('Use mcp configure SETTINGS.json|- (non-secret settings only)');
+      const raw = server === '-' ? await stdinText(1_000_000) : await (async () => { const path = resolve(server), info = await stat(path); if (!info.isFile() || info.size > 1_000_000) throw new Error('MCP settings file exceeds limits'); return readFile(path, 'utf8'); })();
+      let settings: unknown; try { settings = JSON.parse(raw); } catch { throw new Error('Invalid MCP settings JSON'); }
+      print(await client.rpc('extensions.configure', { id: 'mcp', settings: mcpSettings(settings) }));
+    } else if (action === 'secret') {
+      let secret = await secretInput(`${server}: MCP credential JSON (hidden): `, undefined, 16_000);
+      try {
+        try { validate(McpCredentialsSchema, JSON.parse(secret)); } catch { throw new Error('Invalid MCP credential JSON; expected env, headers and/or oauthClientSecret'); }
+        print(await client.rpc('extensions.secret', { id: 'mcp', name: server, value: secret }));
+      } finally { secret = ''; }
+    } else if (action === 'approve' || action === 'respond') {
+      if (!server || !process.stdin.isTTY) throw new Error(`Use mcp ${action} ID in an owner terminal; noninteractive approval is deliberately unavailable`);
+      const review = await invoke(action === 'approve' ? 'actions.review' : 'requests.read', { id: server }) as { id: string; digest: string; status?: string; expiresAt: number; kind?: string; request?: { mode?: string } };
+      if (review.expiresAt <= Date.now() || action === 'approve' && review.status !== 'pending') throw new Error('MCP approval/request expired, consumed or uncertain');
+      print(review);
+      const selected = await authPrompt({ type: 'select', message: action === 'respond' && review.kind === 'sampling' ? 'Approve this exact external sampling request? The selected model may incur charges.' : 'Approve this exact external request once?', options: [{ id: 'no', label: 'Reject (default)' }, { id: 'yes', label: 'Approve exact request' }] });
+      if (action === 'approve') print(await invoke('actions.approve', { id: review.id, digest: review.digest, decision: selected === 'yes' }));
+      else {
+        let content: Record<string, unknown> | undefined;
+        if (selected === 'yes' && review.kind === 'elicitation' && review.request?.mode !== 'url') { let text = await secretInput('Form response JSON (hidden; never enter credentials): ', undefined, 128_000); try { content = JSON.parse(text) as Record<string, unknown>; } catch { throw new Error('Invalid MCP form JSON'); } finally { text = ''; } }
+        print(await invoke('requests.respond', { id: review.id, digest: review.digest, action: selected === 'yes' ? 'accept' : 'decline', ...(content ? { content } : {}) }));
+      }
+    } else if (['connect', 'disconnect', 'auth', 'cancel', 'logout', 'ping'].includes(action)) {
+      if (!server) throw new Error(`Use mcp ${action} SERVER`);
+      print(await invoke(action === 'cancel' ? 'auth.cancel' : action, { server }));
+    } else if (action === 'status' || action === 'requests' || action === 'actions') { if (server) throw new Error(`Use mcp ${action} without arguments`); print(await invoke(action === 'actions' ? 'actions.list' : action)); }
+    else if (action === 'catalog') print(await invoke('catalog', server ? { server } : {}));
+    else if (action === 'call' || action === 'prompt') {
+      if (!server || !value) throw new Error(`Use mcp ${action} SERVER NAME; supply optional JSON arguments through stdin`);
+      let input: unknown; try { input = JSON.parse(process.stdin.isTTY ? '{}' : (await stdinText(1_000_000)).trim() || '{}'); } catch { throw new Error('Invalid MCP arguments JSON'); }
+      print(await invoke(action, { server, name: value, arguments: input }));
+    } else if (action === 'read') { if (!server || !value) throw new Error('Use mcp read SERVER URI'); print(await invoke('resource', { server, uri: value })); }
+    else if (action === 'tasks') { if (!server) throw new Error('Use mcp tasks SERVER [TASK_ID]; use RPC for result/cancel'); print(await invoke('tasks', { server, action: value ? 'get' : 'list', ...(value ? { taskId: value } : {}) })); }
+    else throw new Error('MCP: configure FILE|-, secret SERVER, connect, disconnect, auth, cancel, logout, ping, status, catalog, call, read, prompt, tasks, requests, respond ID, actions, approve ID');
     return;
   }
   if (command === 'chat') { await chat(client); return; }
@@ -153,6 +197,6 @@ async function main(): Promise<void> {
     return;
   }
   if (command === 'rpc') { if (!args[0]) throw new Error('Use rpc operation JSON-arguments'); print(await client.rpc(args[0],JSON.parse(args[1]==='-'?await stdinText(20_100_000):args[1]??'{}'))); return; }
-  throw new Error('Commands: init, serve, chat, login, logout, auth, doctor, status, backup, restore, export, knowledge, skills, extensions, family, rpc');
+  throw new Error('Commands: init, serve, chat, login, logout, auth, doctor, status, backup, restore, export, knowledge, skills, extensions, family, mcp, rpc');
 }
 main().catch(error => { process.stderr.write(json({level:'error',event:'command_failed',error:error instanceof Error ? error.message : 'Command failed'})+'\n'); process.exitCode=1; });

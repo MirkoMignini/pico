@@ -323,7 +323,7 @@ it('never retries uncertain model-generation errors as format repairs', async ()
 
 it('cancels an actual running child without pretending to undo its earlier write', async () => {
   const s=instance(),marker=join(s.root,'started-child'),controller=new AbortController();
-  const pkg=packageFromFiles([...files(),{path:'scripts/wait.mjs',content:`import fs from 'node:fs';fs.writeFileSync(${JSON.stringify(marker)},String(process.pid));setInterval(()=>{},1000);`}]);
+  const pkg=packageFromFiles([...files(),{path:'scripts/wait.mjs',content:`import fs from 'node:fs';fs.writeFileSync(${JSON.stringify(marker + '.tmp')},String(process.pid));fs.renameSync(${JSON.stringify(marker + '.tmp')},${JSON.stringify(marker)});setInterval(()=>{},1000);`}]);
   const running=runSkill(s.root,pkg.files,{script:'scripts/wait.mjs',timeoutMs:10000},[],controller.signal);await waitFor(()=>existsSync(marker));const pid=Number(readFileSync(marker,'utf8'));controller.abort();expect((await running).status).toBe('cancelled');expect(()=>process.kill(pid,0)).toThrow();expect(existsSync(marker)).toBe(true);expect(readdirSync(join(s.root,'skill-work'))).toEqual([]);
 });
 

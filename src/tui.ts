@@ -6,6 +6,7 @@ import type { Run } from './runtime.js';
 import type { ImageReference } from './images.js';
 import type { AuthType } from '@earendil-works/pi-ai';
 import { authEventText, loginProvider } from './auth-client.js';
+import { McpCredentialsSchema, mcpSettings } from './mcp-contracts.js';
 
 const color = (code: number | string) => (value: string) => {
   const prefix = `\x1b[${code}m`;
@@ -60,7 +61,7 @@ function toolResultText(result: unknown): string {
   const details = debugJson(metadata);
   return `${text}${details === '{}' ? '' : `\n\nMetadata\n${details}`}`;
 }
-export const COMMANDS = ['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','settings','reload','integrations','mail','backup','export','login','logout','quit'];
+export const COMMANDS = ['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit'];
 export const HELP = `**Pico** — Enter sends when idle (drafts stay editable while working) · ↑/↓ recalls sent messages · Alt+Enter inserts a line · Ctrl+O expands/collapses all debug boxes · Ctrl+T selects a box · click a box header to toggle · PgUp/PgDn scroll · Escape interrupts/cancels dialogs · /quit exits the client (daemon stays alive)
 
 /new · /sessions [id] · /model [provider/id] · /model default provider/id · /thinking [level|Ctrl+S default]
@@ -71,6 +72,7 @@ Use $skill-name in chat to explicitly activate an installed skill. Drop standard
 /setup · /channels [telegram setup] · /telegram [status|check] · /settings [setting] · /reload
 /login [provider] · /logout [provider] — Pi's built-in API-key/subscription setup
 /auth [key provider|secret name|chatgpt|codex|accounts|select account|status|test]
+/mcp [setup|status|catalog|requests|actions] · /mcp [secret|connect|disconnect|auth|cancel|logout|ping] SERVER · /mcp [approve|respond] ID
 /integrations [setup|auth|cancel|status|actions|approve|disconnect] ID · /mail [setup|auth|cancel|sync|rules] · /backup · /export · /notifications · /stop · /quit
 
 Talk to Pico for memory, documents, notes, learning, workflows, appointments, reminders, web research and images. Routine changes and new extension builds need no confirmation; generated extensions run immediately with full OS access. Validation-only code and procedural approvals remain owner controls. Commands are only for chat controls, setup and safety/administration. Operator CLI/RPC remains available for advanced data recovery.
@@ -468,6 +470,20 @@ export class ChatUI implements PicoChannel {
     }
     if (name === '/settings') { await this.configure(() => this.editSetting(arg)); return; }
     if (name === '/reload') { if (arg) throw new Error('Use /reload without arguments'); await this.configure(() => this.applySettings()); return; }
+    if (name === '/mcp') {
+      const [action = 'status', value, ...extra] = arg ? arg.split(/\s+/) : [];
+      if (extra.length) throw new Error('Use /mcp ACTION [SERVER_OR_ID]; never inline credentials or approval answers');
+      if (action === 'setup' && !value) await this.configure(() => this.integrationSetup('mcp'));
+      else if (action === 'secret' && value) await this.configure(() => this.mcpSecret(value));
+      else if (action === 'approve' && value) await this.configure(() => this.integrationApproval('mcp', value));
+      else if (action === 'respond' && value) await this.mcpRespond(value);
+      else if (action === 'auth' && value) await this.configure(() => this.integrationLogin('extensions.mcp.auth', { server: value }));
+      else if (action === 'catalog') await this.configure(() => show('extensions.mcp.catalog', value ? { server: value } : {}));
+      else if (!value && ['status', 'requests', 'actions'].includes(action)) await show(`extensions.mcp.${action === 'actions' ? 'actions.list' : action}`);
+      else if (value && ['connect', 'disconnect', 'cancel', 'logout', 'ping'].includes(action)) await this.configure(() => show(`extensions.mcp.${action === 'cancel' ? 'auth.cancel' : action}`, { server: value }));
+      else throw new Error('Use /mcp setup|status|catalog|requests|actions, /mcp secret|connect|disconnect|auth|cancel|logout|ping SERVER, or /mcp approve|respond ID');
+      return;
+    }
     if (name === '/integrations') {
       const [action,moduleId,actionId,...extra]=arg.split(/\s+/);
       if(!arg){const modules=await this.client.rpc<{id:string;setup?:boolean}[]>('extensions.list');this.notice(modules.filter(module=>module.setup).map(module=>`${module.id}: /integrations setup ${module.id}`).join('\n')||'No enabled extension provides integration setup');return;}
@@ -683,20 +699,21 @@ export class ChatUI implements PicoChannel {
     const setup=await this.client.rpc<{title:string;description:string;parameters:import('typebox').TSchema;settings:unknown;secrets:{name:string;label:string}[]}>('extensions.setup',{id:moduleId});
     this.notice(`**${safeTerminal(setup.title)}**\n${safeTerminal(setup.description)}\nEdit non-secret settings below. Configure only selected services/records; write permissions need new consent.`);
     const settings=await this.editJson(`${moduleId} integration`,setup.settings);if(settings===undefined)return;validate(setup.parameters,settings);
+    const fields = moduleId === 'mcp' ? mcpSettings(settings).servers.map(server => ({ name: server.id, label: `${server.id}: MCP credential JSON (optional)` })) : setup.secrets;
     const secrets:{name:string;value:string}[]=[];
     try{
-      for(const field of setup.secrets){const value=await this.prompt(`${field.label} — masked; leave blank to keep existing credentials`,{secret:true,maxLength:16_000});if(value===undefined)return;if(value)secrets.push({name:field.name,value});}
+      for(const field of fields){const value=await this.prompt(`${field.label} — masked; leave blank to keep existing credentials`,{secret:true,maxLength:16_000});if(value===undefined)return;if(value){if(moduleId==='mcp'){try{validate(McpCredentialsSchema,JSON.parse(value));}catch{throw new Error('Invalid MCP credential JSON');}}secrets.push({name:field.name,value});}}
       const save=await this.choose([{value:'yes',label:'Save integration settings',description:'Save selected capabilities; this does not grant service consent or verify connectivity'},{value:'no',label:'Cancel',description:'Keep existing configuration'}]);if(save!=='yes')return;
       await this.client.rpc('extensions.configure',{id:moduleId,settings});
       for(const secret of secrets)await this.client.rpc('extensions.secret',{id:moduleId,...secret});
-      this.notice(`Settings saved. Credentials are not chat history. Start or renew browser consent with /integrations auth ${moduleId}; inspect /integrations status ${moduleId}.`);
+      this.notice(moduleId === 'mcp' ? 'MCP settings saved; no connection started now. Use /mcp connect SERVER, /mcp auth SERVER and /mcp status. Enabled servers connect on startup. Servers run with trusted OS/network access, not in a sandbox.' : `Settings saved. Credentials are not chat history. Start or renew browser consent with /integrations auth ${moduleId}; inspect /integrations status ${moduleId}.`);
     }catch{throw new Error('Integration setup incomplete; inspect its settings/status before retrying. Some saved settings or secrets may remain.');}
     finally{for(const secret of secrets)secret.value='';}
   }
   private reviewAction(reviewJson:string):Promise<string|undefined>{
     if(this.closed)return Promise.resolve(undefined);
     return new Promise(resolve=>{
-      const body=new ScrollView(new Text(safeTerminal(reviewJson),1,1),{follow:'none',primary:true,overscroll:'contain',scrollbar:'always'});
+      const body=new ScrollView(new Text(safeTerminal(reviewJson.replace(/[\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g,char=>`\\u${char.charCodeAt(0).toString(16).padStart(4,'0')}`)),1,1),{follow:'none',primary:true,overscroll:'contain',scrollbar:'always'});
       const list=new SelectList([{value:'no',label:'Reject action',description:'Do not perform this external effect'},{value:'yes',label:'Approve exact action',description:'Perform the reviewed payload once; unknown acceptance is never retried'}],2,selectTheme);
       let finished=false;
       const finish=(value?:string)=>{if(finished)return;finished=true;this.cancelDialog=undefined;this.tui.setLayoutRoot(this.mainLayout);this.tui.setFocus(this.editor);this.tui.requestRender();resolve(value);};
@@ -710,15 +727,41 @@ export class ChatUI implements PicoChannel {
       this.tui.setFocus(choices);this.tui.requestRender();
     });
   }
-  private async integrationLogin(op: string): Promise<void> {
-    const result = await this.client.rpc<{ url: string }>(op);
+  private async integrationLogin(op: string, args?: Record<string, unknown>): Promise<void> {
+    const result = await (args ? this.client.rpc<{ url: string; allowInsecureLocal?: boolean }>(op, args) : this.client.rpc<{ url: string; allowInsecureLocal?: boolean }>(op));
     let target: URL;
     try {
       if (typeof result?.url !== 'string' || safeTerminal(result.url) !== result.url || /\s/.test(result.url)) throw new Error();
       target = new URL(result.url);
-      if (target.protocol !== 'https:' || target.username || target.password) throw new Error();
+      if (target.protocol !== 'https:' && !(op === 'extensions.mcp.auth' && result.allowInsecureLocal && target.protocol === 'http:') || target.username || target.password) throw new Error();
     } catch { throw new Error('Invalid integration sign-in URL; cancel the pending login before retrying.'); }
     this.notice(`**Browser sign-in**\n[Open sign-in page — ${target.host}](<${target.href}>)\n\nCmd-click or Ctrl-click the link to open the complete URL. Do not copy wrapped URL text: inserted whitespace can break permissions. Complete consent in your browser, then check integration status.`);
+  }
+  private async mcpSecret(server: string): Promise<void> {
+    let value = await this.prompt(`${server}: credential JSON — stdio: env; HTTP/SSE: headers or oauthClientSecret — masked`, { secret: true, required: true, maxLength: 16_000 });
+    if (value === undefined) return;
+    try {
+      try { validate(McpCredentialsSchema, JSON.parse(value)); } catch { throw new Error('Invalid MCP credential JSON'); }
+      await this.client.rpc('extensions.secret', { id: 'mcp', name: server, value });
+      this.notice('MCP credentials saved outside chat. Disconnect and reconnect the server to apply changed credentials.');
+    } finally { value = ''; }
+  }
+  private async mcpRespond(requestId: string): Promise<void> {
+    if (this.session?.ephemeral) throw new Error('MCP approval is unavailable in ephemeral mode');
+    this.setupBusy = true; this.updateActivity();
+    try {
+      const review = await this.client.rpc<{ id: string; digest: string; kind: string; expiresAt: number; request: { mode?: string } }>('extensions.mcp.requests.read', { id: requestId });
+      if (review.expiresAt <= Date.now()) throw new Error('MCP request expired');
+      const decision = await this.reviewAction(`${review.kind === 'sampling' ? 'Approving sampling may charge the currently selected model. No private conversation context or tools will be supplied.\n' : 'External MCP server request; never enter credentials.\n'}${JSON.stringify(review, null, 2)}`);
+      if (!decision) return;
+      let content: Record<string, unknown> | undefined;
+      if (decision === 'yes' && review.kind === 'elicitation' && review.request.mode !== 'url') {
+        let text = await this.prompt('Form response JSON — masked; never credentials', { secret: true, required: true, maxLength: 128_000 });
+        if (text === undefined) return;
+        try { content = JSON.parse(text) as Record<string, unknown>; } catch { throw new Error('Invalid MCP form JSON'); } finally { text = ''; }
+      }
+      this.notice(`\`\`\`json\n${JSON.stringify(await this.client.rpc('extensions.mcp.requests.respond', { id: review.id, digest: review.digest, action: decision === 'yes' ? 'accept' : 'decline', ...(content ? { content } : {}) }), null, 2)}\n\`\`\``);
+    } finally { this.setupBusy = false; this.updateActivity(); }
   }
   private async integrationApproval(moduleId:string,actionId:string):Promise<void>{
     const action=await this.client.rpc<{id:string;digest:string;status:string;expiresAt:number}>(`extensions.${moduleId}.actions.review`,{id:actionId});

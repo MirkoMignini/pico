@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:daily": "node scripts/daily-assistant.mjs",
     "test:family:local": "node scripts/check-family-local.mjs --run",
+    "test:mcp:live": "node scripts/check-mcp-live.mjs --run",
     "test:memory:live": "node scripts/validate-memory.mjs",
     "test:memory:stress": "node --max-old-space-size=128 scripts/stress-memory.mjs",
     "start": "node dist/cli.js",
@@ -35,6 +36,7 @@
     "@earendil-works/pi-tui": "1.2.0",
     "@firecrawl/anydoc": "0.2.4",
     "@huggingface/transformers": "4.3.1",
+    "@modelcontextprotocol/client": "2.3.1",
     "@mozilla/readability": "0.6.0",
     "@tobilu/qmd": "2.8.3",
     "adm-zip": "0.6.1",
@@ -49,6 +51,7 @@
     "yaml": "2.9.1"
   },
   "devDependencies": {
+    "@modelcontextprotocol/server": "2.3.1",
     "@types/jsdom": "30.0.0",
     "@types/node": "24.19.2",
     "@types/turndown": "5.0.6",

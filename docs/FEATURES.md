@@ -63,6 +63,10 @@ The TUI previews saved results; Telegram-originated work can attempt delivery on
 
 Private PNG files follow media retention; synthetic prompt/model/source metadata can outlive raw bytes. Generated content is assistant-authored, not factual evidence or an owner assertion. Source-aware forgetting removes managed images/derivatives, purges managed backups and preserves restore tombstones. Provider/Telegram/downloaded copies remain outside that guarantee.
 
+## MCP integrations
+
+[MCP](MCP.md) connects explicitly configured trusted servers over stdio, Streamable HTTP or legacy SSE, exposing selected tools plus resources/templates, prompts and argument completion. Private header/environment credentials and OAuth are separate from chat. Server read-only hints never grant permission: unknown effects need exact single-use owner-terminal approval; optional sampling and elicitation require fresh responses. Restricted/ephemeral work cannot dispatch MCP. Server output is evidence, not owner instructions or proof of success. Local servers are not sandboxed; remote services retain their own data and cost policies.
+
 ## Verification limits
 
 Local tests exercise synthetic APIs, real subprocesses/SQLite/Unix transport and simulated terminals. Actual search-provider availability, Google grants, image access/quality, Telegram rendering/playback, model grounding and physical terminal behavior need separately authorized checks. [Testing](TESTING.md).

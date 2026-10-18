@@ -26,7 +26,7 @@
 | **Share selectively** | First-version [family links](docs/FAMILY.md) between same-host instances: explicitly authorized reminders and per-list read/edit access, without sharing private memory or owner credentials. |
 | **Chat where you work** | A streaming terminal UI and optional private Telegram bot with text, voice messages, spoken replies, photos, documents and more. [Explore channels](#channels); more are planned. |
 | **Research the web** | DuckDuckGo search, optional Brave, captured pages and bounded read-only research. |
-| **Connect selectively** | Optional Gmail, Google Docs, Calendar, Contacts, Drive, Sheets and Tasks. Remote writes start disabled and require exact owner approval. |
+| **Connect selectively** | Optional Google services and [MCP servers](docs/MCP.md) over stdio, HTTP or SSE, with private credentials/OAuth. Unknown MCP effects require exact owner approval; read access is explicitly selected. |
 | **Add useful skills** | Standard Agent Skills packages with scripts/assets, chat creation and imports. Trusted extensions handle persistent integrations and daemon hooks. |
 
 Everyday use is conversational:
@@ -142,6 +142,7 @@ See [setup](docs/SETUP.md) for provider accounts, costs, settings, Telegram and 
 | `/setup`, `/settings`, `/reload` | Configure services and apply saved settings. `/reload` does not deploy code. |
 | `/stop`, `/notifications` | Request cancellation or inspect delivery state. |
 | `/skills`, `/extensions` | Inspect and administer installed packages/modules. |
+| `/mcp setup`, `/mcp status` | Configure trusted MCP servers, credentials and tool approvals. |
 | `/backup`, `/export` | Manage private owner data. |
 | `/help`, `/quit` | Show controls or leave the client without stopping the daemon. |
 
@@ -169,6 +170,7 @@ Keep personal skills in the private instance, not this repository. The [English 
 | [Telegram/channels](docs/CHANNELS.md) · [Google](docs/GOOGLE.md) | Integration setup, routing, capabilities and approval boundaries. |
 | [Family collaboration](docs/FAMILY.md) | Same-host owner pairing, consented reminders, shared checklists, revocation and first-version limits. |
 | [Attachment research](docs/ATTACHMENTS-RESEARCH.md) | Phone-first, app-by-app capture taxonomy, basic/advanced processing proposals, sources and current limitations—not a shipped-feature guide. |
+| [MCP](docs/MCP.md) | Trusted servers, tools/resources/prompts, OAuth, exact approvals and interoperability checks. |
 | [Skills](docs/SKILLS.md) · [Extension SDK](docs/SDK.md) | Reusable packages, scripts, trusted integrations and workflows. |
 | [Security](docs/SECURITY.md) · [Deployment](docs/DEPLOYMENT.md) | Trust, retention, backups, recovery and optional containers. |
 | [Demo](docs/DEMO.md) · [Development](docs/DEVELOPMENT.md) · [Testing](docs/TESTING.md) | No-credentials examples, contributor tools, verification and its limits. |
