@@ -1193,6 +1193,22 @@ it('uses masked MCP credentials without chat/inference and rejects inline answer
   await expect(s.ui.submit('/mcp respond pending')).rejects.toThrow('ephemeral');
 });
 
+it('masks and reviews remote browser pairing without sending credentials to chat or widening existing configuration on cancel', async () => {
+  const s = await connected(), pairing = { version: 1, bridgeId: crypto.randomUUID(), url: 'http://127.0.0.1:8931/mcp', token: 'r'.repeat(43) };
+  const cancel = s.ui.submit('/mcp browser-remote'); await s.see('Browser bridge pairing JSON');
+  s.replace(JSON.stringify(pairing)); s.ui.tui.renderNow(true); expect(s.screen.output).not.toContain(pairing.token);
+  s.screen.input('\r'); await s.see('Personal Chrome on another computer'); s.screen.input('\r'); await cancel;
+  expect((await s.client.rpc<any>('extensions.setup', { id: 'mcp' })).settings.servers).toEqual([]);
+  s.screen.output = '';
+  const save = s.ui.submit('/mcp browser-remote'); await s.see('Browser bridge pairing JSON');
+  s.replace(JSON.stringify(pairing)); s.screen.input('\r'); await s.see('Personal Chrome on another computer'); s.screen.input('\x1b[B'); s.screen.input('\r'); await save;
+  expect(s.screen.output).not.toContain(pairing.token);
+  expect(await s.service.runtime.credentials.secret('extensions.mcp.browser-remote')).toContain(`Bearer ${pairing.token}`);
+  expect((await s.client.rpc<any>('extensions.mcp.status')).servers[0]).toMatchObject({ id: 'browser-remote', state: 'not_connected' });
+  expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]); expect(s.faux.state.callCount).toBe(0);
+  await selectLegacyEphemeral(s); await expect(s.ui.submit('/mcp browser-remote')).rejects.toThrow('Ephemeral');
+});
+
 it('reviews the browser MCP preset with cancellation by default and exposes manual handoff without inference', async () => {
   const s = await connected(), entrypoint = fileURLToPath(new URL('./fixtures/mcp-browser-server.mjs', import.meta.url));
   const cancel = s.ui.submit('/mcp browser'); await s.see('Absolute path to an already installed');

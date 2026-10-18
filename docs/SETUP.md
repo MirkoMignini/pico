@@ -118,7 +118,9 @@ Use `/mcp setup` for trusted stdio/HTTP/SSE servers, `/mcp secret SERVER` for ma
 
 ### Optional interactive browser
 
-`/mcp browser` reviews an explicitly installed Playwright MCP entrypoint and a dedicated Pico-only profile; it installs and starts nothing. Connect with `/mcp connect browser`. The preset delegates its exact browser tool allowlist for autonomous execution, including writes/sends, without per-action approval from Telegram or the TUI. Login/CAPTCHA still requires manual handoff using `/mcp pause browser` and terminal-only `/mcp resume browser`. Never reuse an existing browser profile or paste login secrets into chat. [Installation, use, imports and limits](BROWSER.md).
+`/mcp browser` reviews an explicitly installed Playwright MCP entrypoint and a dedicated Pico-only profile; it installs and starts nothing. Connect with `/mcp connect browser`. The preset delegates its exact browser tool allowlist for autonomous execution, including writes/sends, without per-action approval from Telegram or the TUI. Login/CAPTCHA still requires manual handoff using `/mcp pause browser` and terminal-only `/mcp resume browser`. Never point this dedicated-profile preset at an existing browser profile or paste login secrets into chat.
+
+For **personal Chrome on another computer**, explicitly install the official extension in that profile, initialize/run `pico browser-bridge` on the desktop, and pair through `/mcp browser-remote` (masked) or private CLI stdin. An authenticated loopback SSH forward connects the Pico server; Chrome logins stay on the desktop. That computer/bridge/tunnel must remain available; there is no silent fallback or per-action approval. No operational browser is connected automatically. [Installation, pairing, imports, disconnect and limits](BROWSER.md).
 
 ## Google and other settings
 

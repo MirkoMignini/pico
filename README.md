@@ -26,7 +26,7 @@
 | **Plan and remind** | Local appointments, a combined agenda, and durable reminders that do not depend on model availability. |
 | **Share selectively** | First-version [family links](docs/FAMILY.md) between same-host instances: explicitly authorized reminders and per-list read/edit access, without sharing private memory or owner credentials. |
 | **Chat where you work** | A streaming terminal UI and optional private Telegram bot with text, voice messages, spoken replies, photos, documents and more. [Explore channels](#channels); more are planned. |
-| **Research the web** | DuckDuckGo search, optional Brave, captured pages and bounded read-only research. Optional [browser MCP prototype](docs/BROWSER.md) for dynamic pages, with a dedicated profile, autonomous actions and human login handoff. |
+| **Research the web** | DuckDuckGo search, optional Brave, captured pages and bounded read-only research. Optional [browser MCP prototype](docs/BROWSER.md) for dynamic pages, with a dedicated profile or explicitly paired personal Chrome on another computer, autonomous actions and human login handoff. |
 | **Connect selectively** | Optional Gmail, Google Docs, Calendar, Contacts, Drive, Sheets and Tasks. Google writes start disabled and require exact owner approval. |
 | **Connect MCP servers** | Use selected external tools, resources and prompts through the [MCP client](#mcp-integrations), over stdio, Streamable HTTP or legacy SSE, with private credentials/OAuth and owner-controlled approvals. |
 | **Add useful skills** | Standard Agent Skills packages with scripts/assets, chat creation and imports. Trusted extensions handle persistent integrations and daemon hooks. |
@@ -60,7 +60,7 @@ Lists stay in their owner's instance; **“shared” means read/write unless you
 
 ## MCP integrations
 
-**Bring selected tools and data sources into your assistant.** Pico is a Model Context Protocol **client**, built on the official TypeScript SDK; it does not expose Pico itself as an MCP server. Configure trusted servers, then ask Pico to use their capabilities in ordinary conversation.
+**Bring selected tools and data sources into your assistant.** The Pico daemon is a Model Context Protocol **client**, built on the official TypeScript SDK; it does not expose owner RPC as an MCP server. The optional desktop browser bridge exposes only selected browser tools/artifacts. Configure trusted servers, then ask Pico to use their capabilities in ordinary conversation.
 
 - **Tools and data:** namespaced tools with schema validation, resource/template discovery and reads, reusable prompts, argument completion, progress and change notifications.
 - **Connections and accounts:** local stdio processes, Streamable HTTP and legacy HTTP/SSE; private environment/header credentials or OAuth with PKCE, token refresh and explicit client-credentials grants.

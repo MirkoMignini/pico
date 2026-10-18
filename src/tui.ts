@@ -7,7 +7,7 @@ import type { ImageReference } from './images.js';
 import type { AuthType } from '@earendil-works/pi-ai';
 import { authEventText, loginProvider } from './auth-client.js';
 import { McpCredentialsSchema, mcpSettings } from './mcp-contracts.js';
-import { browserSettings, prepareBrowserDirectories } from './mcp-browser.js';
+import { browserSettings, prepareBrowserDirectories, remoteBrowserSettings } from './mcp-browser.js';
 import { ReadinessSchema, formatReadiness, type Readiness } from './readiness.js';
 import { doctor, formatDoctor } from './doctor.js';
 
@@ -75,7 +75,7 @@ Use $skill-name in chat to explicitly activate an installed skill. Drop standard
 /setup · /readiness (local evidence, no probes) · /doctor (redacted local diagnostics) · /channels [telegram setup] · /telegram [status|check] · /settings [setting] · /reload
 /login [provider] · /logout [provider] — Pi's built-in API-key/subscription setup
 /auth [key provider|secret name|chatgpt|codex|accounts|select account|status|test]
-/mcp [browser|setup|status|catalog|requests|actions] · /mcp [secret|connect|disconnect|pause|resume|auth|cancel|logout|ping] SERVER · /mcp [approve|respond] ID
+/mcp [browser|browser-remote|setup|status|catalog|requests|actions] · /mcp [secret|connect|disconnect|pause|resume|auth|cancel|logout|ping] SERVER · /mcp [approve|respond] ID
 /integrations [setup|auth|cancel|status|actions|approve|disconnect] ID · /mail [setup|auth|cancel|sync|rules] · /backup · /export · /notifications · /stop · /quit
 
 Talk to Pico for memory, documents, notes, learning, workflows, appointments, reminders, web research and images. Routine changes and new extension builds need no confirmation; generated extensions run immediately with full OS access. Validation-only code and procedural approvals remain owner controls. Commands are only for chat controls, setup and safety/administration. Operator CLI/RPC remains available for advanced data recovery.
@@ -478,7 +478,8 @@ export class ChatUI implements PicoChannel {
     if (name === '/mcp') {
       const [action = 'status', value, ...extra] = arg ? arg.split(/\s+/) : [];
       if (extra.length) throw new Error('Use /mcp ACTION [SERVER_OR_ID]; never inline credentials or approval answers');
-      if (action === 'browser' && !value) await this.configure(() => this.browserSetup());
+      if (action === 'browser-remote' && !value) await this.configure(() => this.remoteBrowserSetup());
+      else if (action === 'browser' && !value) await this.configure(() => this.browserSetup());
       else if (action === 'setup' && !value) await this.configure(() => this.integrationSetup('mcp'));
       else if (action === 'secret' && value) await this.configure(() => this.mcpSecret(value));
       else if (action === 'approve' && value) await this.configure(() => this.integrationApproval('mcp', value));
@@ -487,7 +488,7 @@ export class ChatUI implements PicoChannel {
       else if (action === 'catalog') await this.configure(() => show('extensions.mcp.catalog', value ? { server: value } : {}));
       else if (!value && ['status', 'requests', 'actions'].includes(action)) await show(`extensions.mcp.${action === 'actions' ? 'actions.list' : action}`);
       else if (value && ['connect', 'disconnect', 'pause', 'resume', 'cancel', 'logout', 'ping'].includes(action)) await this.configure(() => show(`extensions.mcp.${action === 'cancel' ? 'auth.cancel' : action}`, { server: value }));
-      else throw new Error('Use /mcp browser|setup|status|catalog|requests|actions, /mcp secret|connect|disconnect|pause|resume|auth|cancel|logout|ping SERVER, or /mcp approve|respond ID');
+      else throw new Error('Use /mcp browser|browser-remote|setup|status|catalog|requests|actions, /mcp secret|connect|disconnect|pause|resume|auth|cancel|logout|ping SERVER, or /mcp approve|respond ID');
       return;
     }
     if (name === '/integrations') {
@@ -717,6 +718,20 @@ export class ChatUI implements PicoChannel {
     finally { value = ''; }
     this.notice('Service credential saved. It is not part of conversation history.');
     if (name === 'telegram.token') await this.applySettings();
+  }
+  private async remoteBrowserSetup(): Promise<void> {
+    let raw = await this.prompt('Browser bridge pairing JSON — masked; never paste it into chat', { secret: true, required: true, maxLength: 8192 });
+    if (raw === undefined) return;
+    let token: { token: string } | undefined;
+    try {
+      let data: unknown; try { data = JSON.parse(raw); } catch { throw new Error('Invalid browser bridge pairing JSON'); }
+      const current = await this.client.rpc<{ settings: unknown }>('extensions.setup', { id: 'mcp' });
+      const selected = remoteBrowserSettings(current.settings, data); token = selected.pairing;
+      if (await this.reviewAction(`Personal Chrome on another computer — requires its authenticated loopback bridge and a private SSH tunnel. Delegates selected tools autonomously inside your logged-in accounts; cookies stay on that computer. No connection starts now.\n${JSON.stringify(selected.settings.servers.at(-1), null, 2)}`) !== 'yes') return;
+      await this.client.rpc('extensions.configure', { id: 'mcp', settings: selected.settings });
+      await this.client.rpc('extensions.secret', { id: 'mcp', name: 'browser-remote', value: JSON.stringify({ headers: { Authorization: `Bearer ${selected.pairing.token}` } }) });
+      this.notice('Remote browser pairing saved in the private vault. Keep the desktop bridge and SSH tunnel running; /mcp connect browser-remote, then ask normally in Telegram. No per-action approval.');
+    } finally { raw = ''; if (token) token.token = ''; }
   }
   private async browserSetup(): Promise<void> {
     const entrypoint = await this.prompt('Absolute path to an already installed, trusted Playwright MCP cli.js (no installation or existing browser logins)', { required: true, maxLength: 4000 });

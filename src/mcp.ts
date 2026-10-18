@@ -16,8 +16,9 @@ import { mcpFetch } from './mcp-network.js';
 import { McpOAuth } from './mcp-oauth.js';
 import { legacyTaskCall, McpStdioTransport, mcpTransport, mcpRequestSignal } from './mcp-transport.js';
 import { readMcpCredentials } from './mcp-credentials.js';
-import { importMcpArtifact, readMcpArtifact } from './mcp-artifacts.js';
+import { importMcpArtifact, readMcpArtifact, type RemoteArtifactLoader } from './mcp-artifacts.js';
 import type { McpArtifactRead, McpImport } from './mcp-contracts.js';
+import { BRIDGE_FILE_BYTES } from './browser-bridge-contracts.js';
 import { RemoteActions } from './features/integrations/actions.js';
 
 interface ActiveCall { context: ExtensionContext; signal: AbortSignal; update?: AgentToolUpdateCallback }
@@ -62,15 +63,30 @@ export class Mcp {
     this.core.store.audit('mcp.handoff', `${server}:${paused ? 'pause' : 'resume'}`);
     this.api.storage.set(`handoff:${server}`, paused); this.epoch = id();
     this.api.setStatus('MCP handoff', this.settings.servers.some(entry => this.paused(entry.id)) ? 'Paused for human interaction; /mcp status, then /mcp resume SERVER' : undefined);
-    return { server, paused, next: paused ? 'Complete login/CAPTCHA yourself in the dedicated browser, never in chat. Then /mcp resume SERVER and request a fresh snapshot; prior approvals were invalidated.' : 'Resumed without a tool call or inference. Inspect a fresh snapshot; prepare new approvals. Human changes cannot be undone.' };
+    return { server, paused, next: paused ? 'Complete login/CAPTCHA yourself in the selected browser, never in chat. Then /mcp resume SERVER and request a fresh snapshot; prior approvals were invalidated.' : 'Resumed without a tool call or inference. Inspect a fresh snapshot; prepare new approvals. Human changes cannot be undone.' };
   }
-  readArtifact(args: McpArtifactRead, context: ExtensionContext, signal?: AbortSignal): unknown {
+  private bridgeBinding(connection: Connection): string | null { return connection.config.browserBridgeId ? hash(json({ config: connection.config, credentials: connection.credentialsHash })) : null; }
+  private remoteArtifact(server: string, context: ExtensionContext, signal?: AbortSignal): RemoteArtifactLoader {
+    return async (artifact, binding) => {
+      if (artifact.bytes > Math.min(BRIDGE_FILE_BYTES, this.core.store.config.limits.attachmentBytes)) throw new Error('Remote artifact exceeds attachment limit');
+      const result = await this.use(server, context, signal, (connection, options) => {
+        if (!connection.config.browserBridgeId || connection.config.resources === false || this.bridgeBinding(connection) !== binding) throw new Error('Browser bridge configuration or credentials changed since acquisition');
+        return connection.client.readResource({ uri: artifact.uri }, options);
+      });
+      const content = result.contents[0];
+      if (result.contents.length !== 1 || content?.uri !== artifact.uri || !('blob' in content) || typeof content.blob !== 'string' || content.blob.length > Math.ceil(artifact.bytes / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(content.blob)) throw new Error('Invalid remote browser artifact');
+      const bytes = Buffer.from(content.blob, 'base64');
+      if (bytes.length !== artifact.bytes || hash(bytes) !== artifact.hash) throw new Error('Remote browser artifact integrity failure');
+      return bytes;
+    };
+  }
+  async readArtifact(args: McpArtifactRead, context: ExtensionContext, signal?: AbortSignal): Promise<unknown> {
     this.owner(context);
-    return readMcpArtifact(this.core, this.configured(args.server), args, context, name => mcpToolName(args.server, name), signal);
+    return readMcpArtifact(this.core, this.configured(args.server), args, context, name => mcpToolName(args.server, name), signal, this.remoteArtifact(args.server, context, signal));
   }
   async importArtifact(args: McpImport, context: ExtensionContext, signal?: AbortSignal): Promise<unknown> {
     this.owner(context);
-    return importMcpArtifact(this.core, this.configured(args.server), args, context, name => mcpToolName(args.server, name), signal);
+    return importMcpArtifact(this.core, this.configured(args.server), args, context, name => mcpToolName(args.server, name), signal, this.remoteArtifact(args.server, context, signal));
   }
   private configured(server: string): McpServer { const config = this.settings.servers.find(entry => entry.id === server); if (!config?.enabled) throw new Error('MCP server missing or disabled; configure and enable it in /mcp setup'); return config; }
   private owner(context: ExtensionContext): void {
@@ -166,6 +182,7 @@ export class Mcp {
         abort.throwIfAborted();
         await connection.client.connect(mcpTransport(connection.transport, connection.controller.signal, () => connection.active?.signal), { signal: abort, timeout: config.timeoutMs ?? 60_000 });
         abort.throwIfAborted();
+        if (config.browserBridgeId && connection.client.getServerVersion()?.name !== `pico-browser-bridge:${config.browserBridgeId}`) throw new Error('Browser bridge identity does not match the explicit pairing');
         await this.refresh(connection, abort);
         if (this.closed || connection.controller.signal.aborted || this.connections.get(serverId) !== connection) throw new Error('MCP connection was disabled while initializing');
         connection.state = 'connected'; await this.watch(connection, abort).catch(() => this.event(connection, 'subscriptions_unavailable'));
@@ -262,7 +279,7 @@ export class Mcp {
       }
       const execute = () => connection.client.callTool({ name: args.name, arguments: input }, { ...options, toolDefinition: definition });
       if (autonomous) return this.journalResult(connection, context, `${context.runId}:mcp-autonomous:${id()}`, 'mcp_autonomous', { server: args.server, name: args.name, arguments: input }, execute);
-      return { ...await execute(), origin: `external:mcp:${args.server}`, mcpTool: args.name, mcpArtifactDirectory: connection.config.artifactDirectory ?? null };
+      return { ...await execute(), origin: `external:mcp:${args.server}`, mcpTool: args.name, mcpArtifactDirectory: connection.config.artifactDirectory ?? null, mcpBridgeBinding: this.bridgeBinding(connection) };
     }, update);
   }
   async approve(actionId: string, digest: string, decision: boolean, context: ExtensionContext, signal: AbortSignal): Promise<unknown> {
@@ -279,7 +296,7 @@ export class Mcp {
       this.core.store.run('INSERT INTO operations VALUES(?,?,?,?,?,?,?)', operationId, context.runId, tool, hash(json(payload)), 'running', null, Date.now());
     });
     try {
-      const result = this.bounded(connection, { ...await execute(), origin: `external:mcp:${connection.config.id}`, mcpTool: String(payload.name ?? ''), mcpArtifactDirectory: connection.config.artifactDirectory ?? null });
+      const result = this.bounded(connection, { ...await execute(), origin: `external:mcp:${connection.config.id}`, mcpTool: String(payload.name ?? ''), mcpArtifactDirectory: connection.config.artifactDirectory ?? null, mcpBridgeBinding: this.bridgeBinding(connection) });
       const complete = this.result(result);
       this.core.store.run("UPDATE operations SET status='completed',result=? WHERE id=?", json(complete), operationId);
       return json(result).length <= 128_000 ? { ...result, originalResultSourceId: sourceId } : { originalResultSourceId: sourceId, contentOmitted: true, note: 'Read the completed canonical receipt; never repeat the external action to recover its result' };

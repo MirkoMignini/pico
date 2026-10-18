@@ -1,5 +1,6 @@
 import { Type, type Static } from 'typebox';
 import { object, validate } from './contracts.js';
+import { BridgeIdSchema } from './browser-bridge-contracts.js';
 
 export const McpIdSchema = Type.String({ pattern: '^[a-z][a-z0-9-]{0,31}$' });
 const name = Type.String({ minLength: 1, maxLength: 256 });
@@ -15,6 +16,7 @@ const common = {
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1000, maximum: 600_000 })),
   maxBytes: Type.Optional(Type.Integer({ minimum: 1024, maximum: 20_000_000 })),
   artifactDirectory: Type.Optional(Type.String({ minLength: 1, maxLength: 4000 })),
+  browserBridgeId: Type.Optional(BridgeIdSchema),
   protocol: Type.Optional(Type.Union([Type.Literal('legacy'), Type.Literal('auto'), object({ pin: Type.String({ pattern: '^20\\d{2}-\\d{2}-\\d{2}$' }) })]))
 };
 export const McpServerSchema = Type.Union([
@@ -50,6 +52,7 @@ export function mcpSettings(raw: unknown): McpSettings {
   for (const server of settings.servers) {
     if (ids.has(server.id)) throw new Error('Duplicate MCP server ID');
     ids.add(server.id);
+    if (server.browserBridgeId && (server.transport !== 'http' || server.artifactDirectory)) throw new Error('Browser bridge artifacts require HTTP without a local artifact directory');
     for (const tool of server.autonomousTools ?? []) {
       if (!server.tools?.includes(tool)) throw new Error('Autonomous MCP tools must be exact names in the explicit tools allowlist');
       if (server.readOnlyTools?.includes(tool)) throw new Error('Autonomous MCP effects must not also be classified as read-only');

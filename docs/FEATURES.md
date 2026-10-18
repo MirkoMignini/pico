@@ -45,7 +45,7 @@ The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://gi
 
 ## Optional interactive browser
 
-For JavaScript-driven or authenticated sites, use the opt-in [browser MCP prototype](BROWSER.md), not `web_fetch`. A separately installed trusted Playwright server uses a dedicated profile; its exact tool allowlist runs autonomously from trusted owner chat, including Telegram, without per-action approval. Effects stay journaled as effects and failed/uncertain calls are not replayed. Human login/CAPTCHA handoff, bounded file-backed snapshot reads and source-linked screenshot/download imports reuse MCP and normal attachments. This is not a native browser subsystem, seamless automation or an execution sandbox.
+For JavaScript-driven or authenticated sites, use the opt-in [browser MCP prototype](BROWSER.md), not `web_fetch`. A separately installed trusted Playwright server uses a dedicated profile, or an explicitly paired extension/desktop bridge controls personal Chrome on another computer over a private SSH tunnel. Its exact tool allowlist runs autonomously from trusted owner chat, including Telegram, without per-action approval. Effects stay journaled as effects and failed/uncertain calls are not replayed. Human login/CAPTCHA handoff, bounded file-backed snapshot reads and source-linked screenshot/download imports reuse MCP and normal attachments. This is not a native browser subsystem, seamless automation or an execution sandbox.
 
 ## Existing image replies
 
