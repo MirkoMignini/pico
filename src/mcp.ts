@@ -16,6 +16,8 @@ import { mcpFetch } from './mcp-network.js';
 import { McpOAuth } from './mcp-oauth.js';
 import { legacyTaskCall, McpStdioTransport, mcpTransport, mcpRequestSignal } from './mcp-transport.js';
 import { readMcpCredentials } from './mcp-credentials.js';
+import { importMcpArtifact, readMcpArtifact } from './mcp-artifacts.js';
+import type { McpArtifactRead, McpImport } from './mcp-contracts.js';
 import { RemoteActions } from './features/integrations/actions.js';
 
 interface ActiveCall { context: ExtensionContext; signal: AbortSignal; update?: AgentToolUpdateCallback }
@@ -50,7 +52,26 @@ export class Mcp {
     this.settings = mcpSettings(api.storage.get('settings') ?? { servers: [] });
     this.actions = new RemoteActions('mcp', api.storage, core.store, () => this.connectionDigest(), (action, signal) => this.perform(action.payload, signal, action.id, this.approvals.get(action.id)));
   }
-  get busy(): boolean { return [...this.connections.values()].some(connection => !!connection.active || connection.state === 'connecting') || [...this.logins.values()].some(login => login.status === 'pending') || this.pending.size > 0; }
+  get busy(): boolean { return this.settings.servers.some(server => server.enabled && this.paused(server.id)) || [...this.connections.values()].some(connection => !!connection.active || connection.state === 'connecting') || [...this.logins.values()].some(login => login.status === 'pending') || this.pending.size > 0; }
+  private paused(server: string): boolean { return this.api.storage.get(`handoff:${server}`) === true; }
+  private dispatchAllowed(server: string): void { if (this.paused(server)) throw new Error('MCP server paused for human handoff; only the owner terminal can /mcp resume SERVER. Never enter login credentials in chat or MCP tool arguments.'); }
+  handoff(server: string, paused: boolean, context: ExtensionContext): unknown {
+    this.owner(context); this.configured(server);
+    if (!paused && context.source.channel !== 'terminal') throw new Error('Only the authenticated owner terminal can resume MCP after human handoff');
+    if (this.connections.get(server)?.active || this.connections.get(server)?.state === 'connecting' || this.logins.get(server)?.status === 'pending') throw new Error('Wait for the active MCP request or sign-in before changing handoff state; nothing was cancelled');
+    this.core.store.audit('mcp.handoff', `${server}:${paused ? 'pause' : 'resume'}`);
+    this.api.storage.set(`handoff:${server}`, paused); this.epoch = id();
+    this.api.setStatus('MCP handoff', this.settings.servers.some(entry => this.paused(entry.id)) ? 'Paused for human interaction; /mcp status, then /mcp resume SERVER' : undefined);
+    return { server, paused, next: paused ? 'Complete login/CAPTCHA yourself in the dedicated browser, never in chat. Then /mcp resume SERVER and request a fresh snapshot; prior approvals were invalidated.' : 'Resumed without a tool call or inference. Inspect a fresh snapshot; prepare new approvals. Human changes cannot be undone.' };
+  }
+  readArtifact(args: McpArtifactRead, context: ExtensionContext, signal?: AbortSignal): unknown {
+    this.owner(context);
+    return readMcpArtifact(this.core, this.configured(args.server), args, context, name => mcpToolName(args.server, name), signal);
+  }
+  async importArtifact(args: McpImport, context: ExtensionContext, signal?: AbortSignal): Promise<unknown> {
+    this.owner(context);
+    return importMcpArtifact(this.core, this.configured(args.server), args, context, name => mcpToolName(args.server, name), signal);
+  }
   private configured(server: string): McpServer { const config = this.settings.servers.find(entry => entry.id === server); if (!config?.enabled) throw new Error('MCP server missing or disabled; configure and enable it in /mcp setup'); return config; }
   private owner(context: ExtensionContext): void {
     if (context.ownerId !== this.core.store.config.ownerId || context.instanceId !== this.core.store.config.instanceId || context.mode !== 'foreground' || !context.source.trustedOwner || !context.writesAllowed) throw new Error('MCP requires trusted retained owner foreground work; unavailable in ephemeral, scheduled, review or untrusted work');
@@ -110,7 +131,8 @@ export class Mcp {
     const headers = Object.values(credentials.headers ?? {}).flatMap(value => [value, ...(/^(?:Bearer|Basic) (.+)$/i.exec(value)?.slice(1) ?? [])]);
     connection.secrets = [...Object.values(credentials.env ?? {}), ...headers, ...(credentials.oauthClientSecret ? [credentials.oauthClientSecret] : [])];
     if (server.transport === 'stdio') {
-      connection.home = await mkdtemp(join(tmpdir(), 'pico-mcp-'));
+      // macOS's long per-user temp path can exceed browser Unix-socket limits.
+      connection.home = await mkdtemp(join(process.platform === 'darwin' ? '/tmp' : tmpdir(), 'pico-mcp-'));
       if (server.cwd && !isAbsolute(server.cwd)) throw new Error('MCP working directory must be an explicit absolute path');
       const env: Record<string, string> = { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: connection.home, XDG_CONFIG_HOME: connection.home, XDG_CACHE_HOME: connection.home, TMPDIR: connection.home, LANG: 'en_US.UTF-8', ...server.env, ...credentials.env };
       const transport = new McpStdioTransport({ command: process.execPath, args: [fileURLToPath(new URL('../dist/mcp-process.js', import.meta.url)), server.command, ...(server.args ?? [])], env, cwd: server.cwd ?? connection.home, stderr: 'pipe', maxBufferSize: server.maxBytes ?? 8_000_000 });
@@ -200,11 +222,13 @@ export class Mcp {
     await previous?.close().catch(() => this.event(connection, 'previous_subscription_close_failed'));
   }
   private async use<T>(server: string, context: ExtensionContext, parent: AbortSignal | undefined, execute: (connection: Connection, options: RequestOptions) => Promise<T>, update?: AgentToolUpdateCallback): Promise<T> {
-    this.owner(context);
-    const connection = await this.connect(server, parent), signal = AbortSignal.any([connection.controller.signal, this.core.extensions.signal, AbortSignal.timeout(connection.config.timeoutMs ?? 60_000), ...(parent ? [parent] : [])]);
+    this.owner(context); this.dispatchAllowed(server);
+    const connection = await this.connect(server, parent), epoch = this.epoch, signal = AbortSignal.any([connection.controller.signal, this.core.extensions.signal, AbortSignal.timeout(connection.config.timeoutMs ?? 60_000), ...(parent ? [parent] : [])]);
     const work = connection.tail.catch(() => {}).then(async () => {
-      signal.throwIfAborted(); this.owner(context);
+      signal.throwIfAborted(); this.owner(context); this.dispatchAllowed(server);
       if (connection.credentialsHash !== hash(json(await this.credentials(connection.config)))) throw new Error('MCP credentials changed; disconnect and reconnect before using this server');
+      if (epoch !== this.epoch) throw new Error('MCP connection or handoff changed while queued; request fresh evidence and approval');
+      this.dispatchAllowed(server);
       connection.active = { context, signal, update };
       try {
         if (connection.dirty) await this.refresh(connection, signal);
@@ -233,10 +257,10 @@ export class Mcp {
       // Hints come from an untrusted server. Only the owner's exact tool selection grants read access.
       if (!connection.config.readOnlyTools?.includes(args.name) || args.task) {
         if (json(input).length > 800_000) throw new Error('MCP approval arguments exceed the private action record limit (800,000 characters)');
-        return { prepared: true, action: await this.actions.prepare('mcp.call', { ...args, arguments: input, definitionHash: hash(json(definition)) }, context), next: '/mcp approve ACTION_ID — review exact arguments before any tool execution' };
+        return { prepared: true, action: await this.actions.prepare('mcp.call', { ...args, arguments: input, definitionHash: hash(json(definition)), connectionEpoch: this.epoch }, context), next: '/mcp approve ACTION_ID — review exact arguments before any tool execution' };
       }
       const result = await connection.client.callTool({ name: args.name, arguments: input }, { ...options, toolDefinition: definition });
-      return { ...result, origin: `external:mcp:${args.server}` };
+      return { ...result, origin: `external:mcp:${args.server}`, mcpTool: args.name, mcpArtifactDirectory: connection.config.artifactDirectory ?? null };
     }, update);
   }
   async approve(actionId: string, digest: string, decision: boolean, context: ExtensionContext, signal: AbortSignal): Promise<unknown> {
@@ -250,6 +274,7 @@ export class Mcp {
     if (!context) throw new Error('MCP owner-terminal approval context missing');
     this.owner(context);
     const server = String(payload.server), connection = this.connections.get(server);
+    this.dispatchAllowed(server);
     if (!connection || connection.state !== 'connected') throw new Error('MCP connection changed; prepare another action');
     if (connection.credentialsHash !== hash(json(await this.credentials(connection.config)))) throw new Error('MCP credentials changed; prepare a fresh action after reconnecting');
     const signal = AbortSignal.any([parent, connection.controller.signal]);
@@ -262,14 +287,16 @@ export class Mcp {
         : connection.client.callTool({ name: tool.name, arguments: args }, { signal, timeout: connection.config.timeoutMs ?? 60_000, toolDefinition: tool });
     };
     const work = connection.tail.catch(() => {}).then(async () => {
-      signal.throwIfAborted(); connection.active = { context, signal };
+      signal.throwIfAborted(); this.dispatchAllowed(server);
+      if (payload.connectionEpoch !== this.epoch) throw new Error('MCP connection or handoff changed after approval; prepare a fresh action');
+      connection.active = { context, signal };
       const operationId = `${context.runId}:mcp-approved:${actionId}`, sourceId = `operation:${operationId}`;
       try {
         this.core.store.transaction(() => {
           for (const source of this.actions.dependencies(actionId)) this.core.store.linkSource(context.runId, source);
           this.core.store.run('INSERT INTO operations VALUES(?,?,?,?,?,?,?)', operationId, context.runId, 'mcp_approved', hash(json(payload)), 'running', null, Date.now());
         });
-        const result = this.bounded(connection, await execute());
+        const result = this.bounded(connection, { ...await execute(), origin: `external:mcp:${server}`, mcpTool: String(payload.name ?? ''), mcpArtifactDirectory: connection.config.artifactDirectory ?? null });
         const complete = this.result(result);
         this.core.store.run("UPDATE operations SET status='completed',result=? WHERE id=?", json(complete), operationId);
         return json(result).length <= 128_000 ? { ...result, originalResultSourceId: sourceId } : { originalResultSourceId: sourceId, contentOmitted: true, note: 'Read the completed canonical receipt; never repeat the external action to recover its result' };
@@ -323,7 +350,7 @@ export class Mcp {
     if (args.action !== 'list' && !args.taskId) throw new Error('MCP taskId required');
     return this.use<unknown>(args.server, context, signal, (connection, options) => {
       if (!(connection.client.getNegotiatedProtocolVersion() ?? '').startsWith('2025-') || !connection.client.getServerCapabilities()?.tasks) throw new Error('This server does not advertise legacy MCP tasks');
-      if (args.action === 'cancel') return this.actions.prepare('mcp.task.cancel', { server: args.server, action: 'cancelTask', taskId: args.taskId }, context).then(action => ({ prepared: true, action, next: '/mcp approve ACTION_ID' }));
+      if (args.action === 'cancel') return this.actions.prepare('mcp.task.cancel', { server: args.server, action: 'cancelTask', taskId: args.taskId, connectionEpoch: this.epoch }, context).then(action => ({ prepared: true, action, next: '/mcp approve ACTION_ID' }));
       if (args.action === 'get') return connection.client.request({ method: 'tasks/get', params: { taskId: args.taskId! } }, specTypeSchemas.GetTaskResult, options);
       if (args.action === 'result') return connection.client.request({ method: 'tasks/result', params: { taskId: args.taskId! } }, specTypeSchemas.GetTaskPayloadResult, options);
       return connection.client.request({ method: 'tasks/list', params: { cursor: args.cursor } }, specTypeSchemas.ListTasksResult, options);
@@ -401,7 +428,7 @@ export class Mcp {
     return { content, details: undefined };
   }
   status(): unknown {
-    return { servers: this.settings.servers.map(server => { const connection = this.connections.get(server.id); return { id: server.id, enabled: server.enabled, transport: server.transport, state: connection?.state ?? 'not_connected', protocol: connection?.client.getNegotiatedProtocolVersion(), implementation: connection?.client.getServerVersion(), capabilities: connection?.client.getServerCapabilities(), tools: connection?.tools.length ?? 0, resources: connection?.resources.length ?? 0, prompts: connection?.prompts.length ?? 0, error: connection?.error, stderrBytes: connection?.stderrBytes ?? 0, notifications: connection?.events ?? [], login: this.logins.get(server.id)?.status, auth: connection?.state === 'connected' && connection.oauth?.ready ? 'authenticated' : 'not_verified' }; }), pendingRequests: this.requests(), execution: 'Trusted MCP servers, not an OS sandbox. No uncertain tool call is automatically replayed.' };
+    return { servers: this.settings.servers.map(server => { const connection = this.connections.get(server.id); return { id: server.id, enabled: server.enabled, transport: server.transport, state: connection?.state ?? 'not_connected', paused: this.paused(server.id), protocol: connection?.client.getNegotiatedProtocolVersion(), implementation: connection?.client.getServerVersion(), capabilities: connection?.client.getServerCapabilities(), tools: connection?.tools.length ?? 0, resources: connection?.resources.length ?? 0, prompts: connection?.prompts.length ?? 0, error: connection?.error, stderrBytes: connection?.stderrBytes ?? 0, notifications: connection?.events ?? [], login: this.logins.get(server.id)?.status, auth: connection?.state === 'connected' && connection.oauth?.ready ? 'authenticated' : 'not_verified' }; }), pendingRequests: this.requests(), execution: 'Trusted MCP servers, not an OS sandbox. No uncertain tool call is automatically replayed.' };
   }
   async login(serverId: string): Promise<{ url: string; redirectUri: string; allowInsecureLocal: boolean }> {
     const config = this.configured(serverId);

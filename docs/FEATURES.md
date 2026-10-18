@@ -43,6 +43,10 @@ Research has only bundled web reads and time—no automatic personal-memory acce
 
 The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://github.com/badlogic/pi-skills/tree/90bb51cae36515a648515b633a81c0c6efc8c74d/brave-search), with its [license notice](https://github.com/MirkoMignini/pico/blob/main/docs/licenses/pi-skills.txt) retained.
 
+## Optional interactive browser
+
+For JavaScript-driven or authenticated sites, use the opt-in [browser MCP prototype](BROWSER.md), not `web_fetch`. A separately installed trusted Playwright server uses a dedicated profile; every preset tool needs exact terminal approval. Human login/CAPTCHA handoff, bounded file-backed snapshot reads and source-linked screenshot/download imports reuse MCP and normal attachments. This is not a native browser subsystem, seamless automation or an execution sandbox.
+
 ## Existing image replies
 
 Ask Pico to show a saved image in the current conversation. `image_show` accepts a retained attachment or image-document ID and optional immutable revision; it needs neither Telegram nor image-generation credentials. Host paths, URLs, volatile/unknown/tampered originals and non-images are refused.

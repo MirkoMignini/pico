@@ -94,6 +94,12 @@ After building, `pnpm exec vitest run tests/mcp.test.ts tests/mcp-oauth.test.ts 
 
 The separately authorized `pnpm test:mcp:live` checks public credential-free Microsoft Learn and DeepWiki tool discovery and read calls, using new disposable stores only. It accepts no existing instance or credential arguments, installs no MCP servers, invokes no Pico model, preserves failures in a private temporary report and follows canonical receipts for large results instead of replaying calls. Public service availability, actual vendor OAuth, real model interpretation and production reliability remain separate gates. `node scripts/check-mcp-live.mjs --help` is inert; `--run` is required for network/process work. See [MCP](MCP.md).
 
+### Browser MCP prototype
+
+`tests/mcp-browser.test.ts` uses synthetic browser-shaped MCP modules over real stdio: dedicated-profile configuration, no preset read-only bypass, exact approvals, handoff persistence/approval races, restricted-mode denials, file-backed snapshot windows, screenshot/download imports, link/path/size rejection, idempotency, source erasure and old-backup restore. `tests/mcp-cli.test.ts` and `tests/tui-setup.test.ts` cover compiled CLI setup and simulated TUI review/cancellation/handoff. These default tests do not run Chrome or access a live website.
+
+A separate local integration check used explicitly installed Playwright MCP `0.0.83`, actual Chrome in headless mode, a fresh disposable profile and a synthetic loopback HTTP site. It exercised dynamic DOM/snapshots, receipt-linked file reads, screenshot/download import, typing, a real local form submission after exact approval, and pause/resume invalidation, without provider inference or owner credentials. This is not proof of live-site compatibility, login/CAPTCHA handling, graphical human handoff, isolation or model interpretation. Repeat the [browser guide](BROWSER.md) with separately authorized disposable accounts before claiming those gates.
+
 ## Live trials require authorization
 
 Never run live calls merely to complete the default check command. Obtain authorization for the exact provider/account and any metered auxiliary services. Use a separate synthetic store, not owner data. Credentials may be used only through the explicitly selected Pico credential service, never copied or discovered from ambient tools.

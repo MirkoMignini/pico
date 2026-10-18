@@ -23,7 +23,7 @@ it('requires an explicit policy for every shipped tool and every schema action, 
   const core={...s.runtime,store:{config:{...s.config,telegram:{allowedSenders:[1],destination:1}}},extensions:{registerBuiltin:(_id:string,factory:(api:ExtensionAPI)=>void)=>factory(api)}} as unknown as Runtime;
   registerFeatures(core);
   const tools=[...s.runtime.availableTools(context(s,'',id())).filter(tool=>!s.runtime.extensions.isBuiltinTool(tool.name)),...definitions];
-  expect(tools).toHaveLength(51);expect(tools.map(tool=>tool.name).sort()).toEqual([...Object.keys({...CORE_TOOL_HISTORY,...BUNDLED_TOOL_HISTORY}),...definitions.filter(tool=>tool.history).map(tool=>tool.name)].sort());
+  expect(tools).toHaveLength(54);expect(tools.map(tool=>tool.name).sort()).toEqual([...Object.keys({...CORE_TOOL_HISTORY,...BUNDLED_TOOL_HISTORY}),...definitions.filter(tool=>tool.history).map(tool=>tool.name)].sort());
   for(const tool of tools){
     const policy=CORE_TOOL_HISTORY[tool.name]??tool.history??BUNDLED_TOOL_HISTORY[tool.name]!,action=(tool.parameters as {properties:{action?:{anyOf?:{const:string}[];const?:string}}}).properties.action;
     const actions=action?(action.anyOf?.map(branch=>branch.const)??[action.const!]):[undefined];

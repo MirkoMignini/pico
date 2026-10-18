@@ -102,6 +102,7 @@ it('scrubs ambient credentials, uses a disposable HOME and redacts configured se
   const details = JSON.parse(result.content[0].text);
   expect(details).toMatchObject({ inherited: null, secret: '[redacted]' });
   expect(details.home).not.toBe(process.env.HOME); expect(existsSync(details.home)).toBe(true);
+  if (process.platform === 'darwin') expect(Buffer.byteLength(details.home)).toBeLessThan(40); // Leave room for browser Unix-socket suffixes.
   expect(JSON.stringify(s.store.all('SELECT result FROM operations'))).not.toContain('synthetic-quoted');
   await invoke(s, 'disconnect', { server: 'fixture' }); expect(existsSync(details.home)).toBe(false);
 });

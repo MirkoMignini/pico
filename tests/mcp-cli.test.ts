@@ -26,6 +26,12 @@ it('configures and calls MCP through the compiled CLI/Unix IPC, keeping credenti
     await expect(cli(['approve', 'not-an-action'])).rejects.toThrow('noninteractive approval');
     await expect(cli(['secret', 'fixture', 'never-echo-this-secret'])).rejects.toThrow('never pass credentials');
     expect((await cli(['status'])).servers[0].state).toBe('connected');
+    expect(await cli(['browser', fileURLToPath(new URL('./fixtures/mcp-browser-server.mjs', import.meta.url))])).toMatchObject({ saved: true });
+    expect((await cli(['status'])).servers.find((server: any) => server.id === 'browser')).toMatchObject({ state: 'not_connected', paused: false });
+    await cli(['pause', 'browser']);
+    expect((await cli(['status'])).servers.find((server: any) => server.id === 'browser').paused).toBe(true);
+    await cli(['resume', 'browser']);
+    await expect(cli(['import', 'browser'], '{"sourceId":"operation:missing","contentIndex":1}')).rejects.toThrow('retained');
     expect(s.faux.state.callCount).toBe(0);
   } finally { await service.close(); await s.runtime.close(); s.store.close(); rmSync(s.root, { recursive: true, force: true }); }
 }, 45_000);

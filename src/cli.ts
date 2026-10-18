@@ -15,6 +15,7 @@ import { restore } from './backup.js';
 import { hash, json } from './store.js';
 import { validate } from './contracts.js';
 import { McpCredentialsSchema, mcpSettings } from './mcp-contracts.js';
+import { browserSettings, prepareBrowserDirectories } from './mcp-browser.js';
 import { doctor, formatDoctor } from './doctor.js';
 import { manageService, type ServiceAction } from './service.js';
 import { NODE_VERSION, VERSION } from './version.js';
@@ -126,7 +127,14 @@ async function main(): Promise<void> {
     const [action = 'status', server, value, ...extra] = args;
     if (extra.length || value && !['call', 'read', 'prompt', 'tasks'].includes(action)) throw new Error('Unexpected MCP arguments; credentials belong only in the masked secret prompt');
     const invoke = (name: string, input: Record<string, unknown> = {}) => client.rpc(`extensions.mcp.${name}`, input);
-    if (action === 'configure') {
+    if (action === 'browser') {
+      if (!server) throw new Error('Use mcp browser /absolute/path/to/already-installed/@playwright/mcp/cli.js; no package or browser is installed automatically');
+      const current = await client.rpc<{ settings: unknown }>('extensions.setup', { id: 'mcp' });
+      const settings = browserSettings(root, current.settings, server);
+      prepareBrowserDirectories(root);
+      await client.rpc('extensions.configure', { id: 'mcp', settings });
+      print({ saved: true, next: '/mcp connect browser; /mcp catalog browser. All browser tools need exact approval. Login/CAPTCHA: /mcp pause browser, interact manually, /mcp resume browser.' });
+    } else if (action === 'configure') {
       if (!server) throw new Error('Use mcp configure SETTINGS.json|- (non-secret settings only)');
       const raw = server === '-' ? await stdinText(1_000_000) : await (async () => { const path = resolve(server), info = await stat(path); if (!info.isFile() || info.size > 1_000_000) throw new Error('MCP settings file exceeds limits'); return readFile(path, 'utf8'); })();
       let settings: unknown; try { settings = JSON.parse(raw); } catch { throw new Error('Invalid MCP settings JSON'); }
@@ -149,18 +157,23 @@ async function main(): Promise<void> {
         if (selected === 'yes' && review.kind === 'elicitation' && review.request?.mode !== 'url') { let text = await secretInput('Form response JSON (hidden; never enter credentials): ', undefined, 128_000); try { content = JSON.parse(text) as Record<string, unknown>; } catch { throw new Error('Invalid MCP form JSON'); } finally { text = ''; } }
         print(await invoke('requests.respond', { id: review.id, digest: review.digest, action: selected === 'yes' ? 'accept' : 'decline', ...(content ? { content } : {}) }));
       }
-    } else if (['connect', 'disconnect', 'auth', 'cancel', 'logout', 'ping'].includes(action)) {
+    } else if (['connect', 'disconnect', 'auth', 'cancel', 'logout', 'ping', 'pause', 'resume'].includes(action)) {
       if (!server) throw new Error(`Use mcp ${action} SERVER`);
       print(await invoke(action === 'cancel' ? 'auth.cancel' : action, { server }));
     } else if (action === 'status' || action === 'requests' || action === 'actions') { if (server) throw new Error(`Use mcp ${action} without arguments`); print(await invoke(action === 'actions' ? 'actions.list' : action)); }
     else if (action === 'catalog') print(await invoke('catalog', server ? { server } : {}));
-    else if (action === 'call' || action === 'prompt') {
+    else if (action === 'import' || action === 'artifact') {
+      if (!server || value) throw new Error('Use mcp import|artifact SERVER with sourceId and contentIndex or file in JSON stdin');
+      let input: unknown; try { input = JSON.parse(await stdinText(16_000)); } catch { throw new Error('Supply MCP artifact/import JSON through stdin'); }
+      if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('MCP artifact/import requires a JSON object');
+      print(await invoke(action, { ...input, server }));
+    } else if (action === 'call' || action === 'prompt') {
       if (!server || !value) throw new Error(`Use mcp ${action} SERVER NAME; supply optional JSON arguments through stdin`);
       let input: unknown; try { input = JSON.parse(process.stdin.isTTY ? '{}' : (await stdinText(1_000_000)).trim() || '{}'); } catch { throw new Error('Invalid MCP arguments JSON'); }
       print(await invoke(action, { server, name: value, arguments: input }));
     } else if (action === 'read') { if (!server || !value) throw new Error('Use mcp read SERVER URI'); print(await invoke('resource', { server, uri: value })); }
     else if (action === 'tasks') { if (!server) throw new Error('Use mcp tasks SERVER [TASK_ID]; use RPC for result/cancel'); print(await invoke('tasks', { server, action: value ? 'get' : 'list', ...(value ? { taskId: value } : {}) })); }
-    else throw new Error('MCP: configure FILE|-, secret SERVER, connect, disconnect, auth, cancel, logout, ping, status, catalog, call, read, prompt, tasks, requests, respond ID, actions, approve ID');
+    else throw new Error('MCP: browser ENTRYPOINT, configure FILE|-, secret SERVER, connect, disconnect, pause, resume, auth, cancel, logout, ping, status, catalog, call, import|artifact SERVER (JSON stdin), read, prompt, tasks, requests, respond ID, actions, approve ID');
     return;
   }
   if (command === 'chat') { await chat(client); return; }

@@ -13,6 +13,8 @@ const common = {
   sampling: Type.Optional(Type.Boolean()), elicitation: Type.Optional(Type.Boolean()),
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1000, maximum: 600_000 })),
   maxBytes: Type.Optional(Type.Integer({ minimum: 1024, maximum: 20_000_000 })),
+  artifactDirectory: Type.Optional(Type.String({ minLength: 1, maxLength: 4000 })),
+
   protocol: Type.Optional(Type.Union([Type.Literal('legacy'), Type.Literal('auto'), object({ pin: Type.String({ pattern: '^20\\d{2}-\\d{2}-\\d{2}$' }) })]))
 };
 export const McpServerSchema = Type.Union([
@@ -25,6 +27,15 @@ export type McpSettings = Static<typeof McpSettingsSchema>;
 export const McpCredentialsSchema = object({ env: Type.Optional(strings), headers: Type.Optional(strings), oauthClientSecret: Type.Optional(Type.String({ maxLength: 16_000 })) });
 export type McpCredentials = Static<typeof McpCredentialsSchema>;
 export const McpServerRefSchema = object({ server: McpIdSchema });
+export const McpImportSchema = object({
+  server: McpIdSchema, sourceId: Type.String({ minLength: 1, maxLength: 500 }),
+  contentIndex: Type.Optional(Type.Integer({ minimum: 0, maximum: 1000 })),
+  file: Type.Optional(Type.String({ minLength: 1, maxLength: 120 })),
+  mime: Type.Optional(Type.String({ minLength: 1, maxLength: 100 }))
+});
+export type McpImport = Static<typeof McpImportSchema>;
+export const McpArtifactReadSchema = object({ server: McpIdSchema, sourceId: McpImportSchema.properties.sourceId, file: Type.String({ minLength: 1, maxLength: 120 }), fromOffset: Type.Optional(Type.Integer({ minimum: 0 })), maxChars: Type.Optional(Type.Integer({ minimum: 1, maximum: 10_000 })) });
+export type McpArtifactRead = Static<typeof McpArtifactReadSchema>;
 export const McpCatalogSchema = object({ server: Type.Optional(McpIdSchema), kind: Type.Optional(Type.Union(['tools', 'resources', 'templates', 'prompts'].map(value => Type.Literal(value)))), offset: Type.Optional(Type.Integer({ minimum: 0 })), limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })) });
 export const McpCallSchema = object({ server: McpIdSchema, name, arguments: Type.Optional(Type.Record(Type.String(), Type.Unknown())), task: Type.Optional(object({ ttl: Type.Optional(Type.Integer({ minimum: 1000, maximum: 86_400_000 })) })) });
 export const McpResourceSchema = object({ server: McpIdSchema, uri: Type.String({ minLength: 1, maxLength: 4000 }), action: Type.Optional(Type.Union(['read', 'subscribe', 'unsubscribe'].map(value => Type.Literal(value)))) });
@@ -39,6 +50,7 @@ export function mcpSettings(raw: unknown): McpSettings {
   for (const server of settings.servers) {
     if (ids.has(server.id)) throw new Error('Duplicate MCP server ID');
     ids.add(server.id);
+    if (server.artifactDirectory && (!server.artifactDirectory.startsWith('/') || /[\x00-\x1f\x7f]/.test(server.artifactDirectory))) throw new Error('MCP artifact directory must be an explicit absolute path');
     for (const root of server.roots ?? []) {
       const uri = new URL(root.uri);
       if (uri.protocol !== 'file:' || uri.hostname && uri.hostname !== 'localhost' || uri.username || uri.password || uri.search || uri.hash) throw new Error('MCP roots must be explicit local file URIs');
