@@ -2,7 +2,7 @@
 import { parseArgs } from 'node:util';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -39,7 +39,11 @@ async function main() {
   if (values.activate && !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(values.activate)) throw new Error('Invalid version');
   const source = realpathSync(resolve(values.source ?? fileURLToPath(new URL('../', import.meta.url))));
   const requestedPrefix = resolve(values.prefix ?? join(homedir(), '.local', 'share', 'pico-app'));
-  if (/[\x00-\x1f\x7f]/.test(requestedPrefix) || existsSync(join(requestedPrefix, 'config.json')) || source === requestedPrefix || source.startsWith(`${requestedPrefix}/`)) throw new Error('Use a separate application prefix, never an owner instance or source ancestor');
+  let ancestor = requestedPrefix;
+  while (!present(ancestor)) ancestor = dirname(ancestor);
+  const destination = resolve(realpathSync(ancestor), relative(ancestor, requestedPrefix));
+  const overlapsSource = source === destination || source.startsWith(`${destination}/`) || destination.startsWith(`${source}/`);
+  if (/[\x00-\x1f\x7f]/.test(requestedPrefix) || existsSync(join(destination, 'config.json')) || !values.activate && overlapsSource) throw new Error('Use a separate application prefix, never an owner instance or overlapping source tree');
   const pkg = manifest(values.activate ? join(requestedPrefix, 'releases', values.activate) : source);
   if (process.versions.node !== pkg.engines.node) throw new Error(`Select Node ${pkg.engines.node} first; no runtime is installed or replaced automatically`);
   const expectedPnpm = pkg.packageManager.replace('pnpm@', '');

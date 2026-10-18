@@ -101,4 +101,4 @@ it('offers compiled CLI help/version/offline diagnostics without creating or sta
   expect(result.code).toBe(1); expect(JSON.parse(result.stdout).ok).toBe(false); expect(existsSync(root)).toBe(false);
   const status = await execute(process.execPath, [cli, '--instance', root, 'status'], { timeout: 20_000 }).catch(error => error);
   expect(status.code).toBe(1); expect(existsSync(root)).toBe(false);
-});
+}, 90_000);

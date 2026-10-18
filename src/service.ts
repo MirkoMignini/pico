@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { Type } from 'typebox';
-import { atomicWrite, loadConfig, privateDirectory, readPrivate } from './config.js';
+import { assertPrivateFile, atomicWrite, loadConfig, privateDirectory, readPrivate } from './config.js';
 import { object, validate } from './contracts.js';
 import { Client } from './client.js';
 import { hash } from './store.js';
@@ -113,7 +113,7 @@ export async function manageService(instance: string, action: ServiceAction, opt
       const logs = privateDirectory(join(definition.root, 'service-logs'));
       for (const name of ['stdout.log', 'stderr.log']) {
         const file = join(logs, name);
-        if (existsSync(file)) readPrivate(file); else appendFileSync(file, '', { mode: 0o600, flag: 'ax' });
+        if (existsSync(file)) assertPrivateFile(file); else appendFileSync(file, '', { mode: 0o600, flag: 'ax' });
       }
     }
     if (!saved) {

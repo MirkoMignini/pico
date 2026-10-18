@@ -32,7 +32,9 @@ A release version is immutable. Reinstalling it is refused; `--activate VERSION`
 
 ## Initialize and configure one owner
 
-Keep the application prefix separate from owner instances:
+Keep the application prefix separate from owner instances and from the source tree (including ancestors, descendants and symlink aliases). This prevents copying an installation's staging directory back into itself. Activation of an already installed version is separate and can be run from its installed installer.
+
+Initialize an owner with:
 
 ```sh
 pico --instance "$HOME/.local/share/pico" init --name "Your name"

@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, truncateSync, chmodSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Client } from '../src/client.js';
@@ -41,6 +41,15 @@ it.each(['linux', 'darwin'])('installs an explicit private %s service without st
   await expect(manageService(root, 'restart', options)).rejects.toThrow('--confirm-stop');
   expect(await manageService(root, 'uninstall', { ...options, confirmStop: true })).toMatchObject({ uninstalled: true, ownerDataRemoved: false });
   expect(existsSync(definition.file)).toBe(false); expect(existsSync(join(root, 'service.json'))).toBe(false); expect(existsSync(join(root, 'config.json'))).toBe(true);
+});
+it('checks existing service-log permissions without loading large private logs', async () => {
+  const { home, root } = files(), options = { home, platform: 'darwin', run: manager() };
+  await manageService(root, 'install', options);
+  const log = join(root, 'service-logs', 'stdout.log'); truncateSync(log, 2 ** 31);
+  expect(await manageService(root, 'install', options)).toMatchObject({ installed: true, started: false });
+  expect(lstatSync(log).size).toBe(2 ** 31);
+  chmodSync(log, 0o644);
+  await expect(manageService(root, 'install', options)).rejects.toThrow('Unsafe permissions');
 });
 it('refuses modified/unregistered definitions and symlinked service directories without overwriting them', async () => {
   const { home, root } = files(), options = { home, platform: 'linux', run: manager() }, definition = serviceDefinition(root, options);

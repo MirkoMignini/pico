@@ -22,9 +22,12 @@ export function atomicWrite(path: string, content: string | Uint8Array): void {
   const dir = openSync(dirname(path), 'r');
   try { fsyncSync(dir); } finally { closeSync(dir); }
 }
-export function readPrivate(path: string): string {
+export function assertPrivateFile(path: string): void {
   const stat = lstatSync(path);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.uid !== process.getuid?.() || (stat.mode & 0o077) !== 0) throw new Error(`Unsafe permissions: ${path}`);
+}
+export function readPrivate(path: string): string {
+  assertPrivateFile(path);
   return readFileSync(path, 'utf8');
 }
 export function initialize(path: string, name: string): Config {

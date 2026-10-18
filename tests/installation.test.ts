@@ -40,10 +40,21 @@ it('installs immutable private versions, preserves owner separation and selects/
   expect(s.install().stderr).toContain('already installed');
   const pkg = JSON.parse(readFileSync(join(s.source, 'package.json'), 'utf8')); pkg.version = '1.2.4'; writeFileSync(join(s.source, 'package.json'), JSON.stringify(pkg));
   expect(s.install().status).toBe(0); expect(readlinkSync(join(s.prefix, 'current'))).toBe('releases/1.2.4');
-  expect(s.activate('1.2.3').status).toBe(0); expect(readlinkSync(join(s.prefix, 'current'))).toBe('releases/1.2.3');
+  const rollback = spawnSync(process.execPath, [join(s.prefix, 'current', 'scripts', 'install.mjs'), '--prefix', realpathSync(s.prefix), '--activate', '1.2.3'], { encoding: 'utf8', env: s.env, timeout: 30_000 });
+  expect(rollback.status, rollback.stderr).toBe(0); expect(readlinkSync(join(s.prefix, 'current'))).toBe('releases/1.2.3');
   const owner = join(s.root, 'owner'); initialize(owner, 'synthetic');
   const definition = serviceDefinition(owner, { home: s.root, platform: 'linux', cli: join(release, 'dist', 'cli.js') });
   expect(definition.content).toContain(join(realpathSync(s.prefix), 'bin', 'pico')); expect(definition.content).not.toContain(join(release, 'dist', 'cli.js'));
+});
+it('refuses source-overlapping prefixes, including aliases, without recursive copying', () => {
+  const s = fixture(), alias = join(s.root, 'source-alias'); symlinkSync(s.source, alias);
+  for (const prefix of [s.source, realpathSync(s.source), s.root, join(s.source, 'docs', 'application'), join(alias, 'examples', 'application')]) {
+    const result = spawnSync(process.execPath, [join(s.source, 'scripts', 'install.mjs'), '--source', s.source, '--prefix', prefix], { encoding: 'utf8', env: s.env, timeout: 30_000 });
+    expect(result.status, result.stderr).toBe(1); expect(result.stderr).toContain('separate application prefix');
+    expect(result.stderr).not.toContain('ENAMETOOLONG');
+  }
+  expect(existsSync(join(s.source, 'docs', 'application'))).toBe(false);
+  expect(existsSync(join(s.prefix, 'current'))).toBe(false);
 });
 it('preserves the previous selection after a failed build and never cleans someone else’s installer lock', () => {
   const s = fixture(); expect(s.install().status).toBe(0);
