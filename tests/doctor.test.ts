@@ -71,6 +71,16 @@ it('separates stored credentials from explicit selected-model test evidence and 
   expect((await runtimeReadiness(s.runtime)).items[0]).toMatchObject({ authenticated: 'unverified', tested: 'not-run' });
   expect(s.store.all('SELECT * FROM messages')).toEqual([]); expect(s.faux.state.callCount).toBe(1);
 });
+it('shows a tested default model in the background row of a different selected conversation', async () => {
+  const s = instance(), conversation = s.runtime.newConversation('Synthetic selected model');
+  s.runtime.model(conversation.id, { provider: 'deepseek', id: 'deepseek-flash' });
+  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pico is connected.')])]);
+  expect(await rpc(s.runtime, { op: 'auth.test' })).toMatchObject({ tested: 'passed' });
+  const result = await runtimeReadiness(s.runtime, conversation.id);
+  expect(result.items.find(item => item.id === 'model')).toMatchObject({ authenticated: 'unverified', tested: 'not-run' });
+  expect(result.items.find(item => item.id === 'background-model')).toMatchObject({ authenticated: 'verified', reachable: 'verified', tested: 'passed' });
+  expect(s.faux.state.callCount).toBe(1);
+});
 it('distinguishes a reachable model with a failed answer check from an interrupted/uncertain request', async () => {
   const s = instance(); s.faux.appendResponses([fauxAssistantMessage([fauxText('Unexpected synthetic response')])]);
   expect(await rpc(s.runtime, { op: 'auth.test' })).toMatchObject({ tested: 'failed' });

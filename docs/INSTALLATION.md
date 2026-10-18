@@ -137,14 +137,3 @@ The tag must match `package.json`. Packaging emits `pico-VERSION-source.tar.gz`,
 The tag-triggered CI release job waits for Linux/macOS checks and the public-history secret scan before creating a **draft** GitHub release. Inspect it before publication. No tag, release or deployment is created by ordinary local development.
 
 When real assets exist, download the source archive and checksum file from the same reviewed release, verify with `sha256sum --check SHA256SUMS` (Linux) or `shasum -a 256 --check SHA256SUMS` (macOS), inspect/extract it, and run its installer. A checksum detects corruption, not a compromised publisher/download origin. Never pipe a remotely fetched installer straight into a shell or borrow another application's credentials to get setup working.
-
-## Implementation verification (18 October 2026)
-
-Checks actually executed for this change:
-
-- Pinned frozen installation, TypeScript check/build and the full local regression suite; documentation/link and whitespace checks. Providers and ordinary native-manager commands in those suites are synthetic.
-- A real fresh-prefix installation with actual production dependencies, plus a second installation from a checksum-verified source archive. The latter used a new disposable committed snapshot of the current public-allowlisted source, not a published release, copied Git history or deployed owner.
-- An actual disposable macOS LaunchAgent: install without start, plist validation, native start and authenticated health, redacted doctor, refusal to restart with an open event client, graceful restart retaining a synthetic note and owner identity, then uninstall preserving owner data. Only its own unique temporary service was controlled.
-- An unfiltered production audit: the existing high-severity `braces` advisory remains as documented in [security](SECURITY.md#dependency-checks); this is not a clean audit.
-
-Linux systemd execution, a published/hosted release download, independent secret-scanner execution, vendor authentication, billed inference and real Google/Telegram delivery were **not** verified by these checks. No owner credentials were borrowed and no release/tag/deployment was published. Local and macOS success must not be described as those separate gates. Raw per-run reports/logs stay private outside Git.

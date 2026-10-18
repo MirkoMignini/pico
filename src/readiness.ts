@@ -44,14 +44,17 @@ async function binding(runtime: Runtime, selection: Config['model']): Promise<st
 export async function runtimeReadiness(runtime: Runtime, conversationId?: string): Promise<Readiness> {
   const selection = conversationId ? JSON.parse(runtime.conversation(conversationId).model) as Config['model'] : runtime.store.config.model;
   const result = await configurationReadiness({ ...runtime.store.config, model: selection }, runtime.credentials, runtime.models);
-  const probe = probes.get(runtime), model = result.items[0]!;
-  if (probe?.binding === await binding(runtime, selection)) {
-    model.tested = probe.tested; model.checkedAt = probe.checkedAt;
-    if (probe.responded) model.authenticated = model.reachable = 'verified';
-  }
+  const probe = probes.get(runtime);
+  const applyProbe = async (item: Readiness['items'][number], selection: Config['model']) => {
+    if (!probe || probe.binding !== await binding(runtime, selection)) return;
+    item.tested = probe.tested; item.checkedAt = probe.checkedAt;
+    if (probe.responded) item.authenticated = item.reachable = 'verified';
+  };
+  await applyProbe(result.items[0]!, selection);
   try { result.settingsPending = json(loadConfig(runtime.store.root).config) !== json(runtime.store.config); } catch { result.settingsPending = true; }
   if (selection.provider !== runtime.store.config.model.provider || selection.id !== runtime.store.config.model.id) {
     const background = (await configurationReadiness(runtime.store.config, runtime.credentials, runtime.models)).items[0]!;
+    await applyProbe(background, runtime.store.config.model);
     result.items.push({ ...background, id: 'background-model', action: '/model default PROVIDER/ID selects background/extraction and new-chat defaults; CLI auth test explicitly tests that default' });
   }
   const disabled = JSON.parse(runtime.store.meta('extensions.disabled') ?? '[]') as string[];
