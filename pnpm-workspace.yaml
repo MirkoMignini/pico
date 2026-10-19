@@ -2,5 +2,7 @@ minimumReleaseAgeExclude:
   - cron-parser@5.10.2
 overrides:
   'node-llama-cpp>simple-git': 4.0.2
+  # shortcut: VitePress 1 pins vulnerable Vite 5; remove when VitePress ships a patched dependency.
+  'vitepress>vite': 6.4.4
 patchedDependencies:
   mem0ai@3.3.1: patches/mem0ai@3.3.1.patch
