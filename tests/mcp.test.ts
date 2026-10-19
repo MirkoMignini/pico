@@ -102,6 +102,7 @@ it('scrubs ambient credentials, uses a disposable HOME and redacts configured se
   const details = JSON.parse(result.content[0].text);
   expect(details).toMatchObject({ inherited: null, secret: '[redacted]' });
   expect(details.home).not.toBe(process.env.HOME); expect(existsSync(details.home)).toBe(true);
+  if (process.platform === 'darwin') expect(Buffer.byteLength(details.home)).toBeLessThan(40); // Leave room for browser Unix-socket suffixes.
   expect(JSON.stringify(s.store.all('SELECT result FROM operations'))).not.toContain('synthetic-quoted');
   await invoke(s, 'disconnect', { server: 'fixture' }); expect(existsSync(details.home)).toBe(false);
 });
@@ -165,6 +166,13 @@ it('cancels a real stdio call and kills only its owned server process group on d
   await invoke(s, 'disconnect', { server: 'fixture' });
   await waitFor(() => { try { process.kill(childPid, 0); return false; } catch { return true; } });
   expect((await invoke(s, 'status')).servers[0].state).toBe('not_connected');
+});
+
+it('keeps async MCP task creation behind exact approval even for an autonomous tool grant', async () => {
+  const s = await instance({ tools: ['write.record'], readOnlyTools: [], autonomousTools: ['write.record'] });
+  const prepared = await invoke(s, 'call', { server: 'fixture', name: 'write.record', arguments: { text: 'synthetic async task' }, task: { ttl: 60000 } });
+  expect(prepared.prepared).toBe(true);
+  expect(s.store.all("SELECT id FROM operations WHERE tool='mcp_autonomous'")).toEqual([]);
 });
 
 it('supports experimental legacy tasks, with terminal approval for creation and cancellation', async () => {

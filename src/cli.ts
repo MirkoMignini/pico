@@ -15,6 +15,7 @@ import { restore } from './backup.js';
 import { hash, json } from './store.js';
 import { validate } from './contracts.js';
 import { McpCredentialsSchema, mcpSettings } from './mcp-contracts.js';
+import { browserSettings, prepareBrowserDirectories, remoteBrowserSettings } from './mcp-browser.js';
 import { doctor, formatDoctor } from './doctor.js';
 import { manageService, type ServiceAction } from './service.js';
 import { NODE_VERSION, VERSION } from './version.js';
@@ -69,10 +70,13 @@ async function login(client: Client, providerId?: string, type?: AuthType, accou
   } finally { process.off('SIGINT', cancel); }
 }
 async function main(): Promise<void> {
-  const { values, positionals } = parseArgs({ options: { instance: { type:'string',short:'i' }, name:{type:'string'}, 'confirm-original-stopped':{type:'boolean'}, 'allow-reminders':{type:'boolean'}, help:{type:'boolean',short:'h'}, version:{type:'boolean',short:'v'}, json:{type:'boolean'}, offline:{type:'boolean'}, 'confirm-stop':{type:'boolean'} }, allowPositionals:true, strict:true });
+  const { values, positionals } = parseArgs({ options: { instance: { type:'string',short:'i' }, name:{type:'string'}, 'confirm-original-stopped':{type:'boolean'}, 'allow-reminders':{type:'boolean'}, help:{type:'boolean',short:'h'}, version:{type:'boolean',short:'v'}, json:{type:'boolean'}, offline:{type:'boolean'}, 'confirm-stop':{type:'boolean'}, 'bridge-root':{type:'string'}, profile:{type:'string'}, port:{type:'string'} }, allowPositionals:true, strict:true });
   const root = resolve(values.instance ?? join(homedir(),'.local','share','pico'));
   const [command = 'chat',...args] = positionals;
   const print = (value:unknown) => process.stdout.write(JSON.stringify(value,null,2).replace(/[\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'))+'\n');
+  if (command === 'browser-bridge' && (values.help || args[0] === 'help' || !args.length)) {
+    process.stdout.write('Browser-only personal Chrome bridge (macOS/Linux)\n\npico browser-bridge init /absolute/installed/@playwright/mcp/cli.js --profile "Default" [--port 8931] [--bridge-root PRIVATE_DIRECTORY]\npico browser-bridge serve [--bridge-root PRIVATE_DIRECTORY]\npico browser-bridge pair http://127.0.0.1:TUNNEL_PORT/mcp [--bridge-root PRIVATE_DIRECTORY] | ssh SERVER "pico --instance PRIVATE_INSTANCE mcp browser-remote -"\n\nInstall the official extension in the selected Chrome profile yourself. Init reads its token only through masked/stdin input; pair refuses terminal output. The authenticated MCP endpoint binds only to 127.0.0.1; use an explicitly configured private SSH tunnel. No Pico owner, existing browser profile or cookies are copied.\n'); return;
+  }
   if (values.version) { process.stdout.write(`Pico ${VERSION}\n`); return; }
   if (values.help || command === 'help') {
     process.stdout.write(`Pico ${VERSION} — private personal assistant\n\nUse: pico [--instance PRIVATE_PATH] COMMAND\n\ninit --name NAME         Initialize a NEW private owner once\nchat                     Open TUI; /setup configures services with masked dialogs\nserve                    Run the daemon in the foreground\ndoctor [--offline] [--json]  Redacted checks; never starts a daemon or calls providers\nreadiness                Current setup evidence; requires an already running daemon\nstatus                   Private detailed status; never starts a daemon\nservice install|status|start  Explicit per-user launchd/systemd management\nservice stop|restart|uninstall --confirm-stop  Idle only; close TUI clients first\nbackup | export          Private owner data operations\nrestore BACKUP --confirm-original-stopped  Offline recovery\nlogin | logout | auth | knowledge | skills | extensions | family | mcp | rpc\n\nNode ${NODE_VERSION} is required. Installation/upgrade/recovery: docs/INSTALLATION.md.\nStored credentials do not prove live access. Model/connector tests are explicit and may charge.\n`); return;
@@ -83,6 +87,25 @@ async function main(): Promise<void> {
     if (!report.ok) process.exitCode = 1; return;
   }
   if (process.versions.node !== NODE_VERSION) throw new Error(`Use the pinned Node.js ${NODE_VERSION} runtime (see .node-version)`);
+  if (command !== 'browser-bridge' && [values['bridge-root'], values.profile, values.port].some(value => value !== undefined)) throw new Error('--bridge-root, --profile and --port belong only to browser-bridge');
+  if (command === 'browser-bridge') {
+    if (values.instance || !['darwin', 'linux'].includes(process.platform)) throw new Error('Browser bridge uses its own private --bridge-root on macOS/Linux, not a Pico owner instance');
+    const directory = resolve(values['bridge-root'] ?? join(homedir(), '.local', 'share', 'pico-browser-bridge'));
+    const bridge = await import('./browser-bridge.js');
+    if (args[0] === 'init' && args.length === 2 && values.profile) {
+      let token = await secretInput('Selected Chrome profile: Playwright extension token (hidden): ', undefined, 1024);
+      try { const config = await bridge.initializeBrowserBridge(directory, args[1]!, values.profile, Number(values.port ?? '8931'), token); print({ initialized: true, bridgeId: config.id, profile: config.profile, port: config.port, next: 'Run browser-bridge serve. No browser or connector was started.' }); } finally { token = ''; }
+    } else if (args[0] === 'pair' && args.length === 2 && !values.profile && !values.port) {
+      if (process.stdout.isTTY) throw new Error('Pairing contains a credential: use a private pipe to mcp browser-remote -, never terminal/chat output');
+      print(await bridge.browserBridgePairing(directory, args[1]!));
+    } else if (args[0] === 'serve' && args.length === 1 && !values.profile && !values.port) {
+      const running = await bridge.serveBrowserBridge(directory);
+      print({ serving: true, url: running.url, warning: 'Authenticated loopback MCP only; use a private SSH tunnel. Browser actions are autonomous.' });
+      const close = () => { void running.close().catch(() => { process.exitCode = 1; }); };
+      process.once('SIGINT', close); process.once('SIGTERM', close);
+    } else throw new Error('Use browser-bridge help; tokens belong only in masked/stdin input, never arguments');
+    return;
+  }
   if (command === 'service') {
     if (args.length !== 1 || !['install','status','start','stop','restart','uninstall'].includes(args[0]!)) throw new Error('Use service install|status|start|stop|restart|uninstall; stopping/restarting requires --confirm-stop');
     print(await manageService(root, args[0] as ServiceAction, { confirmStop: !!values['confirm-stop'] })); return;
@@ -126,7 +149,27 @@ async function main(): Promise<void> {
     const [action = 'status', server, value, ...extra] = args;
     if (extra.length || value && !['call', 'read', 'prompt', 'tasks'].includes(action)) throw new Error('Unexpected MCP arguments; credentials belong only in the masked secret prompt');
     const invoke = (name: string, input: Record<string, unknown> = {}) => client.rpc(`extensions.mcp.${name}`, input);
-    if (action === 'configure') {
+    if (action === 'browser-remote') {
+      if (server !== '-') throw new Error('Use mcp browser-remote - with bridge pairing JSON through private stdin, never credential arguments');
+      let raw = await stdinText(8192);
+      try {
+        const current = await client.rpc<{ settings: unknown }>('extensions.setup', { id: 'mcp' });
+        let data: unknown; try { data = JSON.parse(raw); } catch { throw new Error('Invalid browser bridge pairing JSON'); }
+        const selected = remoteBrowserSettings(current.settings, data);
+        try {
+          await client.rpc('extensions.configure', { id: 'mcp', settings: selected.settings });
+          await client.rpc('extensions.secret', { id: 'mcp', name: 'browser-remote', value: JSON.stringify({ headers: { Authorization: `Bearer ${selected.pairing.token}` } }) });
+        } finally { selected.pairing.token = ''; }
+        print({ saved: true, next: '/mcp connect browser-remote. Keep the private tunnel and personal-computer bridge running; actions need no per-action approval.' });
+      } finally { raw = ''; }
+    } else if (action === 'browser') {
+      if (!server) throw new Error('Use mcp browser /absolute/path/to/already-installed/@playwright/mcp/cli.js; no package or browser is installed automatically');
+      const current = await client.rpc<{ settings: unknown }>('extensions.setup', { id: 'mcp' });
+      const settings = browserSettings(root, current.settings, server);
+      prepareBrowserDirectories(root);
+      await client.rpc('extensions.configure', { id: 'mcp', settings });
+      print({ saved: true, next: '/mcp connect browser; /mcp catalog browser. Selected browser tools execute autonomously, including writes/sends, without per-action approval. Login/CAPTCHA: /mcp pause browser, interact manually, /mcp resume browser.' });
+    } else if (action === 'configure') {
       if (!server) throw new Error('Use mcp configure SETTINGS.json|- (non-secret settings only)');
       const raw = server === '-' ? await stdinText(1_000_000) : await (async () => { const path = resolve(server), info = await stat(path); if (!info.isFile() || info.size > 1_000_000) throw new Error('MCP settings file exceeds limits'); return readFile(path, 'utf8'); })();
       let settings: unknown; try { settings = JSON.parse(raw); } catch { throw new Error('Invalid MCP settings JSON'); }
@@ -149,18 +192,23 @@ async function main(): Promise<void> {
         if (selected === 'yes' && review.kind === 'elicitation' && review.request?.mode !== 'url') { let text = await secretInput('Form response JSON (hidden; never enter credentials): ', undefined, 128_000); try { content = JSON.parse(text) as Record<string, unknown>; } catch { throw new Error('Invalid MCP form JSON'); } finally { text = ''; } }
         print(await invoke('requests.respond', { id: review.id, digest: review.digest, action: selected === 'yes' ? 'accept' : 'decline', ...(content ? { content } : {}) }));
       }
-    } else if (['connect', 'disconnect', 'auth', 'cancel', 'logout', 'ping'].includes(action)) {
+    } else if (['connect', 'disconnect', 'auth', 'cancel', 'logout', 'ping', 'pause', 'resume'].includes(action)) {
       if (!server) throw new Error(`Use mcp ${action} SERVER`);
       print(await invoke(action === 'cancel' ? 'auth.cancel' : action, { server }));
     } else if (action === 'status' || action === 'requests' || action === 'actions') { if (server) throw new Error(`Use mcp ${action} without arguments`); print(await invoke(action === 'actions' ? 'actions.list' : action)); }
     else if (action === 'catalog') print(await invoke('catalog', server ? { server } : {}));
-    else if (action === 'call' || action === 'prompt') {
+    else if (action === 'import' || action === 'artifact') {
+      if (!server || value) throw new Error('Use mcp import|artifact SERVER with sourceId and contentIndex or file in JSON stdin');
+      let input: unknown; try { input = JSON.parse(await stdinText(16_000)); } catch { throw new Error('Supply MCP artifact/import JSON through stdin'); }
+      if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('MCP artifact/import requires a JSON object');
+      print(await invoke(action, { ...input, server }));
+    } else if (action === 'call' || action === 'prompt') {
       if (!server || !value) throw new Error(`Use mcp ${action} SERVER NAME; supply optional JSON arguments through stdin`);
       let input: unknown; try { input = JSON.parse(process.stdin.isTTY ? '{}' : (await stdinText(1_000_000)).trim() || '{}'); } catch { throw new Error('Invalid MCP arguments JSON'); }
       print(await invoke(action, { server, name: value, arguments: input }));
     } else if (action === 'read') { if (!server || !value) throw new Error('Use mcp read SERVER URI'); print(await invoke('resource', { server, uri: value })); }
     else if (action === 'tasks') { if (!server) throw new Error('Use mcp tasks SERVER [TASK_ID]; use RPC for result/cancel'); print(await invoke('tasks', { server, action: value ? 'get' : 'list', ...(value ? { taskId: value } : {}) })); }
-    else throw new Error('MCP: configure FILE|-, secret SERVER, connect, disconnect, auth, cancel, logout, ping, status, catalog, call, read, prompt, tasks, requests, respond ID, actions, approve ID');
+    else throw new Error('MCP: browser ENTRYPOINT, browser-remote - (private pairing stdin), configure FILE|-, secret SERVER, connect, disconnect, pause, resume, auth, cancel, logout, ping, status, catalog, call, import|artifact SERVER (JSON stdin), read, prompt, tasks, requests, respond ID, actions, approve ID');
     return;
   }
   if (command === 'chat') { await chat(client); return; }

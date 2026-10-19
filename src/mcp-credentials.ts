@@ -8,7 +8,7 @@ const StoredSchema = object({ binding: Type.String({ pattern: '^[a-f0-9]{64}$' }
 export function mcpCredentialBinding(server: McpServer): string {
   return hash(json(server.transport === 'stdio'
     ? { id: server.id, transport: server.transport, command: server.command, args: server.args ?? [], cwd: server.cwd, env: server.env ?? {} }
-    : { id: server.id, transport: server.transport, url: server.url, headers: server.headers ?? {}, clientId: server.oauth?.clientId, issuer: server.oauth?.issuer, grantType: server.oauth?.grantType }));
+    : { id: server.id, transport: server.transport, url: server.url, headers: server.headers ?? {}, clientId: server.oauth?.clientId, issuer: server.oauth?.issuer, grantType: server.oauth?.grantType, ...(server.browserBridgeId ? { browserBridgeId: server.browserBridgeId } : {}) }));
 }
 export function encodeMcpCredentials(server: McpServer, value: string): string {
   let data: McpCredentials;

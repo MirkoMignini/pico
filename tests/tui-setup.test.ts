@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getCapabilities, getOsc8LinkAtColumn, setCapabilities, visibleWidth, type Terminal } from '@earendil-works/pi-tui';
 import { fauxAssistantMessage, fauxText, fauxThinking, fauxToolCall, createAssistantMessageEventStream } from '@earendil-works/pi-ai';
 import { Client } from '../src/client.js';
@@ -1190,6 +1191,41 @@ it('uses masked MCP credentials without chat/inference and rejects inline answer
   await expect(s.ui.submit('/mcp connect fixture')).rejects.toThrow('Ephemeral');
   await expect(s.ui.submit('/mcp catalog fixture')).rejects.toThrow('Ephemeral');
   await expect(s.ui.submit('/mcp respond pending')).rejects.toThrow('ephemeral');
+});
+
+it('masks and reviews remote browser pairing without sending credentials to chat or widening existing configuration on cancel', async () => {
+  const s = await connected(), pairing = { version: 1, bridgeId: crypto.randomUUID(), url: 'http://127.0.0.1:8931/mcp', token: 'r'.repeat(43) };
+  const cancel = s.ui.submit('/mcp browser-remote'); await s.see('Browser bridge pairing JSON');
+  s.replace(JSON.stringify(pairing)); s.ui.tui.renderNow(true); expect(s.screen.output).not.toContain(pairing.token);
+  s.screen.input('\r'); await s.see('Personal Chrome on another computer'); s.screen.input('\r'); await cancel;
+  expect((await s.client.rpc<any>('extensions.setup', { id: 'mcp' })).settings.servers).toEqual([]);
+  s.screen.output = '';
+  const save = s.ui.submit('/mcp browser-remote'); await s.see('Browser bridge pairing JSON');
+  s.replace(JSON.stringify(pairing)); s.screen.input('\r'); await s.see('Personal Chrome on another computer'); s.screen.input('\x1b[B'); s.screen.input('\r'); await save;
+  expect(s.screen.output).not.toContain(pairing.token);
+  expect(await s.service.runtime.credentials.secret('extensions.mcp.browser-remote')).toContain(`Bearer ${pairing.token}`);
+  expect((await s.client.rpc<any>('extensions.mcp.status')).servers[0]).toMatchObject({ id: 'browser-remote', state: 'not_connected' });
+  expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]); expect(s.faux.state.callCount).toBe(0);
+  await selectLegacyEphemeral(s); await expect(s.ui.submit('/mcp browser-remote')).rejects.toThrow('Ephemeral');
+});
+
+it('reviews the browser MCP preset with cancellation by default and exposes manual handoff without inference', async () => {
+  const s = await connected(), entrypoint = fileURLToPath(new URL('./fixtures/mcp-browser-server.mjs', import.meta.url));
+  const cancel = s.ui.submit('/mcp browser'); await s.see('Absolute path to an already installed');
+  s.replace(entrypoint); s.screen.input('\r'); await s.see('Trusted browser MCP preset'); s.screen.input('\r'); await cancel;
+  expect((await s.client.rpc<any>('extensions.setup', { id: 'mcp' })).settings.servers).toEqual([]);
+  s.screen.output = '';
+  const save = s.ui.submit('/mcp browser'); await s.see('Absolute path to an already installed');
+  s.replace(entrypoint); s.screen.input('\r'); await s.see('Trusted browser MCP preset'); s.screen.input('\x1b[B'); s.screen.input('\r'); await save;
+  expect((await s.client.rpc<any>('extensions.mcp.status')).servers[0]).toMatchObject({ id: 'browser', state: 'not_connected' });
+  await s.ui.submit('/mcp connect browser'); await s.ui.submit('/mcp pause browser');
+  expect((await s.client.rpc<any>('extensions.mcp.status')).servers[0]).toMatchObject({ state: 'connected', paused: true });
+  await s.ui.submit('/mcp resume browser');
+  expect((await s.client.rpc<any>('extensions.mcp.status')).servers[0].paused).toBe(false);
+  expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]); expect(s.faux.state.callCount).toBe(0);
+  await selectLegacyEphemeral(s);
+  await expect(s.ui.submit('/mcp browser')).rejects.toThrow('Ephemeral');
+  await expect(s.ui.submit('/mcp resume browser')).rejects.toThrow('Ephemeral');
 });
 
 it('cancels search setup without saving and rejects retired commands without sending inline keys', async () => {

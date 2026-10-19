@@ -88,4 +88,4 @@ For personal/family use, consider scanned-document OCR and better appointment/re
 
 **Target: an assistant that reliably handles a smaller set of personal tasks, explains its evidence and shows what actually happened. Breadth can follow.**
 
-This document preserves the baseline assessment; later implementation and its verification boundaries are documented in [installation/operations](INSTALLATION.md) and [testing](TESTING.md), not retroactively counted as baseline capabilities.
+This document preserves the baseline assessment; later implementation and its verification boundaries are documented in [installation/operations](INSTALLATION.md), the [browser MCP prototype](BROWSER.md) and [testing](TESTING.md), not retroactively counted as baseline capabilities.

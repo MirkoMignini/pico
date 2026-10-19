@@ -54,6 +54,7 @@ export default defineConfig({
         items: [
           { text: 'Google services', link: '/GOOGLE' },
           { text: 'MCP servers', link: '/MCP' },
+          { text: 'Browser prototype', link: '/BROWSER' },
           { text: 'Skills', link: '/SKILLS' },
         ],
       },

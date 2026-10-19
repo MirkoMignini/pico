@@ -43,6 +43,10 @@ Research has only bundled web reads and time—no automatic personal-memory acce
 
 The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://github.com/badlogic/pi-skills/tree/90bb51cae36515a648515b633a81c0c6efc8c74d/brave-search), with its [license notice](https://github.com/MirkoMignini/pico/blob/main/docs/licenses/pi-skills.txt) retained.
 
+## Optional interactive browser
+
+For JavaScript-driven or authenticated sites, use the opt-in [browser MCP prototype](BROWSER.md), not `web_fetch`. A separately installed trusted Playwright server uses a dedicated profile, or an explicitly paired extension/desktop bridge controls personal Chrome on another computer over a private SSH tunnel. Its exact tool allowlist runs autonomously from trusted owner chat, including Telegram, without per-action approval. Effects stay journaled as effects and failed/uncertain calls are not replayed. Human login/CAPTCHA handoff, bounded file-backed snapshot reads and source-linked screenshot/download imports reuse MCP and normal attachments. This is not a native browser subsystem, seamless automation or an execution sandbox.
+
 ## Existing image replies
 
 Ask Pico to show a saved image in the current conversation. `image_show` accepts a retained attachment or image-document ID and optional immutable revision; it needs neither Telegram nor image-generation credentials. Host paths, URLs, volatile/unknown/tampered originals and non-images are refused.
@@ -65,7 +69,7 @@ Private PNG files follow media retention; synthetic prompt/model/source metadata
 
 ## MCP integrations
 
-[MCP](MCP.md) connects explicitly configured trusted servers over stdio, Streamable HTTP or legacy SSE, exposing selected tools plus resources/templates, prompts and argument completion. Private header/environment credentials and OAuth are separate from chat. Server read-only hints never grant permission: unknown effects need exact single-use owner-terminal approval; optional sampling and elicitation require fresh responses. Restricted/ephemeral work cannot dispatch MCP. Server output is evidence, not owner instructions or proof of success. Local servers are not sandboxed; remote services retain their own data and cost policies.
+[MCP](MCP.md) connects explicitly configured trusted servers over stdio, Streamable HTTP or legacy SSE, exposing selected tools plus resources/templates, prompts and argument completion. Private header/environment credentials and OAuth are separate from chat. Server read-only hints never grant permission: effects not explicitly delegated through exact `autonomousTools` need single-use owner-terminal approval; optional sampling and elicitation require fresh responses. Restricted/ephemeral work cannot dispatch MCP. Server output is evidence, not owner instructions or proof of success. Local servers are not sandboxed; remote services retain their own data and cost policies.
 
 ## Verification limits
 

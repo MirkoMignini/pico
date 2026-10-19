@@ -129,10 +129,10 @@ it('pages a bounded catalog without copying schemas or hiding later registered t
     const result = request.messages.findLast(m => m.role === 'toolResult')!;
     if (result.role !== 'toolResult') throw new Error('Missing catalog');
     const page = JSON.parse((result.content[0] as { text: string }).text); for (const name of Object.values(page.groups).flat() as string[]) found.add(name);
-    expect(Object.values(page.groups).flat()).toHaveLength(6); expect(JSON.stringify(page).length).toBeLessThan(2000);
+    expect(Object.values(page.groups).flat()).toHaveLength(9); expect(JSON.stringify(page).length).toBeLessThan(2000);
     expect(page.nextOffset).toBeNull(); return answer();
   }]);
-  expect(found.size).toBe(70); expect(found).toContain('catalog_probe_29');
+  expect(found.size).toBe(73); expect(found).toContain('catalog_probe_29');
 });
 
 it('does not expose disabled or staged-but-unapproved modules', async () => {

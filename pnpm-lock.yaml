@@ -32,6 +32,9 @@ importers:
       '@modelcontextprotocol/client':
         specifier: 2.3.1
         version: 2.3.1
+      '@modelcontextprotocol/server':
+        specifier: 2.3.1
+        version: 2.3.1
       '@mozilla/readability':
         specifier: 0.6.0
         version: 0.6.0
@@ -69,9 +72,6 @@ importers:
         specifier: 2.9.1
         version: 2.9.1
     devDependencies:
-      '@modelcontextprotocol/server':
-        specifier: 2.3.1
-        version: 2.3.1
       '@types/jsdom':
         specifier: 30.0.0
         version: 30.0.0

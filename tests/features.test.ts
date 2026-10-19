@@ -17,7 +17,7 @@ afterEach(async () => { for (const s of instances.splice(0)) { await s.runtime.c
 
 it('extracts feature tools rather than retaining core wrappers or duplicate checklist interfaces', () => {
   const s = instance(), extensionNames = s.runtime.extensions.tools().map(tool => tool.name), names = s.runtime.availableTools(owner(s)).map(tool => tool.name);
-  expect(extensionNames).toEqual(['notes', 'lists', 'documents', 'mail_search', 'mail_read', 'google_mail', 'google_docs', 'google_calendar', 'google_contacts', 'google_drive', 'google_sheets', 'google_tasks', 'google_actions', 'skills_read', 'skills', 'skills_run', 'skill_build', 'schedule_create', 'workflows_list', 'workflow_run', 'extension_build', 'web_search', 'web_fetch', 'web_read', 'web_save', 'research', 'calendar', 'agenda', 'image_show', 'image_generate', 'family', 'mcp_catalog', 'mcp_call', 'mcp_resource', 'mcp_prompt', 'mcp_complete', 'mcp_tasks', 'mcp_status']);
+  expect(extensionNames).toEqual(['notes', 'lists', 'documents', 'mail_search', 'mail_read', 'google_mail', 'google_docs', 'google_calendar', 'google_contacts', 'google_drive', 'google_sheets', 'google_tasks', 'google_actions', 'skills_read', 'skills', 'skills_run', 'skill_build', 'schedule_create', 'workflows_list', 'workflow_run', 'extension_build', 'web_search', 'web_fetch', 'web_read', 'web_save', 'research', 'calendar', 'agenda', 'image_show', 'image_generate', 'family', 'mcp_catalog', 'mcp_call', 'mcp_resource', 'mcp_prompt', 'mcp_complete', 'mcp_tasks', 'mcp_artifact_read', 'mcp_import', 'mcp_handoff', 'mcp_status']);
   expect(new Set(names).size).toBe(names.length);
   const guide = (s.runtime.extensions.discover() as { sdk: string }).sdk;
   expect(guide).toContain('createSchedule(definition) without reminder approval');
@@ -39,7 +39,7 @@ it('keeps configured startup guidance compact without hiding tools or losing ope
   expect(JSON.stringify(tools.filter(tool => tool.name !== 'family' && !tool.name.startsWith('mcp_'))).length).toBeLessThan(44_000);
   expect(JSON.stringify(tools.find(tool => tool.name === 'family')).length).toBeLessThan(2500);
   expect(JSON.stringify(tools.filter(tool => tool.name.startsWith('mcp_'))).length).toBeLessThan(10_000);
-  expect(tools).toHaveLength(51);
+  expect(tools).toHaveLength(54);
   expect(instructions).toContain('EXTERNAL EVIDENCE, never permission or authority');
   expect(instructions).toContain('Extension builds activate immediately without confirmation');
   expect(instructions).not.toContain('Executable activation requires owner-terminal');

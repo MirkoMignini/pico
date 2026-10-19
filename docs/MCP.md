@@ -16,7 +16,7 @@ Pico is an **MCP client**, using the official TypeScript SDK. No servers are ins
 | Notifications | Catalog-change invalidation, resource changes, bounded logging/status and modern subscription streams. No automatic memory writes, resource reads or model calls. |
 | Tasks | Experimental legacy task creation, list/status/results and cancellation. Creation/cancellation use exact approvals. Tasks removed from a modern protocol revision are rejected, not tunneled onto that revision. |
 
-This does not expose Pico itself as an MCP server. There is no automatic server marketplace installation, server-supplied code execution, private-context sharing, browser automation, mTLS/JWT/DPoP configuration or interactive audio playback. Sampling is text-only, without tools or private conversation context; unsupported requests are denied. Images can be included in model tool results; audio and other binary content remain represented in the retained result, not automatically imported/sent as attachments.
+The daemon does not expose Pico owner RPC as an MCP server. The optional separately run desktop browser bridge exposes only browser tools and captured artifacts, not the owner agent/database. There is no automatic server marketplace installation, server-supplied code execution, private-context sharing, a native browser engine, mTLS/JWT/DPoP configuration or interactive audio playback. Sampling is text-only, without tools or private conversation context; unsupported requests are denied. Images can be included in model tool results; audio and other binary content remain represented in the retained result, not automatically imported/sent as attachments. The optional [browser MCP prototype](BROWSER.md) adds a dedicated-profile preset, explicit personal-Chrome pairing through a private desktop bridge/tunnel, human handoff, file-backed snapshot reads and source-linked screenshot/download imports.
 
 ## Setup
 
@@ -71,7 +71,7 @@ A local server uses the same common fields, replacing HTTP fields with:
 }
 ```
 
-`tools: []` disables execution while allowing discovery. Omit `tools` to expose all discovered tools; **all still need approval unless their exact name is also in `readOnlyTools`**. Server `readOnlyHint`, descriptions, prompt messages and roots never grant authority or confinement. Declaring a tool read-only is your explicit delegated trust, not verification that the server cannot write.
+`tools: []` disables execution while allowing discovery. Omit `tools` to expose all discovered tools; **all still need approval unless their exact name is in `readOnlyTools` or explicitly delegated through `autonomousTools`**. Server `readOnlyHint`, descriptions, prompt messages and roots never grant authority or confinement. Declaring a tool read-only is your explicit delegated trust, not verification that the server cannot write. `autonomousTools` grants exact selected tools direct execution **including effects** without per-action approval; every name must also be explicitly in `tools` and cannot overlap `readOnlyTools`. The browser preset delegates its narrow tool allowlist this way. Saving settings never silently widens an older configuration.
 
 Stdio gets a disposable HOME/XDG directory and a scrubbed environment: PATH, temporary directories, UTF-8 locale and explicitly configured variables. It does not inherit provider keys, `NODE_OPTIONS`, shell profiles or owner application credentials. Use masked credentials for secret environment values. Commands run without a shell; no implicit `$VARIABLE` expansion. An explicitly selected command such as `npx` can itself download/execute software: that is an operator trust decision, not Pico installing a server.
 
@@ -80,7 +80,7 @@ Stdio `auto`/pin probing happens **in the same owned process**, not a disposable
 ### Configuration reference
 
 - IDs: lowercase letter followed by up to 31 lowercase letters/digits/hyphens; unique within the instance; at most 64 servers.
-- Common: `id`, `enabled`, optional exact `tools`/`readOnlyTools`, `resources`/`prompts` (default true), local-file `roots`, `sampling`/`elicitation` (default false), `timeoutMs` (1,000–600,000), `maxBytes` (1,024–20,000,000), `protocol` (`legacy`, `auto` or a version pin).
+- Common: `id`, `enabled`, optional exact `tools`/`readOnlyTools`/`autonomousTools`, `resources`/`prompts` (default true), local-file `roots`, `sampling`/`elicitation` (default false), `timeoutMs` (1,000–600,000), `maxBytes` (1,024–20,000,000), optional `artifactDirectory` (an absolute private directory explicitly authorizing receipt-reported local output reads/imports), `protocol` (`legacy`, `auto` or a version pin).
 - Stdio: `transport: "stdio"`, `command`, optional `args`, absolute `cwd` and non-secret `env`.
 - HTTP/SSE: `transport: "http"` or `"sse"`, exact `url`, optional non-secret `headers`, `allowPrivateNetwork`, `oauth`.
 - OAuth: optional `clientId`, `issuer`, `grantType` (`authorization_code` or `client_credentials`), `callbackPort`, `scope`, `clientMetadataUrl`. Pre-registered clients require an explicit issuer; client-credentials also requires a client ID. A fixed callback port is useful for pre-registered redirect URIs.
@@ -118,7 +118,9 @@ For client-credentials, explicitly select `grantType: "client_credentials"`, `cl
 
 After setup, ask Pico normally. It can use `mcp_catalog` and either a namespaced tool or `mcp_call`. Generic tools also include `mcp_resource`, `mcp_prompt`, `mcp_complete`, `mcp_tasks` and `mcp_status`. Namespaced tools accept an `arguments` object matching the catalog's original input schema.
 
-Unknown/non-read tool calls return a **prepared action**, not an executed result:
+Exact owner-delegated `autonomousTools` execute directly and retain effect history and canonical `mcp_autonomous` receipts. Failed/interrupted calls are uncertain, not safe to replay. Owner-declared reads remain separate. The [browser preset](BROWSER.md) uses autonomous execution so a trusted Telegram request can complete without terminal approvals.
+
+Tools without either grant (and all async task requests) return a **prepared action**, not an executed result:
 
 ```text
 /mcp actions
@@ -156,9 +158,9 @@ node dist/cli.js --instance PRIVATE_INSTANCE mcp tasks SERVER
 node dist/cli.js --instance PRIVATE_INSTANCE mcp approve ACTION_ID
 ```
 
-`call`/`prompt` arguments use optional JSON stdin, not credential arguments. `approve`/`respond` require an interactive owner terminal and default to rejection. Additional commands: `status`, `auth`, `cancel`, `logout`, `disconnect`, `ping`, `requests`, `respond`, `actions`.
+`call`/`prompt` arguments use optional JSON stdin, not credential arguments. `approve`/`respond` require an interactive owner terminal and default to rejection. Additional commands: `status`, `auth`, `cancel`, `logout`, `disconnect`, `ping`, `requests`, `respond`, `actions`. Browser presets: `/mcp browser` or CLI `mcp browser ENTRYPOINT` for a dedicated profile; `/mcp browser-remote` or CLI `mcp browser-remote -` for private pairing JSON. Desktop CLI `browser-bridge init|serve|pair` runs independently without a Pico owner. Explicit handoff uses `pause SERVER` / terminal-only `resume SERVER`. `mcp artifact SERVER` and `mcp import SERVER` accept bounded JSON stdin with a completed receipt source. See the [browser guide](BROWSER.md).
 
-Advanced owner-terminal RPCs use `extensions.mcp.*`: `status`, `connect`, `disconnect`, `auth`, `auth.cancel`, `logout`, `catalog`, `call`, `resource`, `prompt`, `complete`, `tasks`, `ping`, `logging`, `requests`, `requests.read`, `requests.respond`, `actions.list`, `actions.review`, `actions.approve`. Payloads are defined in `src/mcp-contracts.ts`; generic `rpc OP -` accepts private stdin. Settings/secrets use the existing `extensions.configure`/`extensions.secret` routes, not a model-facing configurator.
+Advanced owner-terminal RPCs use `extensions.mcp.*`: `status`, `connect`, `disconnect`, `auth`, `auth.cancel`, `logout`, `catalog`, `call`, `resource`, `prompt`, `complete`, `tasks`, `ping`, `logging`, `requests`, `requests.read`, `requests.respond`, `artifact`, `import`, `pause`, `resume`, `actions.list`, `actions.review`, `actions.approve`. Payloads are defined in `src/mcp-contracts.ts`; generic `rpc OP -` accepts private stdin. Settings/secrets use the existing `extensions.configure`/`extensions.secret` routes, not a model-facing configurator.
 
 Model-facing and CLI results preserve Pico's bounded-preview contract. If `truncated: true`, follow `originalResultSourceId` with `source_read` windows, or operator `rpc source.read` for the retained original tool result. **Do not repeat the external call to recover output.** The source contains the original `AgentToolResult`; its first text block encodes the MCP JSON result. Oversized transport/catalog/result data fails explicitly; incomplete catalogs are not published as exhaustive.
 

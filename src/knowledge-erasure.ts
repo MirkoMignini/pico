@@ -12,8 +12,12 @@ import { cleanupSkills } from './skills.js';
  * assistant/tool messages, summaries and deliveries; other conversations are untouched.
  */
 export function purgeErasedContext(store:Store,scope:ErasureScope):void {
-  const runs=[...scope.runs];if(!runs.length)return;
-  const ids=json(runs);
+  if(!scope.runs.size)return;
+  for(const doc of store.all<{id:string;title:string}>("SELECT d.id,d.title FROM documents d JOIN operations o ON d.source_id='operation:'||o.id WHERE d.deleted_at IS NULL AND o.run_id IN(SELECT value FROM json_each(?))",json([...scope.runs]))) {
+    if(scope.deferDependents)scope.deferred.set(doc.id,doc.title);
+    else eraseDocument(store,doc.id,true,scope);
+  }
+  const ids=json([...scope.runs]);
   const deliveries=store.all<{id:string}>("SELECT id FROM outbox WHERE id IN(SELECT 'reply:'||value FROM json_each(?)) OR id IN(SELECT 'task:'||id FROM occurrences WHERE run_id IN(SELECT value FROM json_each(?)))",ids,ids);
   if(deliveries.length){const outbox=json(deliveries.map(row=>row.id));store.run('DELETE FROM feedback WHERE notification_id IN(SELECT value FROM json_each(?))',outbox);store.run('DELETE FROM outbox WHERE id IN(SELECT value FROM json_each(?))',outbox);}
   store.run("DELETE FROM retrieval WHERE source_id IN(SELECT m.id FROM messages m JOIN json_each(?) ON json_each.value=m.run_id WHERE m.role!='user')",ids);
