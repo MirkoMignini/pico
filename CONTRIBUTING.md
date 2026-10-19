@@ -1,6 +1,6 @@
-# Contributing to Pico
+# Contributing to Pikobot
 
-Small, complete changes are welcome: bug fixes, focused tests, clearer documentation and useful integrations. Pico is early-stage software; avoid unrelated refactors or new infrastructure for a narrow fix.
+Small, complete changes are welcome: bug fixes, focused tests, clearer documentation and useful integrations. Pikobot is early-stage software; avoid unrelated refactors or new infrastructure for a narrow fix.
 
 ## Local setup
 
@@ -17,7 +17,7 @@ Use synthetic data and a disposable instance, never your operational assistant. 
 
 ## Documentation site
 
-The [documentation site](https://mirkomignini.github.io/pico/) uses the existing `docs/*.md` guides directly. Edit those files, not generated HTML. The homepage and navigation live in `docs/index.md` and `docs/.vitepress/config.mts`; research proposals and internal comparisons are intentionally excluded. Links to source, fixtures and other repository-only files stay on GitHub.
+The [documentation site](https://mirkomignini.github.io/pikobot/) uses the existing `docs/*.md` guides directly. Edit those files, not generated HTML. The homepage and navigation live in `docs/index.md` and `docs/.vitepress/config.mts`; research proposals and internal comparisons are intentionally excluded. Links to source, fixtures and other repository-only files stay on GitHub.
 
 ```sh
 pnpm docs:dev      # Local authoring preview
@@ -25,7 +25,7 @@ pnpm docs:build    # Production build plus local links, anchors and asset checks
 pnpm docs:preview  # Serve the production build
 ```
 
-The Documentation workflow checks every PR and publishes GitHub Pages after every push to `main`, including documentation-only updates. Failed builds do not replace the published site. Pages uses GitHub Actions as its deployment source; `workflow_dispatch` permits a manual rebuild. No provider credentials, instance data or running Pico daemon are needed.
+The Documentation workflow checks every PR and publishes GitHub Pages after every push to `main`, including documentation-only updates. Failed builds do not replace the published site. Pages uses GitHub Actions as its deployment source; `workflow_dispatch` permits a manual rebuild. No provider credentials, instance data or running Pikobot daemon are needed.
 
 ## Making a change
 
@@ -50,6 +50,6 @@ Live billed requests, connector activity, deployments, owner restarts and destru
 
 ## Reporting problems
 
-Include the Pico revision, Node/pnpm versions, platform, minimal synthetic reproduction and expected/actual behavior. Redact logs before sharing: prompts, instruction snapshots and tool receipts can contain private data.
+Include the Pikobot revision, Node/pnpm versions, platform, minimal synthetic reproduction and expected/actual behavior. Redact logs before sharing: prompts, instruction snapshots and tool receipts can contain private data.
 
 Do not report credentials or exploitable private details in a public issue. See the [security reporting guidance](docs/SECURITY.md#reporting-a-security-issue).

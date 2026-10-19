@@ -8,13 +8,13 @@ import { fileURLToPath } from 'node:url';
 
 function main() {
   const { values } = parseArgs({ options: { help: { type: 'boolean' }, output: { type: 'string' }, ref: { type: 'string' } }, strict: true });
-  if (values.help) { console.log('Create a versioned Pico source archive and SHA256SUMS from an exact committed Git ref.\nnode scripts/release.mjs --output NEW_DIRECTORY [--ref HEAD|TAG|COMMIT]\nUncommitted changes, .git, instances, credentials and caches are not copied.\nNo publication, installation, inference or deployment occurs. Run CI before release.'); return; }
+  if (values.help) { console.log('Create a versioned Pikobot source archive and SHA256SUMS from an exact committed Git ref.\nnode scripts/release.mjs --output NEW_DIRECTORY [--ref HEAD|TAG|COMMIT]\nUncommitted changes, .git, instances, credentials and caches are not copied.\nNo publication, installation, inference or deployment occurs. Run CI before release.'); return; }
   if (!values.output) throw new Error('Use --output NEW_DIRECTORY; existing output directories are never overwritten');
   const repo = fileURLToPath(new URL('../', import.meta.url));
   const git = args => execFileSync('git', ['-C', repo, ...args], { maxBuffer: 20_000_000 });
   const revision = git(['rev-parse', '--verify', '--end-of-options', `${values.ref ?? 'HEAD'}^{commit}`]).toString().trim();
   const pkg = JSON.parse(git(['show', `${revision}:package.json`]).toString());
-  if (pkg.name !== 'pico-assistant' || !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(pkg.version)) throw new Error('Selected commit is not a versioned Pico source tree');
+  if (pkg.name !== 'pikobot' || !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(pkg.version)) throw new Error('Selected commit is not a versioned Pikobot source tree');
   if (values.ref?.startsWith('v') && values.ref !== `v${pkg.version}`) throw new Error('Release tag must match package.json version exactly');
   const output = resolve(values.output); if (existsSync(output)) throw new Error('Output directory already exists');
   const allowed = ['.node-version', '.gitignore', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'tsconfig.json', 'README.md', 'LICENSE', 'SECURITY.md', 'CONTRIBUTING.md', 'AGENTS.md', 'src', 'migrations', 'patches', 'docs', 'examples', 'scripts', 'tests', 'eval', 'deploy', '.github'];
@@ -24,9 +24,9 @@ function main() {
   const modes = git(['ls-tree', '-r', revision, '--', ...allowed]).toString().split('\n').filter(Boolean);
   if (modes.some(line => !/^100(?:644|755) blob /.test(line))) throw new Error('Release inputs must be regular tracked files, not symlinks or submodules');
   mkdirSync(output, { recursive: false, mode: 0o700 });
-  const name = `pico-${pkg.version}-source.tar.gz`, archive = join(output, name);
+  const name = `pikobot-${pkg.version}-source.tar.gz`, archive = join(output, name);
   try {
-    git(['archive', '--format=tar.gz', `--prefix=pico-${pkg.version}/`, `--output=${archive}`, revision, '--', ...paths]);
+    git(['archive', '--format=tar.gz', `--prefix=pikobot-${pkg.version}/`, `--output=${archive}`, revision, '--', ...paths]);
     const sha256 = createHash('sha256').update(readFileSync(archive)).digest('hex');
     writeFileSync(join(output, 'SHA256SUMS'), `${sha256}  ${name}\n`, { mode: 0o600, flag: 'wx' });
     writeFileSync(join(output, 'release.json'), JSON.stringify({ version: pkg.version, revision, archive: name, sha256, kind: 'source', verification: 'Run check/build/tests and secret/dependency review separately; this command does not certify the build.' }, null, 2) + '\n', { mode: 0o600, flag: 'wx' });

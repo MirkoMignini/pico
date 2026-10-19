@@ -97,7 +97,7 @@ it('citation repair cannot create, change or delete calendar state',async()=>{
   const s=instance(),event=await invoke(s,definition()),before=s.store.all('SELECT * FROM calendar_events');
   for(const args of [definition(),{action:'update',id:event.id,expectedRevision:1,title:'Denied repair'},{action:'delete',id:event.id,expectedRevision:1}]){
     const conversation=s.runtime.newConversation('Synthetic citation repair');
-    s.faux.appendResponses([fauxAssistantMessage([fauxText(`Invalid pico:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`)]),fauxAssistantMessage([fauxToolCall('calendar',args)],{stopReason:'toolUse'}),fauxAssistantMessage([fauxText('No grounded evidence available.')])]);
+    s.faux.appendResponses([fauxAssistantMessage([fauxText(`Invalid pikobot:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`)]),fauxAssistantMessage([fauxToolCall('calendar',args)],{stopReason:'toolUse'}),fauxAssistantMessage([fauxText('No grounded evidence available.')])]);
     const run=await s.runtime.ingest({requestId:crypto.randomUUID(),conversationId:conversation.id,text:'Read planning evidence'},source);
     await waitFor(()=>s.runtime.run(run.id).status==='completed');
     const result=s.store.all<{body:string}>("SELECT body FROM messages WHERE run_id=? AND role='toolResult'",run.id).map(row=>JSON.parse(row.body))[0];expect(result.isError).toBe(true);
@@ -147,7 +147,7 @@ it('survives reconstruction/backup/export and reapplies event deletion tombstone
   const s=instance(),event=await invoke(s,definition());expect((exportData(s.store) as any).calendarEvents).toHaveLength(1);
   const reminder=s.runtime.scheduler.create({text:'Independent alert',at:'2099-10-15T07:00Z',timezone:'UTC',kind:'reminder',destination:'terminal',misfire:'once'},'Synthetic');s.store.run('INSERT INTO schedule_sources VALUES(?,?)',reminder.id,`calendar:${event.id}`);
   await s.runtime.close();s.runtime=new Runtime(s.store,s.runtime.models);expect(s.runtime.calendar.read(event.id).title).toBe('Dentist');
-  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-planning-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
+  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-planning-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
   await invoke(s,{action:'delete',id:event.id,expectedRevision:1});expect(s.runtime.scheduler.list()).toHaveLength(1);
   await s.runtime.close();s.store.close();instances.splice(instances.indexOf(s),1);directories.push(s.root);await restore(s.root,external,true);
   const restored=new Store(s.root,s.config);try{expect(restored.all('SELECT * FROM calendar_events')).toEqual([]);expect(restored.all('SELECT * FROM schedules')).toHaveLength(1);expect(restored.all('PRAGMA foreign_key_check')).toEqual([]);}finally{restored.close();}
@@ -156,7 +156,7 @@ it('forgetting input sources removes derived appointments and linked reminders, 
   const s=instance(),created=await turn(s,definition()),event=JSON.parse(created.result.content[0].text),user=s.store.get<{id:string;text:string}>("SELECT id,text FROM messages WHERE run_id=? AND role='user'",created.run.id)!;
   const memory=s.runtime.memory.remember({sourceId:user.id,entity:`owner:${s.config.ownerId}`,kind:'fact',key:'synthetic-appointment',value:user.text,quote:user.text,eventAt:Date.now()},false);
   const reminder=s.runtime.scheduler.create({text:'Derived alert',at:'2099-10-15T07:00Z',timezone:'UTC',kind:'reminder',destination:'terminal',misfire:'once'},'Synthetic');s.store.run('INSERT INTO schedule_sources VALUES(?,?)',reminder.id,`calendar:${event.id}`);
-  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-planning-forget-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
+  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-planning-forget-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
   await s.runtime.forget(memory.id);expect(s.store.all('SELECT * FROM calendar_events')).toEqual([]);expect(s.runtime.scheduler.list()).toEqual([]);
   await s.runtime.close();s.store.close();instances.splice(instances.indexOf(s),1);directories.push(s.root);await restore(s.root,external,true);
   const restored=new Store(s.root,s.config);try{expect(restored.all('SELECT * FROM calendar_events')).toEqual([]);expect(restored.all('SELECT * FROM schedules')).toEqual([]);expect(restored.all('PRAGMA foreign_key_check')).toEqual([]);}finally{restored.close();}

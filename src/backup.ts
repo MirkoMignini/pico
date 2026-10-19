@@ -26,8 +26,8 @@ export async function backup(store: Store): Promise<{ path: string; manifest: Ba
   const destination = join(store.root, 'backups', `${new Date().toISOString().replaceAll(':','-')}-${id()}`);
   await mkdir(join(destination, 'attachments'), { recursive: true, mode: 0o700 });
   try {
-    await sqliteBackup(store.db, join(destination, 'pico.sqlite'));
-    const snapshot = new DatabaseSync(join(destination, 'pico.sqlite'), { readOnly: true });
+    await sqliteBackup(store.db, join(destination, 'pikobot.sqlite'));
+    const snapshot = new DatabaseSync(join(destination, 'pikobot.sqlite'), { readOnly: true });
     const attachments = snapshot.prepare("SELECT id,hash FROM attachments WHERE status!='expired'").all() as { id: string; hash: string }[];
     snapshot.close();
     const snapshotStore=new Store(destination,store.config);let knowledge:{path:string;hash:string}[];
@@ -42,7 +42,7 @@ export async function backup(store: Store): Promise<{ path: string; manifest: Ba
     }
     for(const file of knowledge){const content=await readFile(join(store.root,file.path));if(hash(content)!==file.hash)throw new Error('Knowledge integrity failure during backup');await mkdir(join(destination,file.path,'..'),{recursive:true,mode:0o700});await writeFile(join(destination,file.path),content,{mode:0o600});files.push(file);}
     await copyFile(join(store.root,'config.json'),join(destination,'config.json'));
-    for (const path of ['config.json','pico.sqlite']) files.push({ path, hash: hash(await readFile(join(destination,path))) });
+    for (const path of ['config.json','pikobot.sqlite']) files.push({ path, hash: hash(await readFile(join(destination,path))) });
     if(existsSync(join(store.root,'deletion-ledger.json'))){await copyFile(join(store.root,'deletion-ledger.json'),join(destination,'deletion-ledger.json'));files.push({path:'deletion-ledger.json',hash:hash(await readFile(join(destination,'deletion-ledger.json')))});}
     const manifest: BackupManifest = { version: 1, ownerId: store.config.ownerId, instanceId: store.config.instanceId, createdAt: Date.now(), files, credentials: 'excluded' };
     atomicWrite(join(destination,'manifest.json'),json(manifest));
@@ -52,7 +52,7 @@ export async function backup(store: Store): Promise<{ path: string; manifest: Ba
   } catch (error) { await rm(destination, { recursive: true, force: true }); throw error; }
 }
 export function exportData(store: Store): unknown {
-  return { format: 'pico-export-v1', owner: { id: store.config.ownerId, name: store.config.ownerName }, assistant: { id: `assistant:${store.config.instanceId}`, name: 'Pico' },
+  return { format: 'pikobot-export-v1', owner: { id: store.config.ownerId, name: store.config.ownerName }, assistant: { id: `assistant:${store.config.instanceId}`, name: 'Pikobot' },
     conversations: store.all('SELECT * FROM conversations'), messages: store.all('SELECT id,conversation_id,actor,role,text,event_at FROM messages ORDER BY rowid'),
     memories: store.all('SELECT * FROM memories'), memoryEvidence: store.all('SELECT * FROM memory_evidence'), memoryDependencies: store.all('SELECT * FROM memory_dependencies'), memoryTags: store.all('SELECT * FROM memory_tags ORDER BY memory_id,tag'), skills: store.all('SELECT * FROM skills'), schedules: store.all('SELECT * FROM schedules'),
     skillPackages:store.all('SELECT * FROM skill_packages'),skillFiles:store.all<{skill_id:string;version:number;path:string;hash:string;content:Uint8Array;executable:number}>('SELECT * FROM skill_files').map(({content,...file})=>({...file,encoding:'base64',content:Buffer.from(content).toString('base64')})),skillDependencies:store.all('SELECT * FROM skill_sources'),
@@ -85,7 +85,7 @@ export async function restore(rootPath: string, backupPath: string, originalStop
       const content = await readFile(join(source,file.path));
       if (hash(content) !== file.hash) throw new Error('Backup integrity failure');
       await mkdir(join(staged,file.path,'..'),{recursive:true,mode:0o700});
-      await writeFile(join(staged,file.path===database?'pico.sqlite':file.path),content,{mode:0o600});
+      await writeFile(join(staged,file.path===database?'pikobot.sqlite':file.path),content,{mode:0o600});
     }
     const stagedStore=new Store(staged,config),db=stagedStore.db;
     db.exec('PRAGMA foreign_keys=ON; PRAGMA secure_delete=ON');
@@ -99,7 +99,7 @@ export async function restore(rootPath: string, backupPath: string, originalStop
     const integrity = db.prepare('PRAGMA integrity_check').get() as { integrity_check: string };
     if (integrity.integrity_check !== 'ok' || db.prepare('PRAGMA foreign_key_check').all().length) { db.close(); throw new Error('Backup database integrity failure'); }
     const ledger = new Set<string>();
-    if (existsSync(join(root,'pico.sqlite'))) { const current = new Store(root,config); try { for (const row of current.all<{hash:string}>('SELECT hash FROM deletions')) ledger.add(row.hash); } finally { current.close(); } }
+    if (existsSync(join(root,'pikobot.sqlite'))) { const current = new Store(root,config); try { for (const row of current.all<{hash:string}>('SELECT hash FROM deletions')) ledger.add(row.hash); } finally { current.close(); } }
     for (const path of [join(root,'deletion-ledger.json'),...(manifest.files.some(f=>f.path==='deletion-ledger.json')?[join(staged,'deletion-ledger.json')]:[])]) if (existsSync(path)) for (const entry of JSON.parse(await readFile(path,'utf8')) as string[]) ledger.add(entry);
     for (const row of db.prepare('SELECT hash FROM deletions').all() as { hash: string }[]) ledger.add(row.hash);
     const sources = new Set<string>();
@@ -171,8 +171,8 @@ export async function restore(rootPath: string, backupPath: string, originalStop
     for(const file of remainingKnowledge){await mkdir(join(root,file.path,'..'),{recursive:true,mode:0o700});await copyFile(join(staged,file.path),join(root,file.path));}
     for(const name of ['qmd.sqlite','qmd.sqlite-wal','qmd.sqlite-shm'])await rm(join(root,'knowledge',name),{force:true});
     await rm(join(root,'knowledge','searchable'),{recursive:true,force:true});
-    for (const suffix of ['-wal','-shm']) await rm(join(root,`pico.sqlite${suffix}`),{force:true});
-    await import('node:fs/promises').then(fs => fs.rename(join(staged,'pico.sqlite'),join(root,'pico.sqlite')));
+    for (const suffix of ['-wal','-shm']) await rm(join(root,`pikobot.sqlite${suffix}`),{force:true});
+    await import('node:fs/promises').then(fs => fs.rename(join(staged,'pikobot.sqlite'),join(root,'pikobot.sqlite')));
     if (ledger.size) atomicWrite(join(root,'deletion-ledger.json'),json([...ledger]));
   } finally { await rm(staged,{recursive:true,force:true}); unlock(); }
 }

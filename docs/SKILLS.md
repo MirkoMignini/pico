@@ -1,6 +1,6 @@
 # Standard Agent Skills
 
-Pico supports the [Agent Skills format](https://agentskills.io/specification): a named directory with `SKILL.md`, YAML frontmatter, Markdown instructions, and optional scripts, references, assets and other supporting files. This is independent of Pi's coding-agent runtime and global plugins.
+Pikobot supports the [Agent Skills format](https://agentskills.io/specification): a named directory with `SKILL.md`, YAML frontmatter, Markdown instructions, and optional scripts, references, assets and other supporting files. This is independent of Pi's coding-agent runtime and global plugins.
 
 ## Skill or extension?
 
@@ -10,7 +10,7 @@ Pico supports the [Agent Skills format](https://agentskills.io/specification): a
 | Instructions and files load progressively; scripts execute only when called | Imports/factories execute in the daemon when enabled/loaded |
 | One shared `skills_run` tool, temporary package work copy | Permanently registered native tools/hooks |
 
-Both can execute code with the OS user's permissions. **Neither is a security sandbox.** A skill is the default for a text-analysis utility, not a way to make arbitrary downloaded code safe. `allowed-tools` is advisory metadata, never permission or a bypass of Pico's mode/ownership checks.
+Both can execute code with the OS user's permissions. **Neither is a security sandbox.** A skill is the default for a text-analysis utility, not a way to make arbitrary downloaded code safe. `allowed-tools` is advisory metadata, never permission or a bypass of Pikobot's mode/ownership checks.
 
 ## Discovery
 
@@ -28,11 +28,11 @@ PRIVATE_INSTANCE/
     another-skill/SKILL.md
 ```
 
-Pico scans at startup, in background work, before retained owner turns and before package operations. A duplicate lower-priority name is diagnosed, not merged. Invalid or missing packages are held inactive. Unchanged content retains its revision; changed valid content creates a new revision. Disabled packages remain disabled across edits/restarts. Filesystem drop-ins are an operator trust decision, not untrusted chat attachments.
+Pikobot scans at startup, in background work, before retained owner turns and before package operations. A duplicate lower-priority name is diagnosed, not merged. Invalid or missing packages are held inactive. Unchanged content retains its revision; changed valid content creates a new revision. Disabled packages remain disabled across edits/restarts. Filesystem drop-ins are an operator trust decision, not untrusted chat attachments.
 
 There is no recursive search of arbitrary project/home folders, `~/.pi`, global skill/plugin discovery, symlink following or ambient credential import. Import an explicitly selected external directory instead. The daemon's host is authoritative: a client-side path on a remote computer is not an upload.
 
-At conversation startup Pico supplies a bounded catalog of names, descriptions, hashes and package locations—not all procedure bodies. It selects matching skills by description, then reads `SKILL.md`; `$example-skill` explicitly activates it. Current instruction bodies are reinserted independently of history/compaction. References and scripts are read on demand, with text pagination; binary resources are available to scripts and ZIP export. At most eight active instruction sets and half the configured context-character budget are allowed per conversation. Keep SKILL.md short and move long material into references.
+At conversation startup Pikobot supplies a bounded catalog of names, descriptions, hashes and package locations—not all procedure bodies. It selects matching skills by description, then reads `SKILL.md`; `$example-skill` explicitly activates it. Current instruction bodies are reinserted independently of history/compaction. References and scripts are read on demand, with text pagination; binary resources are available to scripts and ZIP export. At most eight active instruction sets and half the configured context-character budget are allowed per conversation. Keep SKILL.md short and move long material into references.
 
 ## Creation and existing files
 
@@ -69,9 +69,9 @@ Trusted extensions use the same canonical services: `context.services.readSkill(
 
 The runner copies the immutable DB snapshot into a private temporary directory. Current working directory is that package root; resolve `scripts/`, `references/` and `assets/` relative to it. Input files appear under `inputs/`; request retained output paths explicitly, normally under `outputs/`. Scripts can import sibling helpers. Temporary work is removed after settlement; publication does not execute imports or scripts.
 
-Supported runtimes: Node.js (`.js/.mjs/.cjs/.ts/.mts/.cts`), Python (`python3`), Bash, Ruby and Perl **when installed**. Node uses the running pinned executable; TypeScript supports Node's erasable syntax, not JSX or runtime-only TS constructs. Other runtimes/dependencies must be installed explicitly by the operator; compatibility metadata describes prerequisites. Pico does not run pip/npm/uv installers, provision containers, borrow provider keys or translate arbitrary host-specific tool APIs automatically. An otherwise valid skill can need unavailable tools, dependencies or APIs; report the actual blocker rather than promising universal execution compatibility.
+Supported runtimes: Node.js (`.js/.mjs/.cjs/.ts/.mts/.cts`), Python (`python3`), Bash, Ruby and Perl **when installed**. Node uses the running pinned executable; TypeScript supports Node's erasable syntax, not JSX or runtime-only TS constructs. Other runtimes/dependencies must be installed explicitly by the operator; compatibility metadata describes prerequisites. Pikobot does not run pip/npm/uv installers, provision containers, borrow provider keys or translate arbitrary host-specific tool APIs automatically. An otherwise valid skill can need unavailable tools, dependencies or APIs; report the actual blocker rather than promising universal execution compatibility.
 
-The child receives a small environment with temporary HOME/XDG/TMP locations, PATH and `PICO_SKILL_ROOT`, `PICO_SKILL_INPUTS`, `PICO_SKILL_OUTPUTS`; provider keys, `NODE_OPTIONS`, Python search paths and ambient secrets are not forwarded. **This does not stop trusted code from reading the host's files/vault or accessing the network.** PATH and installed interpreters are part of the trusted host.
+The child receives a small environment with temporary HOME/XDG/TMP locations, PATH and `PIKOBOT_SKILL_ROOT`, `PIKOBOT_SKILL_INPUTS`, `PIKOBOT_SKILL_OUTPUTS`; provider keys, `NODE_OPTIONS`, Python search paths and ambient secrets are not forwarded. **This does not stop trusted code from reading the host's files/vault or accessing the network.** PATH and installed interpreters are part of the trusted host.
 
 Defaults/limits:
 
@@ -112,7 +112,7 @@ node dist/cli.js --instance PRIVATE_INSTANCE skills export text-statistics /new/
 node dist/cli.js --instance PRIVATE_INSTANCE skills disable text-statistics
 ```
 
-TUI `/skills` lists package metadata/diagnostics; `/skills read NAME [PATH]`, `import PATH`, `enable NAME`, `disable NAME`, `delete NAME` and `rollback NAME VERSION` administer them. Existing procedural review/approval remains separate. These operator calls create operational receipts/activations; TUI read/import/change administration is refused in a selected ephemeral session—ask Pico in chat for volatile instruction/resource reads.
+TUI `/skills` lists package metadata/diagnostics; `/skills read NAME [PATH]`, `import PATH`, `enable NAME`, `disable NAME`, `delete NAME` and `rollback NAME VERSION` administer them. Existing procedural review/approval remains separate. These operator calls create operational receipts/activations; TUI read/import/change administration is refused in a selected ephemeral session—ask Pikobot in chat for volatile instruction/resource reads.
 
 The [English text-statistics example](../examples/skills/text-statistics/SKILL.md) is a portable standard package with scripts, reference documentation, a sample asset, a license, JSON input/output and an optional report attachment. Run `node examples/skills/text-statistics/scripts/test.mjs`; the Vitest suite also covers Unicode/counting rules, invalid input, selected files, private non-overwriting output, compiled CLI and agent-core execution.
 

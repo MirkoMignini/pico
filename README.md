@@ -1,23 +1,23 @@
 <h1 align="center">
-  <img src="docs/assets/pico.svg" alt="Pico — your space, your assistant" width="480">
+  <img src="docs/assets/pikobot.svg" alt="Pikobot — your space, your assistant" width="480">
 </h1>
 
 <p align="center"><strong>A self-hosted, chat-first personal assistant with memory.</strong></p>
 <p align="center">Remember what matters. Organize your day. Chat in your terminal or on Telegram—with text, files and voice.</p>
 <p align="center">
   <a href="#quickstart">Quickstart</a> ·
-  <a href="#what-pico-can-do">Features</a> ·
+  <a href="#what-pikobot-can-do">Features</a> ·
   <a href="#channels">Channels</a> ·
   <a href="#family-collaboration">Family</a> ·
   <a href="#mcp-integrations">MCP</a> ·
-  <a href="https://mirkomignini.github.io/pico/">Documentation</a> ·
+  <a href="https://mirkomignini.github.io/pikobot/">Documentation</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="LICENSE">MIT license</a>
 </p>
 
-> **Early development.** Pico is not production-hardened. Models can make mistakes, integrations require their own setup, and passing local tests does not establish live reliability. Read the [security model](docs/SECURITY.md) and [testing limits](docs/TESTING.md) before trusting important work to it.
+> **Early development.** Pikobot is not production-hardened. Models can make mistakes, integrations require their own setup, and passing local tests does not establish live reliability. Read the [security model](docs/SECURITY.md) and [testing limits](docs/TESTING.md) before trusting important work to it.
 
-## What Pico can do
+## What Pikobot can do
 
 | | |
 | --- | --- |
@@ -49,7 +49,7 @@ These are examples, not guaranteed command templates. Check receipts and sources
 - “Remind Bob in two minutes to bring the parcel.”
 - “Create a groceries list shared with Bob.” — creates and shares it in one operation, with read/write access.
 - “Share my groceries list with Bob.” — read/write by default; say “read-only” to restrict it.
-- From Bob's Pico: “Add milk to Alice's shared groceries list.”
+- From Bob's Pikobot: “Add milk to Alice's shared groceries list.”
 - “Stop sharing my groceries list with Bob.”
 
 Lists stay in their owner's instance; **“shared” means read/write unless you explicitly request read-only**. Access applies only to that checklist, not private memory, conversations, files or credentials. The recipient controls reminder delivery. Revocation stops new access and pending family reminders; accepted deliveries cannot be recalled.
@@ -60,7 +60,7 @@ Lists stay in their owner's instance; **“shared” means read/write unless you
 
 ## MCP integrations
 
-**Bring selected tools and data sources into your assistant.** The Pico daemon is a Model Context Protocol **client**, built on the official TypeScript SDK; it does not expose owner RPC as an MCP server. The optional desktop browser bridge exposes only selected browser tools/artifacts. Configure trusted servers, then ask Pico to use their capabilities in ordinary conversation.
+**Bring selected tools and data sources into your assistant.** The Pikobot daemon is a Model Context Protocol **client**, built on the official TypeScript SDK; it does not expose owner RPC as an MCP server. The optional desktop browser bridge exposes only selected browser tools/artifacts. Configure trusted servers, then ask Pikobot to use their capabilities in ordinary conversation.
 
 - **Tools and data:** namespaced tools with schema validation, resource/template discovery and reads, reusable prompts, argument completion, progress and change notifications.
 - **Connections and accounts:** local stdio processes, Streamable HTTP and legacy HTTP/SSE; private environment/header credentials or OAuth with PKCE, token refresh and explicit client-credentials grants.
@@ -76,7 +76,7 @@ Start in the TUI, replacing `SERVER` with an ID from your saved configuration:
 /mcp catalog SERVER
 ```
 
-No servers are installed or connected by default. Saving settings does not connect immediately; enabled servers connect on daemon startup or when explicitly requested. If needed, enter credential JSON only through `/mcp secret SERVER` (masked) and complete browser consent with `/mcp auth SERVER`. The [setup examples](docs/MCP.md#setup) include a public, credential-free Microsoft Learn server; the selected Pico model still has its own inference costs.
+No servers are installed or connected by default. Saving settings does not connect immediately; enabled servers connect on daemon startup or when explicitly requested. If needed, enter credential JSON only through `/mcp secret SERVER` (masked) and complete browser consent with `/mcp auth SERVER`. The [setup examples](docs/MCP.md#setup) include a public, credential-free Microsoft Learn server; the selected Pikobot model still has its own inference costs.
 
 **Trusted servers, not a sandbox.** Local servers run with your OS-user permissions; remote servers receive your arguments and apply their own retention/cost policies. Declaring a tool read-only is delegated trust, not proof that a server cannot write. Returned content is evidence, never permission, and cancellation cannot undo accepted effects.
 
@@ -84,11 +84,11 @@ No servers are installed or connected by default. Saving settings does not conne
 
 ## Channels
 
-**Two channels today: the terminal UI (TUI) and Telegram, with more to come.** Both connect to the same private Pico instance and its memory, documents, skills and enabled integrations, while keeping separate conversations. Choose the TUI for detailed inspection and administration, or Telegram to carry your assistant with you. The daemon keeps running independently of the terminal client.
+**Two channels today: the terminal UI (TUI) and Telegram, with more to come.** Both connect to the same private Pikobot instance and its memory, documents, skills and enabled integrations, while keeping separate conversations. Choose the TUI for detailed inspection and administration, or Telegram to carry your assistant with you. The daemon keeps running independently of the terminal client.
 
 ### Terminal UI (TUI)
 
-A streaming, keyboard-first workspace for chatting with Pico and managing your instance.
+A streaming, keyboard-first workspace for chatting with Pikobot and managing your instance.
 
 | Feature | What you can do |
 | --- | --- |
@@ -124,34 +124,36 @@ Your own optional bot for **private, allowlisted owner chats**—not group chats
 
 **Audio needs separate setup:** [transcription](docs/SETUP.md#voice-transcription) and [voice replies](docs/SETUP.md#voice-replies-on-request-text-to-speech) are independently enabled OpenAI API services and can incur charges. Receiving a voice message alone does not enable either service or switch replies to voice. Image descriptions/generation also depend on configured services.
 
-Incoming files are limited to **20 MB**, subject to configured limits and Telegram availability. Unsupported formats may remain opaque: retaining media does not mean Pico can understand or play it. Stories, paid-content unlocking, payments, games and secret chats are not supported. See [Telegram setup](docs/SETUP.md#telegram) and the [full content/delivery contract](docs/CHANNELS.md#telegram-content-and-delivery) for details.
+Incoming files are limited to **20 MB**, subject to configured limits and Telegram availability. Unsupported formats may remain opaque: retaining media does not mean Pikobot can understand or play it. Stories, paid-content unlocking, payments, games and secret chats are not supported. See [Telegram setup](docs/SETUP.md#telegram) and the [full content/delivery contract](docs/CHANNELS.md#telegram-content-and-delivery) for details.
 
 ### More channels to come
 
-TUI and Telegram are the currently shipped channels; additional channels are planned. Pico's [channel adapter contract](docs/CHANNELS.md#adapter-contract) lets trusted extensions add transports while reusing core routing, lifecycle and notification delivery. Planned channels are not available integrations yet.
+TUI and Telegram are the currently shipped channels; additional channels are planned. Pikobot's [channel adapter contract](docs/CHANNELS.md#adapter-contract) lets trusted extensions add transports while reusing core routing, lifecycle and notification delivery. Planned channels are not available integrations yet.
 
 ## Quickstart
 
 **Requirements:** Node.js **24.21.0**, pnpm **11.2.2**, and a POSIX environment with Unix sockets and private file permissions. Node 26 is not supported. Docker is optional.
 
 ```sh
-git clone https://github.com/MirkoMignini/pico.git
-cd pico
+git clone https://github.com/MirkoMignini/pikobot.git
+cd pikobot
 
 # Select the pinned Node and pnpm versions first.
 # Install into an immutable version directory; no owner/service is created.
-node scripts/install.mjs --prefix "$HOME/.local/share/pico-app"
-export PATH="$HOME/.local/share/pico-app/bin:$PATH"
+node scripts/install.mjs --prefix "$HOME/.local/share/pikobot-app"
+export PATH="$HOME/.local/share/pikobot-app/bin:$PATH"
 
-pico --instance "$HOME/.local/share/pico" init --name "Your name"
-pico --instance "$HOME/.local/share/pico" chat
+pikobot --instance "$HOME/.local/share/pikobot" init --name "Your name"
+pikobot --instance "$HOME/.local/share/pikobot" chat
 ```
 
-Initialize each directory only once. The chat client starts or reconnects to that instance's daemon; closing the client leaves the daemon running. Optional `pico --instance PATH service install` / `service start` provide explicit per-user launchd/systemd supervision; installation alone does not start it. `doctor --offline --json` checks local setup without starting a daemon or contacting providers. [Installation, service operation, upgrades and recovery](docs/INSTALLATION.md).
+**Upgrading an existing installation?** This is a breaking rename; follow the [offline rename procedure](docs/INSTALLATION.md#renamed-installations) before starting the new build against retained data.
 
-These installer tools require a checkout containing this guide; the original `v0.1.0` tag predates them. For direct source development, use `pnpm install --frozen-lockfile --ignore-scripts && pnpm check && pnpm build`, then `node dist/cli.js` instead of the installed `pico` launcher.
+Initialize each directory only once. The chat client starts or reconnects to that instance's daemon; closing the client leaves the daemon running. Optional `pikobot --instance PATH service install` / `service start` provide explicit per-user launchd/systemd supervision; installation alone does not start it. `doctor --offline --json` checks local setup without starting a daemon or contacting providers. [Installation, service operation, upgrades and recovery](docs/INSTALLATION.md).
 
-In Pico, open `/setup` to configure your model and optional services. Factory defaults are **DeepSeek Flash** for chat and **OpenAI text-embedding-3-small** for memory embeddings; both can incur charges. For those defaults:
+These installer tools require a checkout containing this guide; the original `v0.1.0` tag predates them. For direct source development, use `pnpm install --frozen-lockfile --ignore-scripts && pnpm check && pnpm build`, then `node dist/cli.js` instead of the installed `pikobot` launcher.
+
+In Pikobot, open `/setup` to configure your model and optional services. Factory defaults are **DeepSeek Flash** for chat and **OpenAI text-embedding-3-small** for memory embeddings; both can incur charges. For those defaults:
 
 ```text
 /auth key deepseek
@@ -180,10 +182,10 @@ Drafts stay editable during work but are never sent automatically. Escape interr
 
 ## Your data, your instance
 
-Pico runs an independent daemon with authenticated HTTP/SSE over a Unix socket. SQLite holds canonical records, evidence and execution receipts; search indexes and model caches are rebuildable. It uses Pi's **agent-core, AI and TUI libraries**, not the coding-agent runtime.
+Pikobot runs an independent daemon with authenticated HTTP/SSE over a Unix socket. SQLite holds canonical records, evidence and execution receipts; search indexes and model caches are rebuildable. It uses Pi's **agent-core, AI and TUI libraries**, not the coding-agent runtime.
 
 - **One instance, one owner identity.** Use separate OS/container boundaries for mutually untrusted owners; two folders under one OS user are not isolation.
-- **Self-hosted is not offline.** Selected model providers and enabled connectors receive the data needed for their work and have separate retention policies. Pico does not silently switch accounts/providers or borrow ambient credentials.
+- **Self-hosted is not offline.** Selected model providers and enabled connectors receive the data needed for their work and have separate retention policies. Pikobot does not silently switch accounts/providers or borrow ambient credentials.
 - **Saved chats are retained.** Forgetting removes linked managed derivatives and protects restores with tombstones; it cannot erase provider copies, downloaded files or OS snapshots. Backups exclude the credential vault and need a separate credential-recovery plan.
 - **Actions have consequences.** Routine local writes and generated skills/extensions need no mandatory confirmation. Cancellation cannot undo an accepted write, delivery or charge; uncertain effects are not safe to replay.
 - **Executable code is trusted.** Extensions run inside the daemon; skill scripts and local MCP servers run as the OS user. None is sandboxed. They can read accessible files/credentials, use the network and damage data. Syntax checks are not a security audit.
@@ -192,7 +194,7 @@ Keep personal skills in the private instance, not this repository. The [English 
 
 ## Documentation
 
-**[Read the documentation online →](https://mirkomignini.github.io/pico/)** — searchable guides, rebuilt automatically from this repository on every update to `main`.
+**[Read the documentation online →](https://mirkomignini.github.io/pikobot/)** — searchable guides, rebuilt automatically from this repository on every update to `main`.
 
 | Guide | Start here for… |
 | --- | --- |
@@ -207,11 +209,11 @@ Keep personal skills in the private instance, not this repository. The [English 
 | [Skills](docs/SKILLS.md) · [Extension SDK](docs/SDK.md) | Reusable packages, scripts, trusted integrations and workflows. |
 | [Security](docs/SECURITY.md) · [Deployment](docs/DEPLOYMENT.md) | Trust, retention, backups, recovery and optional containers. |
 | [Demo](docs/DEMO.md) · [Development](docs/DEVELOPMENT.md) · [Testing](docs/TESTING.md) | No-credentials examples, contributor tools, verification and its limits. |
-| [OpenClaw/Hermes assessment](docs/COMPARISON.md) | Current Pico capabilities against pinned upstream snapshots, remaining gaps, priorities and non-goals. |
+| [OpenClaw/Hermes assessment](docs/COMPARISON.md) | Current Pikobot capabilities against pinned upstream snapshots, remaining gaps, priorities and non-goals. |
 
 ## Contributing
 
-Pico is TypeScript/ESM on Node, with strict TypeBox contracts and SQLite migrations. Start with [CONTRIBUTING.md](CONTRIBUTING.md); coding agents should also read [AGENTS.md](AGENTS.md).
+Pikobot is TypeScript/ESM on Node, with strict TypeBox contracts and SQLite migrations. Start with [CONTRIBUTING.md](CONTRIBUTING.md); coding agents should also read [AGENTS.md](AGENTS.md).
 
 ```sh
 pnpm check && pnpm build && pnpm test

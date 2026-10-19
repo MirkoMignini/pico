@@ -21,7 +21,7 @@ const invoke = <T = any>(s: ReturnType<typeof setup>, name: string, args: Record
 async function desktop() {
   const reserve = createServer(); reserve.listen(0, '127.0.0.1'); await once(reserve, 'listening');
   const port = (reserve.address() as { port: number }).port; await new Promise<void>(resolve => reserve.close(() => resolve()));
-  const root = mkdtempSync(join(tmpdir(), 'pico-bridge-test-')); directories.push(root);
+  const root = mkdtempSync(join(tmpdir(), 'pikobot-bridge-test-')); directories.push(root);
   const config = await initializeBrowserBridge(root, entrypoint, 'Default', port, extensionToken);
   const bridge = await serveBrowserBridge(root); cleanups.push(bridge.close);
   const pairing = await browserBridgePairing(root, bridge.url);
@@ -55,7 +55,7 @@ it('initializes only a separate private bridge vault, pins an explicit Chrome pr
 });
 
 it('never overwrites authority when two initializations race for the same empty directory', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'pico-bridge-race-')); directories.push(root);
+  const root = mkdtempSync(join(tmpdir(), 'pikobot-bridge-race-')); directories.push(root);
   const attempts = await Promise.allSettled(['Default', 'Profile 2'].map(profile => initializeBrowserBridge(root, entrypoint, profile, 8931, extensionToken)));
   expect(attempts.filter(result => result.status === 'fulfilled')).toHaveLength(1);
   const winner = attempts.find(result => result.status === 'fulfilled')!;
@@ -148,7 +148,7 @@ it('refuses wrong bridge identity/credentials and never silently forwards old cr
 });
 
 it('redacts bridge credentials, scrubs unrelated environment and does not trust backend-minted artifact handles', async () => {
-  vi.stubEnv('PICO_BRIDGE_AMBIENT_TOKEN', 'must-not-reach-browser'); vi.stubEnv('WAYLAND_DISPLAY', 'synthetic-wayland');
+  vi.stubEnv('PIKOBOT_BRIDGE_AMBIENT_TOKEN', 'must-not-reach-browser'); vi.stubEnv('WAYLAND_DISPLAY', 'synthetic-wayland');
   const d = await desktop(), s = await server(d);
   const inspect = await invoke(s, 'call', { server: 'browser-remote', name: 'browser_navigate', arguments: { url: 'bridge-inspect' } });
   const details = JSON.parse(inspect.content[0].text);
@@ -168,7 +168,7 @@ it('pins remote artifact bytes even when the backend later overwrites the same f
   const d = await desktop(), s = await server(d);
   const original = await invoke(s, 'call', { server: 'browser-remote', name: 'browser_snapshot', arguments: {} });
   const staged = /^\[Snapshot\]\((.+)\)$/.exec(original.content[0].text)?.[1];
-  expect(staged).toContain('/pico-browser-bridge-'); expect(existsSync(staged!)).toBe(false);
+  expect(staged).toContain('/pikobot-browser-bridge-'); expect(existsSync(staged!)).toBe(false);
   const changed = await invoke(s, 'call', { server: 'browser-remote', name: 'browser_snapshot', arguments: { url: 'changed' } });
   const first = await invoke(s, 'artifact', { server: 'browser-remote', sourceId: original.originalResultSourceId, file: 'page.yml' });
   const second = await invoke(s, 'artifact', { server: 'browser-remote', sourceId: changed.originalResultSourceId, file: 'page.yml' });

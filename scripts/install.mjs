@@ -7,7 +7,7 @@ import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
-const help = `Pico versioned source installer (macOS/Linux)\n\nnode scripts/install.mjs [--prefix PATH] [--source CHECKOUT_OR_EXTRACTED_RELEASE]\nnode scripts/install.mjs --prefix PATH --activate VERSION\n\nRequires the release's exact Node/pnpm versions. Installs frozen dependencies\nwith scripts disabled, checks/builds in a private version directory and atomically\nselects it. Does NOT initialize an owner, import credentials, install services,\nstart/restart daemons, modify shell profiles or remove older versions.\n--activate selects an already installed version; schema downgrades may be refused.\nDefault prefix: ~/.local/share/pico-app; add PREFIX/bin to PATH yourself.\n`;
+const help = `Pikobot versioned source installer (macOS/Linux)\n\nnode scripts/install.mjs [--prefix PATH] [--source CHECKOUT_OR_EXTRACTED_RELEASE]\nnode scripts/install.mjs --prefix PATH --activate VERSION\n\nRequires the release's exact Node/pnpm versions. Installs frozen dependencies\nwith scripts disabled, checks/builds in a private version directory and atomically\nselects it. Does NOT initialize an owner, import credentials, install services,\nstart/restart daemons, modify shell profiles or remove older versions.\n--activate selects an already installed version; schema downgrades may be refused.\nDefault prefix: ~/.local/share/pikobot-app; add PREFIX/bin to PATH yourself.\n`;
 const present = path => { try { return lstatSync(path); } catch (error) { if (error.code === 'ENOENT') return undefined; throw error; } };
 function ownedDirectory(path) {
   if (!present(path)) { mkdirSync(path, { recursive: true, mode: 0o700 }); }
@@ -28,7 +28,7 @@ function command(cwd, name, args) {
 }
 function manifest(path) {
   const value = JSON.parse(readFileSync(join(path, 'package.json'), 'utf8'));
-  if (value.name !== 'pico-assistant' || !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(value.version) || !/^\d+\.\d+\.\d+$/.test(value.engines?.node) || !/^pnpm@\d+\.\d+\.\d+$/.test(value.packageManager)) throw new Error('Not a valid versioned Pico source release');
+  if (value.name !== 'pikobot' || !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(value.version) || !/^\d+\.\d+\.\d+$/.test(value.engines?.node) || !/^pnpm@\d+\.\d+\.\d+$/.test(value.packageManager)) throw new Error('Not a valid versioned Pikobot source release');
   return value;
 }
 async function main() {
@@ -38,7 +38,7 @@ async function main() {
   if (values.source && values.activate) throw new Error('Choose source installation or --activate, not both');
   if (values.activate && !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(values.activate)) throw new Error('Invalid version');
   const source = realpathSync(resolve(values.source ?? fileURLToPath(new URL('../', import.meta.url))));
-  const requestedPrefix = resolve(values.prefix ?? join(homedir(), '.local', 'share', 'pico-app'));
+  const requestedPrefix = resolve(values.prefix ?? join(homedir(), '.local', 'share', 'pikobot-app'));
   let ancestor = requestedPrefix;
   while (!present(ancestor)) ancestor = dirname(ancestor);
   const destination = resolve(realpathSync(ancestor), relative(ancestor, requestedPrefix));
@@ -58,8 +58,8 @@ async function main() {
     const current = join(prefix, 'current'), currentStat = present(current);
     if (currentStat && (!currentStat.isSymbolicLink() || !realpathSync(current).startsWith(`${releases}/`))) throw new Error('Current selection is not a managed release symlink; refusing to replace it');
     const wrapper = `#!/bin/sh\nset -eu\nexec /bin/sh ${quote(join(prefix, 'current', 'launch'))} "$@"\n`;
-    const executable = join(bin, 'pico'), existing = present(executable);
-    if (existing && (!existing.isFile() || existing.isSymbolicLink() || existing.uid !== process.getuid?.() || readFileSync(executable, 'utf8') !== wrapper)) throw new Error('Existing launcher is not the managed Pico wrapper; refusing to overwrite it');
+    const executable = join(bin, 'pikobot'), existing = present(executable);
+    if (existing && (!existing.isFile() || existing.isSymbolicLink() || existing.uid !== process.getuid?.() || readFileSync(executable, 'utf8') !== wrapper)) throw new Error('Existing launcher is not the managed Pikobot wrapper; refusing to overwrite it');
     const release = join(releases, pkg.version);
     if (values.activate) {
       ownedDirectory(release);
@@ -82,7 +82,7 @@ async function main() {
     const selection = join(prefix, `.current-${randomUUID()}`);
     try { symlinkSync(join('releases', pkg.version), selection); renameSync(selection, current); }
     finally { if (present(selection)) rmSync(selection); }
-    console.log(JSON.stringify({ installed: true, version: pkg.version, executable, selected: true, runningDaemonsRestarted: false, next: 'Use pico --help, initialize a NEW owner once, then chat and /setup. Existing owners: back up and explicitly restart their service when idle.' }, null, 2));
+    console.log(JSON.stringify({ installed: true, version: pkg.version, executable, selected: true, runningDaemonsRestarted: false, next: 'Use pikobot --help, initialize a NEW owner once, then chat and /setup. Existing owners: back up and explicitly restart their service when idle.' }, null, 2));
   } finally { if (stage) rmSync(stage, { recursive: true, force: true }); rmdirSync(lock); }
 }
 main().catch(error => { console.error(error instanceof Error ? error.message : 'Installation failed'); process.exitCode = 1; });

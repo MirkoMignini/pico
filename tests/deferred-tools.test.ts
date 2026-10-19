@@ -159,7 +159,7 @@ it('does not let loading bypass ephemeral write policy or citation repair', asyn
     expect(result).toMatchObject({ isError: true }); expect(JSON.stringify(result)).toMatch(/cannot persist|trusted retained/); return answer();
   }], session);
   expect(s.store.all('SELECT * FROM generated_images')).toEqual([]); expect(s.store.all('SELECT * FROM operations')).toEqual([]);
-  await turn(s, [fauxAssistantMessage([fauxText('Invalid pico:missing')]), request => {
+  await turn(s, [fauxAssistantMessage([fauxText('Invalid pikobot:missing')]), request => {
     expect(names(request).sort()).toEqual(['documents', 'memory_read', 'memory_search', 'source_read', 'web_read']);
     return call('tools_load', { names: ['image_generate'] });
   }, request => { expect(request.messages.findLast(m => m.role === 'toolResult')).toMatchObject({ isError: true }); expect(names(request)).not.toContain('image_generate'); return answer(); }]);

@@ -9,7 +9,7 @@ import { readRegular } from './skill-package.js';
 import { BRIDGE_FILE_BYTES } from './browser-bridge-contracts.js';
 
 const idPattern = '[a-f0-9-]{36}';
-const controlPattern = new RegExp(`^\\.pico-download-(${idPattern})\\.(json|pending|error)$`);
+const controlPattern = new RegExp(`^\\.pikobot-download-(${idPattern})\\.(json|pending|error)$`);
 export const CapturedDownloadSchema = object({ file: Type.String({ pattern: `^download-${idPattern}\\.[a-z0-9]{1,12}$` }), name: Type.String({ minLength: 1, maxLength: 120 }), mimeType: Type.String({ minLength: 1, maxLength: 100 }) });
 export type CapturedDownload = Static<typeof CapturedDownloadSchema>;
 interface PausedResponse { requestId: string; request: { url: string }; resourceType: string; responseStatusCode?: number; responseErrorReason?: string; responseHeaders?: { name: string; value: string }[] }
@@ -31,10 +31,10 @@ const chunkBytes = 64_000;
 
 /** Installed by Playwright's trusted --init-page hook, never exposed as model-supplied code. */
 export default async function initializeDownloads({ page }: { page: DownloadPage }): Promise<void> {
-  const directory = process.env.PICO_BROWSER_DOWNLOAD_DIR;
+  const directory = process.env.PIKOBOT_BROWSER_DOWNLOAD_DIR;
   if (!directory) throw new Error('Private browser download directory missing');
   existingPrivateDirectory(directory);
-  const failed = () => { try { atomicWrite(join(directory, '.pico-download-initialization.error'), JSON.stringify('transfer-failed')); } catch {} };
+  const failed = () => { try { atomicWrite(join(directory, '.pikobot-download-initialization.error'), JSON.stringify('transfer-failed')); } catch {} };
   if (/^(chrome|chrome-extension|devtools):/.test(page.url())) {
     let started = false;
     page.on('framenavigated', () => {
@@ -72,9 +72,9 @@ export async function captureResponse(session: DownloadSession, event: PausedRes
   if (!/^https?:\/\//.test(event.request.url) || !['Document', 'Other'].includes(event.resourceType) || !/^attachment(?:;|$)/i.test(disposition.trim()) || !event.responseStatusCode || event.responseStatusCode < 200 || event.responseStatusCode >= 300 || event.responseStatusCode === 206) {
     await session.send(event.responseStatusCode ? 'Fetch.continueResponse' : 'Fetch.continueRequest', { requestId: event.requestId }); return;
   }
-  const id = randomUUID(), prefix = join(directory, `.pico-download-${id}`);
+  const id = randomUUID(), prefix = join(directory, `.pikobot-download-${id}`);
   if (readdirSync(directory).filter(file => controlPattern.test(file)).length >= 16) {
-    atomicWrite(join(directory, '.pico-download-overflow.error'), JSON.stringify('queue-full'));
+    atomicWrite(join(directory, '.pikobot-download-overflow.error'), JSON.stringify('queue-full'));
     await session.send('Fetch.failRequest', { requestId: event.requestId, errorReason: 'Aborted' }); return;
   }
   let name = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
@@ -135,9 +135,9 @@ export function collectedDownloads(directory: string): { files: (CapturedDownloa
   const files: (CapturedDownload & { control: string })[] = [], errors: string[] = []; let pending = 0;
   const controls = new Set(readdirSync(directory));
   for (const control of controls) {
-    if (control === '.pico-download-overflow.error' || control === '.pico-download-initialization.error') { errors.push(validate<string>(ErrorSchema, JSON.parse(readRegular(join(directory, control), 1024).toString()))); unlinkSync(join(directory, control)); continue; }
+    if (control === '.pikobot-download-overflow.error' || control === '.pikobot-download-initialization.error') { errors.push(validate<string>(ErrorSchema, JSON.parse(readRegular(join(directory, control), 1024).toString()))); unlinkSync(join(directory, control)); continue; }
     const match = controlPattern.exec(control); if (!match) continue;
-    if (match[2] === 'pending') { if (!controls.has(`.pico-download-${match[1]}.json`) && !controls.has(`.pico-download-${match[1]}.error`)) pending++; continue; }
+    if (match[2] === 'pending') { if (!controls.has(`.pikobot-download-${match[1]}.json`) && !controls.has(`.pikobot-download-${match[1]}.error`)) pending++; continue; }
     if (match[2] === 'error') { errors.push(validate<string>(ErrorSchema, JSON.parse(readRegular(join(directory, control), 1024).toString()))); unlinkSync(join(directory, control)); continue; }
     const metadata = validate<CapturedDownload>(CapturedDownloadSchema, JSON.parse(readRegular(join(directory, control), 4096).toString()));
     if (!metadata.file.startsWith(`download-${match[1]}.`)) throw new Error('Browser download identity mismatch');

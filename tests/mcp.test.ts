@@ -43,7 +43,7 @@ it('validates strict MCP configuration, credential separation and one-process st
 it('uses the official SDK over a real stdio child, pages discovery and registers namespaced tools', async () => {
   const s = await instance();
   const status = await invoke(s, 'status');
-  expect(status.servers[0]).toMatchObject({ state: 'connected', tools: 10, resources: 2, prompts: 1, implementation: { name: 'pico-synthetic-mcp' } });
+  expect(status.servers[0]).toMatchObject({ state: 'connected', tools: 10, resources: 2, prompts: 1, implementation: { name: 'pikobot-synthetic-mcp' } });
   const catalog = await invoke(s, 'catalog', { server: 'fixture', kind: 'tools', limit: 1 });
   expect(catalog).toMatchObject({ total: 10, nextOffset: 1, entries: [{ name: 'read.echo', policy: 'owner-declared-read', inputSchema: { additionalProperties: false } }] });
   expect(s.runtime.extensions.tools().some(tool => tool.name === mcpToolName('fixture', 'read.echo'))).toBe(true);
@@ -93,7 +93,7 @@ it('invalidates prepared actions on disconnect and refuses MCP in all restricted
 });
 
 it('scrubs ambient credentials, uses a disposable HOME and redacts configured secrets before retention', async () => {
-  vi.stubEnv('PICO_MCP_AMBIENT_TOKEN', 'ambient-fixture');
+  vi.stubEnv('PIKOBOT_MCP_AMBIENT_TOKEN', 'ambient-fixture');
   const s = await instance();
   await invoke(s, 'disconnect', { server: 'fixture' });
   await rpc(s.runtime, { op: 'extensions.secret', args: { id: 'mcp', name: 'fixture', value: JSON.stringify({ env: { OPERATOR_TOKEN: 'synthetic-quoted-"-token' } }) } });
@@ -121,7 +121,7 @@ it('bounds results and pagination and reports tool/schema failures instead of su
   await expect(invoke(invalid, 'call', { server: 'fixture', name: 'read.echo', arguments: { text: 'invalid' } })).rejects.toThrow();
 });
 
-it('refreshes changed tool catalogs without restarting Pico or inheriting an old approval', async () => {
+it('refreshes changed tool catalogs without restarting Pikobot or inheriting an old approval', async () => {
   const s = await instance();
   await invoke(s, 'call', { server: 'fixture', name: 'change_catalog', arguments: { text: '' } });
   expect(await invoke(s, 'catalog', { kind: 'tools', limit: 100 })).toMatchObject({ total: 11 });

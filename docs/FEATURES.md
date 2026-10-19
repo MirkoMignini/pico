@@ -37,11 +37,11 @@ Pasted URLs are not opened at intake. The model may read a relevant owner-suppli
 
 Network controls validate public HTTP(S), standard ports, URL credentials, all DNS answers and every redirect; connections are pinned with Host/SNI/TLS checks. No cookies, ambient authentication, caller headers, page JavaScript or subresource downloads. Authenticated redirects are refused. Responses are limited to 2 MB wire/decompressed data, five redirects and 15 seconds; parsing is separately bounded in a subprocess, not sandboxed.
 
-Captures/read previews can be incomplete; follow cursors. `pico:web:` citations identify stored text ranges, not factual correctness. Retained captures live privately until forgetting; ephemeral captures are conversation-scoped memory-only data and cannot be promoted. No automatic personal-memory/QMD ingestion occurs. Same-URL/content tombstones and erasure guards prevent late reintroduction of forgotten captures. Operator `web.list`, `source.read`, `web.forget` provide administration.
+Captures/read previews can be incomplete; follow cursors. `pikobot:web:` citations identify stored text ranges, not factual correctness. Retained captures live privately until forgetting; ephemeral captures are conversation-scoped memory-only data and cannot be promoted. No automatic personal-memory/QMD ingestion occurs. Same-URL/content tombstones and erasure guards prevent late reintroduction of forgotten captures. Operator `web.list`, `source.read`, `web.forget` provide administration.
 
 Research has only bundled web reads and time—no automatic personal-memory access, writes, delivery, shell or recursive delegation. It shares parent cancellation/budgets, with at most four model requests, eight tool calls and 60 seconds. Logical limits and estimated prices are not invoice caps. Queries/URLs leave the machine; accepted provider requests may charge even after cancellation.
 
-The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://github.com/badlogic/pi-skills/tree/90bb51cae36515a648515b633a81c0c6efc8c74d/brave-search), with its [license notice](https://github.com/MirkoMignini/pico/blob/main/docs/licenses/pi-skills.txt) retained.
+The extraction/Brave adaptation reuses MIT [Pi Brave Search material](https://github.com/badlogic/pi-skills/tree/90bb51cae36515a648515b633a81c0c6efc8c74d/brave-search), with its [license notice](https://github.com/MirkoMignini/pikobot/blob/main/docs/licenses/pi-skills.txt) retained.
 
 ## Optional interactive browser
 
@@ -49,7 +49,7 @@ For JavaScript-driven or authenticated sites, use the opt-in [browser MCP protot
 
 ## Existing image replies
 
-Ask Pico to show a saved image in the current conversation. `image_show` accepts a retained attachment or image-document ID and optional immutable revision; it needs neither Telegram nor image-generation credentials. Host paths, URLs, volatile/unknown/tampered originals and non-images are refused.
+Ask Pikobot to show a saved image in the current conversation. `image_show` accepts a retained attachment or image-document ID and optional immutable revision; it needs neither Telegram nor image-generation credentials. Host paths, URLs, volatile/unknown/tampered originals and non-images are refused.
 
 The TUI displays a preview in the matching selected conversation when its terminal supports graphics, otherwise a labelled placeholder. PNG/JPEG/GIF/WebP are supported; non-PNG previews are normalized locally without rewriting originals. Animated originals show a still preview. Normalization has pixel/size/time/process bounds, not an OS sandbox.
 

@@ -6,7 +6,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
  // src/oss/src/utils/factory.ts
  var EmbedderFactory = class {
    static create(provider, config) {
-+    if (provider === "pico") return config.model;
++    if (provider === "pikobot") return config.model;
      switch (provider.toLowerCase()) {
        case "openai":
          return new OpenAIEmbedder(config);
@@ -14,7 +14,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
  };
  var LLMFactory = class {
    static create(provider, config) {
-+    if (provider === "pico") return config.client;
++    if (provider === "pikobot") return config.client;
      switch (provider.toLowerCase()) {
        case "openai":
          return new OpenAILLM(config);
@@ -22,7 +22,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
  };
  var VectorStoreFactory = class {
    static create(provider, config) {
-+    if (provider === "pico") return config.instance(config.collectionName);
++    if (provider === "pikobot") return config.instance(config.collectionName);
      switch (provider.toLowerCase()) {
        case "memory":
          return new MemoryVectorStore(config);
@@ -30,7 +30,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
      return parts.join("&");
    }
    async _initializeTelemetry() {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await captureClientEvent("init", this, {
@@ -38,7 +38,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
      }
    }
    async _captureEvent(methodName, additionalData = {}) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await captureClientEvent(methodName, this, {
@@ -46,7 +46,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
      }
    }
    async _displayFirstRunNotice(triggerFunction) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayFirstRunNotice(this, triggerFunction);
@@ -54,7 +54,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
      }
    }
    async _displayDecayUsageNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayDecayUsageNotice(this, trigger);
@@ -62,7 +62,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
      }
    }
    async _displayTemporalUsageNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayTemporalUsageNotice(this, trigger);
@@ -70,7 +70,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
      }
    }
    async _displayScaleThresholdNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayScaleThresholdNotice(this, trigger);
@@ -78,7 +78,7 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
      }
    }
    async _displayPerformanceSlowQueryNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayPerformanceSlowQueryNotice(this, trigger);
@@ -87,13 +87,13 @@ index 38b7d1a33e18b97b9d810087a99cab78c4a2c71f..9fd187ba8f70296c1277a39d19d140d4
        );
      } catch (e) {
 -      console.error("LLM extraction failed:", e);
-+      if (this.config.llm.provider !== "pico") console.error("LLM extraction failed:", e);
++      if (this.config.llm.provider !== "pikobot") console.error("LLM extraction failed:", e);
        throw new LLMError(`LLM extraction failed: ${e}`, { cause: e });
      }
      let extractedMemories = [];
      try {
 -      const cleanResponse = extractJson(response);
-+      const cleanResponse = this.config.llm.provider === "pico" ? response : extractJson(response);
++      const cleanResponse = this.config.llm.provider === "pikobot" ? response : extractJson(response);
        if (cleanResponse && cleanResponse.trim()) {
          try {
            const parsed = AdditiveExtractionSchema.parse(
@@ -105,7 +105,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
  // src/oss/src/utils/factory.ts
  var EmbedderFactory = class {
    static create(provider, config) {
-+    if (provider === "pico") return config.model;
++    if (provider === "pikobot") return config.model;
      switch (provider.toLowerCase()) {
        case "openai":
          return new OpenAIEmbedder(config);
@@ -113,7 +113,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
  };
  var LLMFactory = class {
    static create(provider, config) {
-+    if (provider === "pico") return config.client;
++    if (provider === "pikobot") return config.client;
      switch (provider.toLowerCase()) {
        case "openai":
          return new OpenAILLM(config);
@@ -121,7 +121,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
  };
  var VectorStoreFactory = class {
    static create(provider, config) {
-+    if (provider === "pico") return config.instance(config.collectionName);
++    if (provider === "pikobot") return config.instance(config.collectionName);
      switch (provider.toLowerCase()) {
        case "memory":
          return new MemoryVectorStore(config);
@@ -129,7 +129,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
      return parts.join("&");
    }
    async _initializeTelemetry() {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await captureClientEvent("init", this, {
@@ -137,7 +137,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
      }
    }
    async _captureEvent(methodName, additionalData = {}) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await captureClientEvent(methodName, this, {
@@ -145,7 +145,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
      }
    }
    async _displayFirstRunNotice(triggerFunction) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayFirstRunNotice(this, triggerFunction);
@@ -153,7 +153,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
      }
    }
    async _displayDecayUsageNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayDecayUsageNotice(this, trigger);
@@ -161,7 +161,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
      }
    }
    async _displayTemporalUsageNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayTemporalUsageNotice(this, trigger);
@@ -169,7 +169,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
      }
    }
    async _displayScaleThresholdNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayScaleThresholdNotice(this, trigger);
@@ -177,7 +177,7 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
      }
    }
    async _displayPerformanceSlowQueryNotice(trigger) {
-+    if (this.config.llm.provider === "pico") return;
++    if (this.config.llm.provider === "pikobot") return;
      try {
        await this._getTelemetryId();
        await displayPerformanceSlowQueryNotice(this, trigger);
@@ -186,13 +186,13 @@ index a226d3a001d79403261643fb3135dfbc6ad9ee96..3ff74dc0a09544dba255e544b239a8e1
        );
      } catch (e) {
 -      console.error("LLM extraction failed:", e);
-+      if (this.config.llm.provider !== "pico") console.error("LLM extraction failed:", e);
++      if (this.config.llm.provider !== "pikobot") console.error("LLM extraction failed:", e);
        throw new LLMError(`LLM extraction failed: ${e}`, { cause: e });
      }
      let extractedMemories = [];
      try {
 -      const cleanResponse = extractJson(response);
-+      const cleanResponse = this.config.llm.provider === "pico" ? response : extractJson(response);
++      const cleanResponse = this.config.llm.provider === "pikobot" ? response : extractJson(response);
        if (cleanResponse && cleanResponse.trim()) {
          try {
            const parsed = AdditiveExtractionSchema.parse(

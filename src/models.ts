@@ -4,7 +4,7 @@ import { Credentials } from './credentials.js';
 import type { Config, ProviderCapabilities } from './contracts.js';
 import { VERSION } from './version.js';
 
-// Pico's factory default; explicit settings override it, and the model clamps it.
+// Pikobot's factory default; explicit settings override it, and the model clamps it.
 export const DEFAULT_THINKING_LEVEL: ModelThinkingLevel = 'low';
 
 export class ModelAccess {
@@ -29,7 +29,7 @@ export class ModelAccess {
       models = createModels({ credentials: this.credentials.alias(providerId, key), authContext: { env: async () => undefined, fileExists: async () => false } });
       models.setProvider(provider);
     }
-    await models.login(providerId, type, interaction, { agentName: 'Pico', getDeviceId: () => this.config.instanceId });
+    await models.login(providerId, type, interaction, { agentName: 'Pikobot', getDeviceId: () => this.config.instanceId });
     if (providerId === 'openai') await this.credentials.selectOpenai(key);
     const result = await this.models.refresh({ providers: [providerId], signal: AbortSignal.any([AbortSignal.timeout(30_000), ...(interaction.signal ? [interaction.signal] : [])]) });
     if (result.aborted || result.errors.size) interaction.notify({ type: 'info', message: 'Credentials saved, but the model catalog could not refresh. Retry models.refresh before selecting a newly available model.' });
@@ -40,7 +40,7 @@ export class ModelAccess {
     return model;
   }
   async options(model: Model<any>, signal?: AbortSignal, ephemeral = false): Promise<SimpleStreamOptions> {
-    return { signal, maxTokens: 4096, cacheRetention: ephemeral ? 'none' : 'short', headers: { 'User-Agent': `Pico/${VERSION}` } };
+    return { signal, maxTokens: 4096, cacheRetention: ephemeral ? 'none' : 'short', headers: { 'User-Agent': `Pikobot/${VERSION}` } };
   }
   async complete(context: Context, signal?: AbortSignal, selection=this.config.model, structured: { json?: boolean; maxTokens?: number } = {}): Promise<AssistantMessage> {
     const model = this.model(selection), options = await this.options(model, signal), thinking = clampThinkingLevel(model, 'off');

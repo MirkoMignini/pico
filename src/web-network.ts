@@ -52,7 +52,7 @@ export class WebNetwork {
             agent:false, family:selected.family, signal,
             // Pin this socket to a checked address; keep the URL hostname for Host/SNI/certificate checks.
             lookup: (_hostname,_options,callback) => callback(null,selected.address,selected.family),
-            headers:{'User-Agent':'Pico/0.1.0','Accept':credentials?'application/json':'text/html,application/xhtml+xml,text/plain,text/markdown;q=0.9','Accept-Encoding':'gzip, deflate, br',...(credentials?{'X-Subscription-Token':credentials.braveKey}:{})}
+            headers:{'User-Agent':'Pikobot/0.1.0','Accept':credentials?'application/json':'text/html,application/xhtml+xml,text/plain,text/markdown;q=0.9','Accept-Encoding':'gzip, deflate, br',...(credentials?{'X-Subscription-Token':credentials.braveKey}:{})}
           },resolve);
           request.once('error',() => reject(new Error('Web network/TLS request failed'))); request.end();
         });

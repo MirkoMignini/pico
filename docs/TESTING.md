@@ -1,6 +1,6 @@
 # Testing and verification
 
-Pico is early-stage software, not a production reliability or security certification. Local regressions, real subprocess/transport checks, live model answers and actual connector delivery are different kinds of evidence. Report them separately.
+Pikobot is early-stage software, not a production reliability or security certification. Local regressions, real subprocess/transport checks, live model answers and actual connector delivery are different kinds of evidence. Report them separately.
 
 ## Default checks
 
@@ -42,7 +42,7 @@ No doctor/readiness operation runs provider probes. Explicit model-test fixtures
 ## Repeated workflows and memory stress
 
 ```sh
-pnpm test:daily --repeat 2 --output /tmp/pico-daily-report.json
+pnpm test:daily --repeat 2 --output /tmp/pikobot-daily-report.json
 pnpm test:memory:stress
 ```
 
@@ -62,12 +62,12 @@ node scripts/check-knowledge-offline.mjs
 The converter check rejects attempted fetches in-process. For a separate OS-level network boundary, explicitly build/run the optional validation image:
 
 ```sh
-docker build -f deploy/Dockerfile -t pico-app:0.1.0 .
-docker build -f deploy/knowledge-test.Dockerfile -t pico-knowledge-validation:local .
-docker run --rm --network none pico-knowledge-validation:local /app/scripts/check-knowledge-offline.mjs
+docker build -f deploy/Dockerfile -t pikobot-app:0.1.0 .
+docker build -f deploy/knowledge-test.Dockerfile -t pikobot-knowledge-validation:local .
+docker run --rm --network none pikobot-knowledge-validation:local /app/scripts/check-knowledge-offline.mjs
 ```
 
-`node scripts/evaluate-knowledge.mjs --output /tmp/pico-document-retrieval.json` uses a disposable synthetic corpus, actual QMD retrieval and growth notes. It can download roughly **2.1 GB** of local weights and needs several GiB of RAM. It measures retrieval, not generated-answer correctness. Do not use an operational `--root`.
+`node scripts/evaluate-knowledge.mjs --output /tmp/pikobot-document-retrieval.json` uses a disposable synthetic corpus, actual QMD retrieval and growth notes. It can download roughly **2.1 GB** of local weights and needs several GiB of RAM. It measures retrieval, not generated-answer correctness. Do not use an operational `--root`.
 
 The development-only fixture generator is `uv run --project scripts/knowledge-fixtures python scripts/knowledge-fixtures/generate.py`. It pins its Python environment, preserves cached public originals and refuses to overwrite different frozen document gold. Ordinary tests need no Python fixture regeneration.
 
@@ -84,7 +84,7 @@ pnpm test:family:local
 
 This starts **new disposable compiled CLI daemon processes**, with no runtime/model mocks or existing instance arguments. It exercises CLI card export/import and consent, private defaults, atomic shared creation with default read/write access, explicit read/edit grants, append/complete/remove and stale revisions, pagination, unsharing, actual wall-clock scheduling and terminal SSE delivery, recipient restart and reverse-direction delivery, revocation and pending cancellation. It asserts distinct owner/instance/PID identities and no model usage/credentials. Only the empty recipient archive has short automatic ticks, avoiding semantic model downloads for the source's documents.
 
-The check never attaches to deployed owners, borrows credentials, enables Telegram or invokes a model. It gracefully stops only its own subprocesses and removes their instance directories; private reports and daemon logs remain under a printed `/tmp/pico-family-local-…` directory, including failures. Every planned scenario remains in the report as passed, failed or not run. `node scripts/check-family-local.mjs --help` performs no file/process operations; unknown arguments and omission of `--run` are refused.
+The check never attaches to deployed owners, borrows credentials, enables Telegram or invokes a model. It gracefully stops only its own subprocesses and removes their instance directories; private reports and daemon logs remain under a printed `/tmp/pikobot-family-local-…` directory, including failures. Every planned scenario remains in the report as passed, failed or not run. `node scripts/check-family-local.mjs --help` performs no file/process operations; unknown arguments and omission of `--run` are refused.
 
 This is a **real local process/transport/scheduler check**, not live model interpretation, real Telegram delivery, deployment isolation or cross-host federation. A live model/Telegram trial needs separately approved accounts and synthetic data. The [manual walkthrough](FAMILY.md#manual-acceptance-walkthrough) gives exact prompts and observable outcomes for owners to verify after pairing.
 
@@ -92,7 +92,7 @@ This is a **real local process/transport/scheduler check**, not live model inter
 
 After building, `pnpm exec vitest run tests/mcp.test.ts tests/mcp-oauth.test.ts tests/mcp-network.test.ts tests/mcp-cli.test.ts` exercises actual disposable stdio processes/process-group cleanup, legacy and modern HTTP, legacy SSE, paginated catalogs, resources/prompts/completion, input/output validation, exact single-use approvals, task wire compatibility, credential binding/redaction and restricted-mode denials. The OAuth suite uses actual local HTTP discovery, registration, PKCE callbacks, issuer/state rejection, token refresh and client-credentials with synthetic accounts. `tests/tui-setup.test.ts` covers masked MCP entry and ephemeral/admin denials. Sampling uses a faux model; no vendor login or billed inference is proven.
 
-The separately authorized `pnpm test:mcp:live` checks public credential-free Microsoft Learn and DeepWiki tool discovery and read calls, using new disposable stores only. It accepts no existing instance or credential arguments, installs no MCP servers, invokes no Pico model, preserves failures in a private temporary report and follows canonical receipts for large results instead of replaying calls. Public service availability, actual vendor OAuth, real model interpretation and production reliability remain separate gates. `node scripts/check-mcp-live.mjs --help` is inert; `--run` is required for network/process work. See [MCP](MCP.md).
+The separately authorized `pnpm test:mcp:live` checks public credential-free Microsoft Learn and DeepWiki tool discovery and read calls, using new disposable stores only. It accepts no existing instance or credential arguments, installs no MCP servers, invokes no Pikobot model, preserves failures in a private temporary report and follows canonical receipts for large results instead of replaying calls. Public service availability, actual vendor OAuth, real model interpretation and production reliability remain separate gates. `node scripts/check-mcp-live.mjs --help` is inert; `--run` is required for network/process work. See [MCP](MCP.md).
 
 ### Browser MCP prototype
 
@@ -108,20 +108,20 @@ After adding tab-scoped HTTP attachment capture, a new owner-authorized check on
 
 ## Live trials require authorization
 
-Never run live calls merely to complete the default check command. Obtain authorization for the exact provider/account and any metered auxiliary services. Use a separate synthetic store, not owner data. Credentials may be used only through the explicitly selected Pico credential service, never copied or discovered from ambient tools.
+Never run live calls merely to complete the default check command. Obtain authorization for the exact provider/account and any metered auxiliary services. Use a separate synthetic store, not owner data. Credentials may be used only through the explicitly selected Pikobot credential service, never copied or discovered from ambient tools.
 
 Examples, **only after authorization**:
 
 ```sh
 pnpm test:daily --mode live --authorize-paid-model \
   --credential-root PRIVATE_AUTHORIZED_INSTANCE --model provider/model-id \
-  --repeat 2 --output /tmp/pico-daily-live.json
+  --repeat 2 --output /tmp/pikobot-daily-live.json
 
 pnpm test:memory:live --credential-root PRIVATE_AUTHORIZED_INSTANCE \
-  --fixtures eval/mem0-validation.json --repeat 2 --output /tmp/pico-memory-live.json
+  --fixtures eval/mem0-validation.json --repeat 2 --output /tmp/pikobot-memory-live.json
 
 node scripts/validate-knowledge.mjs --credential-root PRIVATE_AUTHORIZED_INSTANCE \
-  --provider openai --openai-model EXPLICIT_MODEL_ID --output /tmp/pico-documents-live.json
+  --provider openai --openai-model EXPLICIT_MODEL_ID --output /tmp/pikobot-documents-live.json
 ```
 
 The memory harness uses DeepSeek chat/extraction and OpenAI embeddings; it requires those configured API credentials. The document harness defaults to both configured API providers unless `--provider` selects one, and semantic indexing can download weights. Read [evaluation rules](../eval/GRADING.md) and the relevant script before running. These are not connector or deployed-owner checks.
@@ -137,8 +137,8 @@ The memory harness uses DeepSeek chat/extraction and OpenAI embeddings; it requi
 The daily runner can bind a separate manual review to the exact raw report bytes:
 
 ```sh
-pnpm test:daily --review /tmp/pico-daily-live.json \
-  --decisions /tmp/pico-review-decisions.json --output /tmp/pico-reviewed.json
+pnpm test:daily --review /tmp/pikobot-daily-live.json \
+  --decisions /tmp/pikobot-review-decisions.json --output /tmp/pikobot-reviewed.json
 ```
 
 A decisions file contains `reportSha256`, an identified `reviewer`, and one `{id,iteration,passed,safetyFailures,reason}` entry per scenario/repetition. It cannot waive functional/state failures or actual safety violations. Even a bounded reviewed pass does not establish general production quality.

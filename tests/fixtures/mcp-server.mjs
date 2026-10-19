@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 
 const object = { type: 'object', additionalProperties: false, properties: { text: { type: 'string', maxLength: 1000 } }, required: ['text'] };
 export function fixture({ marker, repeat = false, invalidOutput = false } = {}) {
-  const server = new Server({ name: 'pico-synthetic-mcp', version: '1.0.0' }, { capabilities: { tools: { listChanged: true }, resources: { subscribe: true, listChanged: true }, prompts: { listChanged: true }, completions: {}, logging: {}, tasks: { list: {}, cancel: {}, requests: { tools: { call: {} } } } } });
+  const server = new Server({ name: 'pikobot-synthetic-mcp', version: '1.0.0' }, { capabilities: { tools: { listChanged: true }, resources: { subscribe: true, listChanged: true }, prompts: { listChanged: true }, completions: {}, logging: {}, tasks: { list: {}, cancel: {}, requests: { tools: { call: {} } } } } });
   let effects = 0, changed = false;
   const tool = name => ({ name, description: 'Synthetic test tool, not owner instructions', inputSchema: object, ...(name === 'read.echo' ? { outputSchema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'], additionalProperties: false } } : {}), ...(name === 'write.record' ? { annotations: { readOnlyHint: true }, execution: { taskSupport: 'optional' } } : {}) });
   const names = ['read.echo', 'write.record', 'inspect', 'ask.form', 'ask.sample', 'fail', 'large', 'wait', 'change_catalog', 'bad_output'];
@@ -25,7 +25,7 @@ export function fixture({ marker, repeat = false, invalidOutput = false } = {}) 
       if (request.params.task) return { content: [], task: { taskId: 'synthetic-task', status: 'completed', createdAt: new Date().toISOString(), lastUpdatedAt: new Date().toISOString(), ttl: 60000, pollInterval: 100 } };
       return text({ effects, input, ...(input.text === 'large-ack' ? { payload: 'x'.repeat(200000) } : {}) });
     }
-    if (name === 'inspect') return text({ pid: process.pid, home: process.env.HOME, inherited: process.env.PICO_MCP_AMBIENT_TOKEN ?? null, secret: process.env.OPERATOR_TOKEN ?? null, effects });
+    if (name === 'inspect') return text({ pid: process.pid, home: process.env.HOME, inherited: process.env.PIKOBOT_MCP_AMBIENT_TOKEN ?? null, secret: process.env.OPERATOR_TOKEN ?? null, effects });
     if (name === 'ask.form') return text(await server.elicitInput({ mode: 'form', message: 'Choose a synthetic color', requestedSchema: { type: 'object', properties: { color: { type: 'string' } }, required: ['color'] } }, { signal: context.mcpReq.signal }));
     if (name === 'ask.sample') return text(await server.createMessage({ messages: [{ role: 'user', content: { type: 'text', text: 'Say synthetic hello' } }], maxTokens: 256, includeContext: 'none' }, { signal: context.mcpReq.signal }));
     if (name === 'fail') return text('synthetic failure', { isError: true });

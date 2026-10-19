@@ -29,7 +29,7 @@ const report = { buildHash: hash(JSON.stringify(build)), build, protocol: fixtur
   note: 'Real foreground ingestion, asynchronous extraction, retrieval and new-session answers. No accepted facts seeded. Strict checks are not a complete factuality/attribution grader; review all records and answers.', runs: [] };
 
 for (let iteration = 0; iteration < repeats; iteration++) {
-  const root = await mkdtemp(join(tmpdir(), 'pico-natural-memory-'));
+  const root = await mkdtemp(join(tmpdir(), 'pikobot-natural-memory-'));
   const config = initialize(root, 'Synthetic memory validation owner');
   config.model = { provider: 'deepseek', id: 'deepseek-flash' };
   config.embeddings = { provider: 'openai', model: 'text-embedding-3-small', dimensions: 1536, maxScan: 10000 };

@@ -6,7 +6,7 @@ import { JSDOM } from 'jsdom';
 
 const output = fileURLToPath(new URL('../docs/.vitepress/dist/', import.meta.url));
 const origin = 'https://mirkomignini.github.io';
-const base = '/pico/';
+const base = '/pikobot/';
 const pages = new Map();
 
 for (const file of readdirSync(output, { recursive: true })) {
@@ -14,7 +14,7 @@ for (const file of readdirSync(output, { recursive: true })) {
   const dom = new JSDOM(readFileSync(join(output, file), 'utf8'));
   const document = dom.window.document;
   assert.equal(document.documentElement.lang, 'en-US', `${file}: missing language`);
-  assert.ok(document.title.includes('Pico'), `${file}: missing page title`);
+  assert.ok(document.title.includes('Pikobot'), `${file}: missing page title`);
   for (const image of document.querySelectorAll('img')) {
     assert.ok(image.hasAttribute('alt'), `${file}: image missing alt text`);
   }
@@ -53,5 +53,5 @@ for (const [file, page] of pages) {
 }
 
 const setup = readFileSync(join(output, 'CHANNELS.html'), 'utf8');
-assert.ok(setup.includes('https://github.com/MirkoMignini/pico/blob/main/src/contracts.ts'), 'Source links must point to GitHub');
+assert.ok(setup.includes('https://github.com/MirkoMignini/pikobot/blob/main/src/contracts.ts'), 'Source links must point to GitHub');
 console.log(`Documentation: checked ${pages.size} pages and ${checked} local links, anchors and assets.`);

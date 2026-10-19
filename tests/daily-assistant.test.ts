@@ -8,7 +8,7 @@ import { abstains, claimsVerifiedOutcome, scenarios } from '../scripts/daily-ass
 
 let directory: string, report: any, output: string;
 beforeAll(async () => {
-  directory = await mkdtemp(join(tmpdir(), 'pico-daily-tests-'));
+  directory = await mkdtemp(join(tmpdir(), 'pikobot-daily-tests-'));
   ({ report, output } = await runSuite(parseArgs(['--repeat', '2', '--output', join(directory, 'regression.json')])));
 }, 30_000);
 afterEach(() => vi.restoreAllMocks());

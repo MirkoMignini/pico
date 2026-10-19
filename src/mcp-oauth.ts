@@ -31,7 +31,7 @@ export class McpOAuth implements OAuthClientProvider {
   get redirectUrl(): string | undefined { return this.server.oauth?.grantType === 'client_credentials' ? undefined : this.handoff?.redirectUrl ?? this.stateData.redirectUrl; }
   get clientMetadataUrl(): string | undefined { return this.server.oauth?.clientMetadataUrl; }
   get clientMetadata(): OAuthClientMetadata {
-    return { client_name: 'Pico MCP', application_type: 'native', redirect_uris: this.redirectUrl ? [this.redirectUrl] : [], grant_types: this.server.oauth?.grantType === 'client_credentials' ? ['client_credentials'] : ['authorization_code', 'refresh_token'], response_types: ['code'], token_endpoint_auth_method: this.secret ? 'client_secret_post' : 'none', ...(this.server.oauth?.scope ? { scope: this.server.oauth.scope } : {}) };
+    return { client_name: 'Pikobot MCP', application_type: 'native', redirect_uris: this.redirectUrl ? [this.redirectUrl] : [], grant_types: this.server.oauth?.grantType === 'client_credentials' ? ['client_credentials'] : ['authorization_code', 'refresh_token'], response_types: ['code'], token_endpoint_auth_method: this.secret ? 'client_secret_post' : 'none', ...(this.server.oauth?.scope ? { scope: this.server.oauth.scope } : {}) };
   }
   state(): string { this.csrf = randomBytes(32).toString('base64url'); return this.csrf; }
   private issuer(context?: OAuthClientInformationContext): string | undefined {

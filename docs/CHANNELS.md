@@ -54,7 +54,7 @@ Image sends publish a same-conversation TUI preview when supported, not evidence
 Types live in [contracts.ts](../src/contracts.ts); lifecycle/routing in [channels.ts](../src/channels.ts):
 
 ```ts
-interface PicoChannel {
+interface PikobotChannel {
   readonly id: string;
   readonly deliveries?: ReadonlyMap<string, NotificationDelivery>;
   start(): void | Promise<void>;
@@ -68,7 +68,7 @@ interface PicoChannel {
 - `onOutput` receives run events only for its channel; unscoped operational events can be shared. Select the correct conversation/recipient within the channel. Handler errors produce sanitized diagnostics.
 - Declared `deliveries` belong to the adapter: `channel` or `channel:opaque-target`. A default destination does not authorize arbitrary recipients.
 
-Register before `runtime.start()`, use `serve(instancePath,{channels: runtime => [...]})` for embedded launchers, or `await pico.registerChannel(adapter)` in a trusted module. Reload factories need fresh instances. Duplicate/cross-channel registrations fail before changing state. Module disable detaches its own listeners/destinations, not durable schedules.
+Register before `runtime.start()`, use `serve(instancePath,{channels: runtime => [...]})` for embedded launchers, or `await pikobot.registerChannel(adapter)` in a trusted module. Reload factories need fresh instances. Duplicate/cross-channel registrations fail before changing state. Module disable detaches its own listeners/destinations, not durable schedules.
 
 ## Input admission
 
@@ -85,7 +85,7 @@ const run = await runtime.channels.ingest(
 );
 ```
 
-Attachment IDs must refer to Pico media, not unverified remote file handles. Preserve event time and actual provenance. Trusted modules use their registered `pico.ingest` boundary; core fixes owner/instance/channel identity.
+Attachment IDs must refer to Pikobot media, not unverified remote file handles. Preserve event time and actual provenance. Trusted modules use their registered `pikobot.ingest` boundary; core fixes owner/instance/channel identity.
 
 Stable channel/sender/request IDs deduplicate admission and reject changed-body replay. The adapter must define durable native-update cursor/acknowledgment behavior; an HTTP/update receipt is not completed work. A completion may precede the intake acknowledgment, so inspect the admitted run snapshot when starting a watcher rather than relying only on future events.
 

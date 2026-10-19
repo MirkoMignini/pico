@@ -42,7 +42,7 @@ export function parseSkill(text: string, directory?: string): { metadata: SkillM
   if (directory !== undefined && basename(directory).normalize('NFKC') !== metadata.name) throw new Error('Skill directory name must match the name in SKILL.md');
   const warnings: string[] = [];
   if (text.split('\n').length > 500) warnings.push('SKILL.md exceeds the recommended 500 lines; move details into references/');
-  if (metadata['allowed-tools']) warnings.push('allowed-tools is advisory metadata, never a permission grant or a bypass of Pico execution policy');
+  if (metadata['allowed-tools']) warnings.push('allowed-tools is advisory metadata, never a permission grant or a bypass of Pikobot execution policy');
   return { metadata, instructions: match[2]!.trim(), warnings };
 }
 export function packageFromFiles(raw: unknown, directory?: string): SkillPackage {

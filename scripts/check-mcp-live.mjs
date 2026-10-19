@@ -8,7 +8,7 @@ if (args.length === 1 && args[0] === '--help') { console.log('Build first, then:
 if (args.length !== 1 || args[0] !== '--run') throw new Error('Explicit --run required; use --help. No instance/credential arguments are accepted.');
 
 const [{ initialize }, { Store }, { Runtime }, { Credentials }, { ModelAccess }, { rpc }] = await Promise.all(['config', 'store', 'runtime', 'credentials', 'models', 'daemon'].map(name => import(`../dist/${name}.js`)));
-const directory = await mkdtemp(join(tmpdir(), 'pico-mcp-live-'));
+const directory = await mkdtemp(join(tmpdir(), 'pikobot-mcp-live-'));
 const plans = [
   { id: 'microsoft', url: 'https://learn.microsoft.com/api/mcp', name: 'microsoft_docs_search', arguments: { query: 'Model Context Protocol TypeScript SDK initialization' } },
   { id: 'deepwiki', url: 'https://mcp.deepwiki.com/mcp', name: 'read_wiki_structure', arguments: { repoName: 'modelcontextprotocol/typescript-sdk' } }

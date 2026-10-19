@@ -110,7 +110,7 @@ it('uses Pi ChatGPT browser callbacks, state checks, token exchange and native s
   await waitFor(() => !!login.prompt || login.state !== 'pending');
   expect(login.state, login.error).toBe('pending');
   const event = login.events.find(item => item.event.type === 'auth_url')!.event as { url: string };
-  const url = new URL(event.url); expect(url.searchParams.get('agent_name_hint')).toBe('Pico'); expect(url.searchParams.get('ext_agent_host_id')).toBe(`urn:uuid:${s.config.instanceId}`);
+  const url = new URL(event.url); expect(url.searchParams.get('agent_name_hint')).toBe('Pikobot'); expect(url.searchParams.get('ext_agent_host_id')).toBe(`urn:uuid:${s.config.instanceId}`);
   const redirect = new URL(url.searchParams.get('redirect_uri')!); redirect.search = new URLSearchParams({ code: 'fixture-browser-code', state: 'wrong-state', client_id: 'fixture-issued-client' }).toString();
   expect((await localFetch(redirect)).status).toBe(400); expect(exchanges).toBe(0); expect(login.state).toBe('pending');
   const oldPrompt = login.prompt!.id; redirect.searchParams.set('state', url.searchParams.get('state')!);

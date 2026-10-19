@@ -1,19 +1,19 @@
-import { ChannelSchema, DestinationSchema, validate, type Envelope, type OutputEvent, type PicoChannel } from './contracts.js';
+import { ChannelSchema, DestinationSchema, validate, type Envelope, type OutputEvent, type PikobotChannel } from './contracts.js';
 import type { Runtime } from './runtime.js';
 
 export class Channels {
-  private adapters = new Map<string, { channel: PicoChannel; output: (event: OutputEvent) => void }>();
+  private adapters = new Map<string, { channel: PikobotChannel; output: (event: OutputEvent) => void }>();
   private started = false;
   private closing?: Promise<void>;
   constructor(readonly runtime: Runtime) {}
   get inputEpoch(): number { return this.runtime.inputEpoch; }
 
-  register<T extends PicoChannel>(channel: T): T {
+  register<T extends PikobotChannel>(channel: T): T {
     if (this.started) throw new Error('Register channels before starting the runtime; use attach for approved modules');
     return this.install(channel);
   }
 
-  async attach(channel: PicoChannel): Promise<void> {
+  async attach(channel: PikobotChannel): Promise<void> {
     this.install(channel);
     try { if (this.started) await channel.start(); }
     catch (error) { await this.detach(channel.id); throw error; }
@@ -26,7 +26,7 @@ export class Channels {
     await entry.channel.close();
   }
 
-  private install<T extends PicoChannel>(channel: T): T {
+  private install<T extends PikobotChannel>(channel: T): T {
     validate(ChannelSchema, channel.id);
     if (['schedule', 'review', 'global'].includes(channel.id)) throw new Error('Reserved channel ID');
     if (this.closing) throw new Error('Channels are closing');

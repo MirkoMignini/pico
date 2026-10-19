@@ -32,11 +32,11 @@ export class Client {
       if (status.extensionsExecution?.mode !== 'in-process') throw new Error('A legacy extension-worker daemon is already running. Ask its operator to upgrade/restart it; it will not be replaced automatically.');
     };
     try { await check(); return; } catch (error) { if (!['ENOENT','ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error; }
-    if (existsSync(join(this.root, 'service.json'))) throw new Error('This instance has an installed service. Use pico --instance PATH service start; a detached replacement will not be spawned.');
+    if (existsSync(join(this.root, 'service.json'))) throw new Error('This instance has an installed service. Use pikobot --instance PATH service start; a detached replacement will not be spawned.');
     const daemon = spawn(process.execPath,[fileURLToPath(new URL('./cli.js',import.meta.url)),'--instance',this.root,'serve'], { detached: true, stdio: 'ignore', env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: process.env.LANG ?? 'en_US.UTF-8' } });
     daemon.unref();
     for (let i = 0; i < 100; i++) { await sleep(100); try { await check(); return; } catch (error) { if (!['ENOENT','ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error; } }
-    throw new Error('Daemon startup failed. Run `pico --instance PATH serve` for its diagnostic; an existing authority is never replaced.');
+    throw new Error('Daemon startup failed. Run `pikobot --instance PATH serve` for its diagnostic; an existing authority is never replaced.');
   }
   subscribe(output: (event: OutputEvent) => void, disconnected: () => void, connected?:()=>void): () => void {
     this.unsubscribe?.();

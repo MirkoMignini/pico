@@ -4,7 +4,7 @@ description: Count characters, words and lines in supplied text or UTF-8 files u
 license: MIT; see LICENSE.txt
 compatibility: Requires Node.js 24. No external packages or network access.
 metadata:
-  author: Pico
+  author: Pikobot
   version: "1.0"
 ---
 
@@ -27,7 +27,7 @@ Use this skill for mechanical counts, not summaries, readability scores or langu
 5. To return a report attachment, add `args:["--output","outputs/report.json"]` and `outputs:["outputs/report.json"]` to a text request. File mode can combine `--file` and `--output`. Existing output files are never overwritten.
 6. Report counts only when `status` is `completed`, `exitCode` is 0 and stdout is valid JSON. Explain genuine input errors rather than inventing a result. Help is available with `args:["--help"]`.
 
-Do not automatically rerun an uncertain/timed-out invocation to recover its receipt. Use Pico's historical receipts instead.
+Do not automatically rerun an uncertain/timed-out invocation to recover its receipt. Use Pikobot's historical receipts instead.
 
 ## Counting rules
 
@@ -38,6 +38,6 @@ Do not automatically rerun an uncertain/timed-out invocation to recover its rece
 
 ## Safety and portability
 
-This is a small standard Agent Skills example: instructions, scripts, reference documentation, a sample asset and a license. It uses Node builtins, no Pico imports, credentials, external packages or network calls. It writes only an explicitly requested report under `outputs/`.
+This is a small standard Agent Skills example: instructions, scripts, reference documentation, a sample asset and a license. It uses Node builtins, no Pikobot imports, credentials, external packages or network calls. It writes only an explicitly requested report under `outputs/`.
 
-Pico runs it as the OS user in a private temporary copy. That is **not an OS security sandbox**; review any changes before trusting different code.
+Pikobot runs it as the OS user in a private temporary copy. That is **not an OS security sandbox**; review any changes before trusting different code.

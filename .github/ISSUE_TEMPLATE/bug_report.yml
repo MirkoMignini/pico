@@ -15,7 +15,7 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: Pico revision, OS/architecture, Node and pnpm versions, and relevant configuration without secrets.
+      description: Pikobot revision, OS/architecture, Node and pnpm versions, and relevant configuration without secrets.
     validations:
       required: true
   - type: textarea

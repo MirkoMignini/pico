@@ -8,5 +8,5 @@ export const BridgeConfigSchema = object({ version: Type.Literal(1), id: BridgeI
 export type BridgeConfig = Static<typeof BridgeConfigSchema>;
 export const BridgePairingSchema = object({ version: Type.Literal(1), bridgeId: BridgeIdSchema, url: Type.String({ minLength: 1, maxLength: 4000 }), token: Type.String({ pattern: '^[A-Za-z0-9_-]{43}$' }) });
 export type BridgePairing = Static<typeof BridgePairingSchema>;
-export const BridgeArtifactSchema = object({ name: Type.String({ minLength: 1, maxLength: 120 }), uri: Type.String({ pattern: '^pico-browser-artifact:[a-f0-9-]{36}:[a-f0-9]{64}$' }), mimeType: Type.String({ minLength: 1, maxLength: 100 }), bytes: Type.Integer({ minimum: 0, maximum: BRIDGE_FILE_BYTES }), hash: Type.String({ pattern: '^[a-f0-9]{64}$' }) });
+export const BridgeArtifactSchema = object({ name: Type.String({ minLength: 1, maxLength: 120 }), uri: Type.String({ pattern: '^pikobot-browser-artifact:[a-f0-9-]{36}:[a-f0-9]{64}$' }), mimeType: Type.String({ minLength: 1, maxLength: 100 }), bytes: Type.Integer({ minimum: 0, maximum: BRIDGE_FILE_BYTES }), hash: Type.String({ pattern: '^[a-f0-9]{64}$' }) });
 export type BridgeArtifact = Static<typeof BridgeArtifactSchema>;

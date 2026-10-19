@@ -247,7 +247,7 @@ it('backs up image descriptions with originals and erases them through old-backu
   const s = instance(), doc = await image(s);
   s.faux.appendResponses([fauxAssistantMessage([fauxText('BACKED-UP-IMAGE: a violet package.')])]);
   await s.runtime.knowledge.work();
-  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pico-image-backup-'));
+  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pikobot-image-backup-'));
   cpSync(snapshot.path, external, { recursive: true });
   try {
     await s.runtime.close(); s.store.close(); await restore(s.root, external, true);

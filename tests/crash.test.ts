@@ -14,7 +14,7 @@ async function start(root:string,scenario:string,endpoint=''){
  await waitFor(()=>output.includes('READY')||child.exitCode!==null,10000);if(!output.includes('READY'))throw new Error('Fault fixture exited before startup');return child;
 }
 async function kill(child:ChildProcess|undefined,signal:NodeJS.Signals='SIGKILL'){if(!child||child.exitCode!==null||child.signalCode!==null)return;const exited=once(child,'exit');child.kill(signal);await exited;}
-function root(){const path=mkdtempSync(join(tmpdir(),'pico-crash-')),config=initialize(path,'synthetic-crash-owner');delete config.embeddings;writeFileSync(join(path,'config.json'),JSON.stringify(config),{mode:0o600});return path;}
+function root(){const path=mkdtempSync(join(tmpdir(),'pikobot-crash-')),config=initialize(path,'synthetic-crash-owner');delete config.embeddings;writeFileSync(join(path,'config.json'),JSON.stringify(config),{mode:0o600});return path;}
 it('real SIGKILL during streaming releases authority; receipt resumes without duplicating input',async()=>{
  const path=root(),client=new Client(path);let child:ChildProcess|undefined;
  try{

@@ -9,15 +9,28 @@ import { backup, restore, exportData } from '../src/backup.js';
 import { Store } from '../src/store.js';
 import { atomicWrite } from '../src/config.js';
 
-it('Pico branding reaches package, default CLI path, database, backup and export without changing owner identity',async()=>{
+it('Pikobot branding reaches package, default CLI path, database, backup and export without changing owner identity',async()=>{
  const s=setup('Human owner');
  try{
-  const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));expect(pkg.name).toBe('pico-assistant');expect(pkg.bin).toEqual({pico:'dist/cli.js'});
-  const cli=spawnSync(process.execPath,[new URL('../dist/cli.js',import.meta.url).pathname,'init','--name','Human owner'],{env:{...process.env,HOME:s.root},encoding:'utf8'});expect(cli.status,cli.stderr).toBe(0);expect(JSON.parse(cli.stdout).path).toBe(join(s.root,'.local','share','pico'));
-  expect(existsSync(join(s.root,'pico.sqlite'))).toBe(true);const snapshot=await backup(s.store);expect(snapshot.manifest.files.some(file=>file.path==='pico.sqlite')).toBe(true);
-  const exported=exportData(s.store) as any;expect(exported.format).toBe('pico-export-v1');expect(exported.assistant.name).toBe('Pico');expect(exported.owner).toEqual({id:s.config.ownerId,name:'Human owner'});
+  const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));expect(pkg.name).toBe('pikobot');expect(pkg.bin).toEqual({pikobot:'dist/cli.js'});
+  const cli=spawnSync(process.execPath,[new URL('../dist/cli.js',import.meta.url).pathname,'init','--name','Human owner'],{env:{...process.env,HOME:s.root},encoding:'utf8'});expect(cli.status,cli.stderr).toBe(0);expect(JSON.parse(cli.stdout).path).toBe(join(s.root,'.local','share','pikobot'));
+  expect(existsSync(join(s.root,'pikobot.sqlite'))).toBe(true);const snapshot=await backup(s.store);expect(snapshot.manifest.files.some(file=>file.path==='pikobot.sqlite')).toBe(true);
+  const exported=exportData(s.store) as any;expect(exported.format).toBe('pikobot-export-v1');expect(exported.assistant.name).toBe('Pikobot');expect(exported.owner).toEqual({id:s.config.ownerId,name:'Human owner'});
   expect(s.store.meta('ownerId')).toBe(s.config.ownerId);expect(s.store.meta('instanceId')).toBe(s.config.instanceId);
  }finally{await s.runtime.close();s.store.close();rmSync(s.root,{recursive:true,force:true});}
+});
+it('refuses a differently named operational database without creating an empty replacement', async () => {
+  const s = setup();
+  s.runtime.remember('preserved', 'synthetic retained evidence');
+  await s.runtime.close(); s.store.close();
+  const database = join(s.root, 'legacy.sqlite');
+  renameSync(join(s.root, 'pikobot.sqlite'), database);
+  const original = readFileSync(database);
+  try {
+    expect(() => new Store(s.root, s.config)).toThrow('offline rename procedure');
+    expect(existsSync(join(s.root, 'pikobot.sqlite'))).toBe(false);
+    expect(readFileSync(database)).toEqual(original);
+  } finally { rmSync(s.root, { recursive: true, force: true }); }
 });
 it('concurrent foreground/background auth resolution serializes actual rotating-token HTTP exchange',async()=>{
   const s=setup();let token='first-refresh',rotations=0;
@@ -36,13 +49,13 @@ it('concurrent foreground/background auth resolution serializes actual rotating-
     await s.runtime.credentials.modify('rotating',async()=>({type:'oauth',access:'expired',refresh:'invalid',expires:1}));await expect(models.getAuth('rotating')).rejects.toThrow();expect((await s.runtime.credentials.read('rotating') as any).refresh).toBe('invalid');
   }finally{await new Promise<void>(resolve=>server.close(()=>resolve()));await s.runtime.close();s.store.close();rmSync(s.root,{recursive:true,force:true});}
 });
-it('pre-rename snapshot basenames restore into Pico without weakening hash or single-database validation',async()=>{
+it('pre-rename snapshot basenames restore into Pikobot without weakening hash or single-database validation',async()=>{
  const s=setup();s.runtime.remember('preserved','legacy evidence');const snapshot=await backup(s.store);
- renameSync(join(snapshot.path,'pico.sqlite'),join(snapshot.path,'legacy.sqlite'));
- const files=snapshot.manifest.files.map(file=>file.path==='pico.sqlite'?{...file,path:'legacy.sqlite'}:file);
+ renameSync(join(snapshot.path,'pikobot.sqlite'),join(snapshot.path,'legacy.sqlite'));
+ const files=snapshot.manifest.files.map(file=>file.path==='pikobot.sqlite'?{...file,path:'legacy.sqlite'}:file);
  writeFileSync(join(snapshot.path,'manifest.json'),JSON.stringify({...snapshot.manifest,files}));await s.runtime.close();s.store.close();
  try{
-  await restore(s.root,snapshot.path,true);const recovered=new Store(s.root,s.config);try{expect(recovered.get<{value:string}>('SELECT value FROM memories')!.value).toBe('legacy evidence');expect(existsSync(join(s.root,'pico.sqlite'))).toBe(true);}finally{recovered.close();}
+  await restore(s.root,snapshot.path,true);const recovered=new Store(s.root,s.config);try{expect(recovered.get<{value:string}>('SELECT value FROM memories')!.value).toBe('legacy evidence');expect(existsSync(join(s.root,'pikobot.sqlite'))).toBe(true);}finally{recovered.close();}
   writeFileSync(join(snapshot.path,'manifest.json'),JSON.stringify({...snapshot.manifest,files:[...files,{...files.find(file=>file.path==='legacy.sqlite')!,path:'other.sqlite'}]}));await expect(restore(s.root,snapshot.path,true)).rejects.toThrow('ambiguous database');
   writeFileSync(join(snapshot.path,'manifest.json'),JSON.stringify({...snapshot.manifest,files}));writeFileSync(join(snapshot.path,'legacy.sqlite'),'tampered');await expect(restore(s.root,snapshot.path,true)).rejects.toThrow('integrity');
  }finally{rmSync(s.root,{recursive:true,force:true});}

@@ -96,11 +96,11 @@ pdf('scan.pdf',[[]],(0,));assert not PdfReader(OUT/'scan.pdf').pages[0].extract_
 pdf('mixed.pdf',[['Readable page MIX-904.'],[]],(1,));assert not PdfReader(OUT/'mixed.pdf').pages[1].extract_text();record('mixed.pdf',outcome='needs_ocr')
 w=PdfWriter();w.append(OUT/'digital.pdf');w.encrypt('fictional-fixture-password');w.write(OUT/'encrypted.pdf');record('encrypted.pdf',outcome='encrypted')
 (OUT/'malformed.pdf').write_bytes(b'%PDF-1.7\nnot a PDF');record('malformed.pdf',outcome='malformed')
-(OUT/'unsupported.bin').write_bytes(b'\x00\x01PICO-UNSUPPORTED');record('unsupported.bin',outcome='unsupported_extraction')
+(OUT/'unsupported.bin').write_bytes(b'\x00\x01PIKOBOT-UNSUPPORTED');record('unsupported.bin',outcome='unsupported_extraction')
 with wave.open(str(OUT/'silence.wav'),'wb') as w:w.setnchannels(1);w.setsampwidth(2);w.setframerate(8000);w.writeframes(b'\0\0'*8000)
 record('silence.wav',outcome='unsupported_extraction')
 # Public MIT corpus: actual legacy producer output and independently crafted XLSB.
-ref=Path('/tmp/pico-anydoc-reference');revision='261fc257d17c3eab0f673be31c408fd9fdc2171a'
+ref=Path('/tmp/pikobot-anydoc-reference');revision='261fc257d17c3eab0f673be31c408fd9fdc2171a'
 if ref.exists():assert __import__('subprocess').check_output(['git','-C',str(ref),'rev-parse','HEAD'],text=True).strip()==revision, 'Public source checkout must match the pinned revision' 
 public=['doc/text.doc','xls/sheet.xls','ppt/pres.ppt','xlsb/handmade-sheet.xlsb','csv/handmade-utf16.csv','csv/handmade-semicolon.csv','docx/handmade-altpath.docx','abuse/zipbomb--errors.docx']
 for path in public:

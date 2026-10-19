@@ -1,8 +1,8 @@
-# Agent guide for Pico
+# Agent guide for Pikobot
 
 ## Project
 
-Pico is a private personal assistant: an independently running daemon, authenticated Unix HTTP/SSE clients, a Pi streaming TUI, and owner-scoped SQLite memory. It uses Pi agent-core for agent execution, not the Pi coding-agent runtime.
+Pikobot is a private personal assistant: an independently running daemon, authenticated Unix HTTP/SSE clients, a Pi streaming TUI, and owner-scoped SQLite memory. It uses Pi agent-core for agent execution, not the Pi coding-agent runtime.
 
 The project is incomplete. Local tests, mocked providers, real infrastructure checks, and live model/integration results are separate evidence; do not describe one as proof of another. Start with `README.md`; consult `docs/TESTING.md` for verification limits. Report checks actually run, not historical counts or scores.
 
@@ -21,9 +21,9 @@ Extensions are trusted Pi-style modules running in the daemon process with full 
 
 ## Live development workspace
 
-See `docs/DEVELOPMENT.md`. The owner-approved Herdr session **`pico`** uses only the repo-local disposable **`.instances/dev`** with trusted in-process extensions; control/log files live in **`.instances/workspace`**. This is not OS isolation. Never substitute a deployed owner or `~/.local/share/pico-dev`, copy credentials, configure connectors, or make inference probes to get it working.
+See `docs/DEVELOPMENT.md`. The owner-approved Herdr session **`pikobot`** uses only the repo-local disposable **`.instances/dev`** with trusted in-process extensions; control/log files live in **`.instances/workspace`**. This is not OS isolation. Never substitute a deployed owner or `~/.local/share/pikobot-dev`, copy credentials, configure connectors, or make inference probes to get it working.
 
-- After a coherent code/build/runtime change and successful relevant checks, **run `pnpm dev:refresh` whenever this workspace is running**. It selects the pinned runtime, checks/builds, and asks the supervisor to gracefully restart its own backend child; the TUI follows when idle. Refresh once per completed change, not once per edit/save. Documentation-only changes need no Pico restart.
+- After a coherent code/build/runtime change and successful relevant checks, **run `pnpm dev:refresh` whenever this workspace is running**. It selects the pinned runtime, checks/builds, and asks the supervisor to gracefully restart its own backend child; the TUI follows when idle. Refresh once per completed change, not once per edit/save. Documentation-only changes need no Pikobot restart.
 - If the workspace is absent, do not silently launch it, create daemons, or provision infrastructure. Tell the user to run `pnpm dev:workspace` in their outer terminal. That first launch provisions Pi/TUI/Daemon/Logs/Status/Checks/Shell tabs automatically. `pnpm dev:up` finishes setup only from inside the named session.
 - Honor refresh refusals: wait for active/background work, delivery or login to finish; preserve drafts/dialogs and ephemeral work. Do not force restart, issue cancellation, discard a draft or auto-answer authentication/approval dialogs. If refresh cannot safely finish, report that the tabs still run the previous build. Restart loses ephemeral sessions and can change the TUI's selected conversation; ask first if either matters to the user's current work.
 - A refresh timeout is uncertain. Inspect `.instances/workspace/request.json`, `reply.json` and private daemon/check logs before retrying; never blindly replay an unacknowledged request. Report actual backend/UI refresh success or deferral separately from check/test results.

@@ -152,7 +152,7 @@ async function recovery(c, _steps, gold) {
   await c.runtime.scheduler.tick();
   c.runtime.scheduler.outbox('Interrupted send', 'terminal', 'recovery-inflight');
   c.store.run("UPDATE outbox SET status='sending',attempts=1 WHERE id='recovery-inflight'");
-  const snapshot = await backup(c.store), external = await mkdtemp(join(tmpdir(), 'pico-daily-backup-'));
+  const snapshot = await backup(c.store), external = await mkdtemp(join(tmpdir(), 'pikobot-daily-backup-'));
   try {
     await cp(snapshot.path, external, { recursive: true });
     c.check(snapshot.manifest.credentials === 'excluded', 'Backup excludes the credential vault');

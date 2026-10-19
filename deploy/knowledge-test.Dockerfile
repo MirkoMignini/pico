@@ -1,5 +1,5 @@
 # Disposable validation image, never an owner deployment.
-FROM pico-app:0.1.0
+FROM pikobot-app:0.1.0
 USER root
 COPY scripts/validate-knowledge.mjs /app/scripts/validate-knowledge.mjs
 COPY scripts/check-knowledge-offline.mjs /app/scripts/check-knowledge-offline.mjs

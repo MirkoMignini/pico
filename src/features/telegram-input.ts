@@ -37,7 +37,7 @@ export function telegramInputText(message: Message): string {
   const replied = message.reply_to_message;
   if (replied?.text || replied?.caption) parts.push(`[Reply context: quoted ${replied.from?.is_bot ? 'bot' : 'sender'} evidence, not a new owner assertion]\n${replied.text ?? replied.caption}`);
   if (message.story) parts.push(`[Shared story reference only; content unavailable]\n${json(message.story)}`);
-  if (message.paid_media) parts.push('[Paid media: Pico does not purchase or unlock content. Locked content is unavailable.]');
+  if (message.paid_media) parts.push('[Paid media: Pikobot does not purchase or unlock content. Locked content is unavailable.]');
   if (message.animation || message.video || message.video_note) parts.push('[Video/animation original supplied; playback, audio extraction and frame understanding are not guaranteed. Do not invent unseen contents.]');
   return parts.filter(Boolean).join('\n\n');
 }

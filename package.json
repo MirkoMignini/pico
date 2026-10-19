@@ -1,5 +1,5 @@
 {
-  "name": "pico-assistant",
+  "name": "pikobot",
   "version": "0.1.0",
   "license": "MIT",
   "private": true,
@@ -9,7 +9,7 @@
   },
   "packageManager": "pnpm@11.2.2",
   "bin": {
-    "pico": "dist/cli.js"
+    "pikobot": "dist/cli.js"
   },
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.json",
@@ -26,7 +26,7 @@
     "start": "node dist/cli.js",
     "install:local": "node scripts/install.mjs",
     "release:pack": "node scripts/release.mjs",
-    "dev": "pnpm build && node dist/cli.js --instance \"$HOME/.local/share/pico-dev\" chat",
+    "dev": "pnpm build && node dist/cli.js --instance \"$HOME/.local/share/pikobot-dev\" chat",
     "dev:workspace": "bash scripts/dev.sh workspace",
     "dev:up": "bash scripts/dev.sh up",
     "dev:refresh": "bash scripts/dev.sh refresh",

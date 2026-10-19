@@ -39,7 +39,7 @@ export class GoogleTasks {
     const params={maxResults:String(args.limit??100),...(args.pageToken?{pageToken:args.pageToken}:{})};
     const url=args.action==='lists'?`https://tasks.googleapis.com/tasks/v1/users/@me/lists?${new URLSearchParams(params)}`:`${this.url(args.taskListId)}?${new URLSearchParams({...params,showCompleted:String(args.includeCompleted??false),showHidden:String(args.includeCompleted??false),showDeleted:'false'})}`;
     const data=await this.account.request<{items?:unknown[];nextPageToken?:string}>(url,scopes,signal);
-    return {origin:'external:google-tasks',items:data.items??[],nextPageToken:data.nextPageToken??null,note:'Google Tasks due values are dates, not timed alarms or Pico reminders'};
+    return {origin:'external:google-tasks',items:data.items??[],nextPageToken:data.nextPageToken??null,note:'Google Tasks due values are dates, not timed alarms or Pikobot reminders'};
   }
   private body(args:Record<string,any>):Record<string,unknown>{
     const body:Record<string,unknown>={};

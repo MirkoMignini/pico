@@ -27,7 +27,7 @@ it('delegates through Pi Agent with minimal context, a strict read-only allowlis
   },transcript=>{
     const report=JSON.parse((transcript.messages.find(message=>message.role==='toolResult'&&message.toolName==='research') as any).content[0].text);return text(report.text);
   }]);
-  expect(result.run.status).toBe('completed');expect(result.run.partial).toContain('14:30');expect(result.run.partial).toContain('pico:web:');expect(ingest).toHaveBeenCalledTimes(1);
+  expect(result.run.status).toBe('completed');expect(result.run.partial).toContain('14:30');expect(result.run.partial).toContain('pikobot:web:');expect(ingest).toHaveBeenCalledTimes(1);
   const child=stream.mock.calls.filter(([, ,options])=>options?.sessionId?.includes(':research:'));
   expect(child).toHaveLength(2);expect(child[0]![0].id).toBe(s.config.model.id);expect(child[0]![2]?.maxTokens).toBe(2048);
   expect(json(child[0]![1])).not.toContain('personal-memory-sentinel');expect(child[0]![1].messages.filter(message=>message.role==='system').flatMap(message=>message.toolsAdded??[]).map(tool=>tool.name)).toEqual(['time','web_search','web_fetch','web_read']);
@@ -38,7 +38,7 @@ it('delegates through Pi Agent with minimal context, a strict read-only allowlis
 });
 it('repairs an invalid parent web citation with a bounded read, without re-fetching or writes',async()=>{
   const s=instance(),network=mockPage(s);let fetched:any;
-  const result=await turn(s,[call('web_fetch',{url:'https://www.example.org/'}),transcript=>{fetched=JSON.parse((transcript.messages.find(message=>message.role==='toolResult'&&message.toolName==='web_fetch') as any).content[0].text);return text(`Invalid pico:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`);},()=>call('web_read',{id:fetched.sourceId}),transcript=>{const read=JSON.parse((transcript.messages.filter(message=>message.role==='toolResult').at(-1) as any).content[0].text);return text(`Verified 14:30. ${read.citation}`);}]);
+  const result=await turn(s,[call('web_fetch',{url:'https://www.example.org/'}),transcript=>{fetched=JSON.parse((transcript.messages.find(message=>message.role==='toolResult'&&message.toolName==='web_fetch') as any).content[0].text);return text(`Invalid pikobot:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`);},()=>call('web_read',{id:fetched.sourceId}),transcript=>{const read=JSON.parse((transcript.messages.filter(message=>message.role==='toolResult').at(-1) as any).content[0].text);return text(`Verified 14:30. ${read.citation}`);}]);
   expect(result.run.status).toBe('completed');expect(result.run.partial).toContain('Verified 14:30');expect(network).toHaveBeenCalledTimes(1);expect(s.runtime.knowledge.list().total).toBe(0);
 });
 
@@ -70,7 +70,7 @@ it('refuses oversized child context before starting an additional model request'
   const report=result.messages.find(message=>message.role==='toolResult'&&message.toolName==='research');expect(report.isError).toBe(true);expect(json(report)).toContain('Research incomplete');expect(s.faux.state.callCount).toBe(4);
 });
 it('rejects invented/malformed child source citations instead of publishing a grounded report',async()=>{
-  const s=instance();const result=await turn(s,[call('research',{task:'Source test'}),text(`Fabricated pico:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`),text('Could not verify research.')]);
+  const s=instance();const result=await turn(s,[call('research',{task:'Source test'}),text(`Fabricated pikobot:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`),text('Could not verify research.')]);
   const report=result.messages.find(message=>message.role==='toolResult'&&message.toolName==='research');expect(report.isError).toBe(true);expect(json(report)).toContain('not retained');expect(result.run.partial).not.toContain('Fabricated');
 });
 it('keeps child web content/transcripts/operations out of persistent ephemeral storage',async()=>{

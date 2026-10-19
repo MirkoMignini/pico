@@ -23,13 +23,13 @@ function snapshot(root: string): unknown {
   return readdirSync(root).sort().map(name => { const path = join(root, name), stat = lstatSync(path); return [name, stat.mode, stat.isDirectory() ? snapshot(path) : readFileSync(path).toString('base64')]; });
 }
 it('never creates a missing instance while loading configuration or diagnosing it', async () => {
-  const parent = mkdtempSync(join(tmpdir(), 'pico-doctor-')); cleanup.push(() => rmSync(parent, { recursive: true, force: true }));
+  const parent = mkdtempSync(join(tmpdir(), 'pikobot-doctor-')); cleanup.push(() => rmSync(parent, { recursive: true, force: true }));
   const missing = join(parent, 'missing'); expect(() => loadConfig(missing)).toThrow();
   const result = await doctor(missing); expect(result.ok).toBe(false); expect(existsSync(missing)).toBe(false);
   expect(JSON.stringify(result)).not.toContain(parent);
 });
 it('diagnoses an initialized but stopped instance without database creation, inference, credential refresh or writes', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'pico-doctor-new-')); cleanup.push(() => rmSync(root, { recursive: true, force: true }));
+  const root = mkdtempSync(join(tmpdir(), 'pikobot-doctor-new-')); cleanup.push(() => rmSync(root, { recursive: true, force: true }));
   initialize(root, 'PRIVATE-OWNER-SENTINEL');
   const before = snapshot(root), start = vi.spyOn(Runtime.prototype, 'start'), network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('No network permitted'));
   const result = await doctor(root);
@@ -64,7 +64,7 @@ it('separates stored credentials from explicit selected-model test evidence and 
   const s = instance();
   await s.runtime.credentials.modify(s.config.model.provider, async () => ({ type: 'api_key', key: 'fixture-account-one' }));
   expect((await runtimeReadiness(s.runtime)).items[0]).toMatchObject({ credential: 'stored', authenticated: 'unverified', reachable: 'unverified', tested: 'not-run' });
-  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pico is connected.')])]);
+  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pikobot is connected.')])]);
   expect(await rpc(s.runtime, { op: 'auth.test' })).toMatchObject({ tested: 'passed' });
   expect((await runtimeReadiness(s.runtime)).items[0]).toMatchObject({ authenticated: 'verified', reachable: 'verified', tested: 'passed' });
   await s.runtime.credentials.modify(s.config.model.provider, async () => ({ type: 'api_key', key: 'fixture-account-two' }));
@@ -74,7 +74,7 @@ it('separates stored credentials from explicit selected-model test evidence and 
 it('shows a tested default model in the background row of a different selected conversation', async () => {
   const s = instance(), conversation = s.runtime.newConversation('Synthetic selected model');
   s.runtime.model(conversation.id, { provider: 'deepseek', id: 'deepseek-flash' });
-  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pico is connected.')])]);
+  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pikobot is connected.')])]);
   expect(await rpc(s.runtime, { op: 'auth.test' })).toMatchObject({ tested: 'passed' });
   const result = await runtimeReadiness(s.runtime, conversation.id);
   expect(result.items.find(item => item.id === 'model')).toMatchObject({ authenticated: 'unverified', tested: 'not-run' });
@@ -102,10 +102,10 @@ it('keeps optional services separate, reflects disabled modules and pending save
   result = await runtimeReadiness(s.runtime); expect(result.items.find(item => item.id === 'search')?.enabled).toBe(false);
 });
 it('offers compiled CLI help/version/offline diagnostics without creating or starting an owner', async () => {
-  const parent = mkdtempSync(join(tmpdir(), 'pico-doctor-cli-')); cleanup.push(() => rmSync(parent, { recursive: true, force: true }));
+  const parent = mkdtempSync(join(tmpdir(), 'pikobot-doctor-cli-')); cleanup.push(() => rmSync(parent, { recursive: true, force: true }));
   const root = join(parent, 'missing'), cli = new URL('../dist/cli.js', import.meta.url).pathname, execute = promisify(execFile);
   for (const flag of ['--help', '--version']) {
-    const result = await execute(process.execPath, [cli, '--instance', root, flag], { timeout: 20_000 }); expect(result.stdout).toContain('Pico');
+    const result = await execute(process.execPath, [cli, '--instance', root, flag], { timeout: 20_000 }); expect(result.stdout).toContain('Pikobot');
   }
   const result = await execute(process.execPath, [cli, '--instance', root, 'doctor', '--offline', '--json'], { timeout: 20_000 }).catch(error => error);
   expect(result.code).toBe(1); expect(JSON.parse(result.stdout).ok).toBe(false); expect(existsSync(root)).toBe(false);

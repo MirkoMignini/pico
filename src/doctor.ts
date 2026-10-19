@@ -14,10 +14,10 @@ export interface DoctorReport { version: string; node: string; expectedNode: str
 export async function doctor(root: string, offline = false): Promise<DoctorReport> {
   const report: DoctorReport = { version: VERSION, node: process.versions.node, expectedNode: NODE_VERSION, ok: false, checks: [] };
   const add = (id: string, status: DoctorCheck['status'], message: string, remedy?: string) => report.checks.push({ id, status, message, ...(remedy ? { remedy } : {}) });
-  add('runtime', process.versions.node === NODE_VERSION ? 'pass' : 'fail', `Node ${NODE_VERSION} and pnpm ${PNPM_VERSION} are pinned.`, 'Select the pinned runtime before starting or installing Pico.');
+  add('runtime', process.versions.node === NODE_VERSION ? 'pass' : 'fail', `Node ${NODE_VERSION} and pnpm ${PNPM_VERSION} are pinned.`, 'Select the pinned runtime before starting or installing Pikobot.');
   add('platform', ['darwin', 'linux'].includes(process.platform) ? 'pass' : 'fail', 'Supported native platforms: macOS and Linux with private Unix sockets.');
   try { existingPrivateDirectory(root); }
-  catch { add('instance', 'fail', 'Instance is missing, not owned by this OS user, symlinked or not private.', 'Initialize a NEW private directory once with pico --instance PATH init; fix permissions on existing data instead of reinitializing it.'); return report; }
+  catch { add('instance', 'fail', 'Instance is missing, not owned by this OS user, symlinked or not private.', 'Initialize a NEW private directory once with pikobot --instance PATH init; fix permissions on existing data instead of reinitializing it.'); return report; }
   add('instance', 'pass', 'Instance directory is owned by this OS user and private.');
   let config;
   try { for (const name of ['config.json', 'ipc.token']) if (lstatSync(join(root, name)).size > 4_000_000) throw new Error(); config = loadConfig(root).config; add('configuration', 'pass', 'Saved configuration is valid.'); }
@@ -32,8 +32,8 @@ export async function doctor(root: string, offline = false): Promise<DoctorRepor
     const space = statfsSync(root), free = space.bavail * space.bsize;
     add('disk', free < 1_000_000_000 ? 'warn' : 'pass', free < 1_000_000_000 ? 'Less than 1 GB of disk space is available.' : 'At least 1 GB of disk space is available.', 'Budget separately for originals, backups and several GiB of optional semantic-model weights.');
   } catch { add('disk', 'warn', 'Available disk space could not be checked.'); }
-  const db = join(root, 'pico.sqlite');
-  if (!existsSync(db)) add('database', 'warn', 'No operational database yet. The first explicit daemon start creates it.', 'Use pico --instance PATH serve or service start when ready. Doctor never creates/migrates a database.');
+  const db = join(root, 'pikobot.sqlite');
+  if (!existsSync(db)) add('database', 'warn', 'No operational database yet. The first explicit daemon start creates it.', 'Use pikobot --instance PATH serve or service start when ready. Doctor never creates/migrates a database.');
   else {
     let fd: number | undefined;
     try {
@@ -73,7 +73,7 @@ export async function doctor(root: string, offline = false): Promise<DoctorRepor
   return report;
 }
 export function formatDoctor(report: DoctorReport): string {
-  return [`Pico ${report.version} · ${report.ok ? 'no blocking local failures' : 'attention required'}`,
+  return [`Pikobot ${report.version} · ${report.ok ? 'no blocking local failures' : 'attention required'}`,
     ...report.checks.map(check => `[${check.status.toUpperCase()}] ${check.id}: ${check.message}${check.status !== 'pass' && check.remedy ? `\n  Next: ${check.remedy}` : ''}`),
     ...report.readiness?.items.map(item => `${item.id}: ${item.enabled ? 'enabled' : 'disabled'} · configured ${item.configured ? 'yes' : 'no'} · credential ${item.credential} · authenticated ${item.authenticated} · reachable ${item.reachable} · tested ${item.tested}`) ?? [],
     'This allowlisted report omits owner IDs/names, paths, addresses, content, credentials and raw errors. Live model/connector quality and delivery are not certified.'].join('\n') + '\n';

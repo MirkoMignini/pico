@@ -36,10 +36,10 @@ Place trusted `.ts`, `.js` or `.mjs` files in `PRIVATE_INSTANCE/extensions/`, or
 [The word-count module](../examples/word-count.ts) illustrates the registration API, not the recommended packaging for a standalone counter (use the [skill example](../examples/skills/text-statistics/SKILL.md)):
 
 ```ts
-export default function (pico) {
-  pico.registerTool({
+export default function (pikobot) {
+  pikobot.registerTool({
     name: 'word_count', label: 'Word count', description: 'Count supplied words.',
-    parameters: pico.Type.Object({ text: pico.Type.String() }, { additionalProperties: false }),
+    parameters: pikobot.Type.Object({ text: pikobot.Type.String() }, { additionalProperties: false }),
     async execute(callId, { text }, signal, onUpdate, context) {
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       return { content: [{ type: 'text', text: String(words) }], details: { words } };
@@ -77,14 +77,14 @@ Document imports can reuse an existing current document for a retained attachmen
 
 These interfaces are generic; provider-specific clients belong in extensions, not core:
 
-- `pico.replaceTools(tools)`: atomically replace this module's tools, preserving the previous set on validation/name collisions. It does not activate another module or expand authority. `trustedOnly: true` on a bundled tool retains the trusted-foreground dispatch restriction (used by MCP); it cannot make third-party modules more privileged.
-- `pico.registerSetup({title,description,parameters,read,save,secrets,prepareSecret?})`: one strict non-secret settings object and separately masked `{name,label}` fields. Generic RPCs are `extensions.setup({id})`, `extensions.configure({id,settings})`, `extensions.secret({id,name,value})`; TUI `/integrations setup ID` handles separate dialogs. Partial persistence is reported, not rolled back silently. Optional synchronous `prepareSecret(name,value)` validates/transforms masked input before private vault storage; MCP uses it to bind credentials to the selected endpoint/command/account. Never return secret material from `read()`.
-- `pico.credentials`: owner-vault `read`, serialized `modify`, `delete` and supported `secret` reads. Registered extension secrets use `extensions.MODULE_ID.NAME`. Never expose credentials in tool inputs/results, chat, ordinary settings or logs.
-- `pico.storage.get<T>(key)`, `list(prefix)`, `set(key,value,sourceIds?)`, `delete(key)`: owner/module-namespaced SQLite. Keys ≤200 characters, JSON ≤1,000,000 characters and ≤1000 supplied dependencies. Forgotten dependencies fail atomically; erasure/restore purge linked state. Supply actual dependencies and honor `writesAllowed`. This is not credential storage or confinement of direct Node access.
-- `pico.on('agenda', async (range,context,signal) => ({items,truncated,warnings}))`: bounded selected remote contributions to canonical agenda, not local copies or permission. Items carry IDs, titles, explicit instants/all-day metadata and provenance. Failed providers make the agenda incomplete. `pico.agenda(range,context,signal)` collects contributions.
-- `await pico.registerChannel(adapter)`: validated module-owned registration/lifecycle. Authorize senders **before storage/download**, capture `pico.inputEpoch` before asynchronous preparation, then call `pico.ingest(channel,input,sender,mode,epoch)`. Only registered channels are admitted, with fixed owner/instance and recipient namespaces. [Adapter contract](CHANNELS.md).
-- `pico.registerRpc({name,parameters,execute})`: authenticated owner-terminal routes under `extensions.MODULE_ID.METHOD`, not a model-facing dispatcher.
-- `pico.setStatus(key,text?)`: a bounded literal terminal footer entry; omit text to clear it. Display-only, never evidence or authority.
+- `pikobot.replaceTools(tools)`: atomically replace this module's tools, preserving the previous set on validation/name collisions. It does not activate another module or expand authority. `trustedOnly: true` on a bundled tool retains the trusted-foreground dispatch restriction (used by MCP); it cannot make third-party modules more privileged.
+- `pikobot.registerSetup({title,description,parameters,read,save,secrets,prepareSecret?})`: one strict non-secret settings object and separately masked `{name,label}` fields. Generic RPCs are `extensions.setup({id})`, `extensions.configure({id,settings})`, `extensions.secret({id,name,value})`; TUI `/integrations setup ID` handles separate dialogs. Partial persistence is reported, not rolled back silently. Optional synchronous `prepareSecret(name,value)` validates/transforms masked input before private vault storage; MCP uses it to bind credentials to the selected endpoint/command/account. Never return secret material from `read()`.
+- `pikobot.credentials`: owner-vault `read`, serialized `modify`, `delete` and supported `secret` reads. Registered extension secrets use `extensions.MODULE_ID.NAME`. Never expose credentials in tool inputs/results, chat, ordinary settings or logs.
+- `pikobot.storage.get<T>(key)`, `list(prefix)`, `set(key,value,sourceIds?)`, `delete(key)`: owner/module-namespaced SQLite. Keys ≤200 characters, JSON ≤1,000,000 characters and ≤1000 supplied dependencies. Forgotten dependencies fail atomically; erasure/restore purge linked state. Supply actual dependencies and honor `writesAllowed`. This is not credential storage or confinement of direct Node access.
+- `pikobot.on('agenda', async (range,context,signal) => ({items,truncated,warnings}))`: bounded selected remote contributions to canonical agenda, not local copies or permission. Items carry IDs, titles, explicit instants/all-day metadata and provenance. Failed providers make the agenda incomplete. `pikobot.agenda(range,context,signal)` collects contributions.
+- `await pikobot.registerChannel(adapter)`: validated module-owned registration/lifecycle. Authorize senders **before storage/download**, capture `pikobot.inputEpoch` before asynchronous preparation, then call `pikobot.ingest(channel,input,sender,mode,epoch)`. Only registered channels are admitted, with fixed owner/instance and recipient namespaces. [Adapter contract](CHANNELS.md).
+- `pikobot.registerRpc({name,parameters,execute})`: authenticated owner-terminal routes under `extensions.MODULE_ID.METHOD`, not a model-facing dispatcher.
+- `pikobot.setStatus(key,text?)`: a bounded literal terminal footer entry; omit text to clear it. Display-only, never evidence or authority.
 
 Integration TUI conventions are `extensions.ID.auth`, `.auth.cancel`, `.status`, `.disconnect`, `.actions.list`, `.actions.review({id})`, `.actions.approve({id,digest,decision})`. A provider implements them; core never infers authority from names. Google and MCP reuse expiring payload/connection-bound approvals and attempted-action tombstones. [Google](GOOGLE.md) · [MCP](MCP.md).
 

@@ -1,4 +1,4 @@
-# Try Pico without credentials
+# Try Pikobot without credentials
 
 This short demo uses synthetic data, no provider accounts, no connector setup and no billed inference. It demonstrates deterministic skill execution and real local family transport—not live conversational quality or Telegram delivery.
 
@@ -19,7 +19,7 @@ Expected statistics:
 {"characters":13,"words":2,"lines":1}
 ```
 
-Read the [skill package](../examples/skills/text-statistics/SKILL.md) for counting rules, inputs and trust limits. This invokes the script directly, not through a model or Pico's managed skill service.
+Read the [skill package](../examples/skills/text-statistics/SKILL.md) for counting rules, inputs and trust limits. This invokes the script directly, not through a model or Pikobot's managed skill service.
 
 ## 2. Exercise disposable independent assistants
 

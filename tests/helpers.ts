@@ -10,7 +10,7 @@ import { fauxProvider, fauxAssistantMessage, fauxText, fauxToolCall } from '@ear
 import { builtinModels } from '@earendil-works/pi-ai/providers/all';
 export const source = { channel: 'terminal' as const, identity: 'test-owner', trustedOwner: true };
 export function setup(name='owner') {
-  const root = mkdtempSync(join(tmpdir(),'pico-test-'));
+  const root = mkdtempSync(join(tmpdir(),'pikobot-test-'));
   const config = initialize(root,name);
   delete config.embeddings; // Fast deterministic core tests; real multilingual retrieval has a separate evaluation gate.
   const faux = fauxProvider({ tokensPerSecond: 500 });

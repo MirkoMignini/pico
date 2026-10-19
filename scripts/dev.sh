@@ -2,7 +2,7 @@
 set -euo pipefail
 repo="$(cd "$(dirname "$0")/.." && pwd -P)"
 # Herdr uses this shell for every space; unrelated panes must keep their own directory.
-if [[ "${1:-pane}" == pane && -z "${PICO_DEV_ROLE:-}" && "$(pwd -P)" != "$repo" ]]; then
+if [[ "${1:-pane}" == pane && -z "${PIKOBOT_DEV_ROLE:-}" && "$(pwd -P)" != "$repo" ]]; then
   exec "${SHELL:-/bin/bash}" -i
 fi
 cd "$repo"

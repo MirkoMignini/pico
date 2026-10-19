@@ -70,7 +70,7 @@ it('registers the private-chat command menu once at startup without inference an
   expect(channel.bot.api.setMyCommands).toHaveBeenCalledExactlyOnceWith([
     { command: 'new', description: 'Start a new chat' },
     { command: 'help', description: 'Show available commands and usage' },
-    { command: 'start', description: 'Introduce Pico and show help' },
+    { command: 'start', description: 'Introduce Pikobot and show help' },
     { command: 'stop', description: 'Stop active work in this chat' }
   ], { scope: { type: 'all_private_chats' } }, expect.anything());
   expect(channel.bot.api.setChatMenuButton).toHaveBeenCalledExactlyOnceWith({ menu_button: { type: 'commands' } }, expect.anything());
@@ -153,9 +153,9 @@ it.each([false,true])('rejects feature and unknown commands without inference or
   const sessions=s.runtime.sessions().length;
   const agenda=vi.spyOn(s.runtime.calendar,'agenda'),reminders=vi.spyOn(s.runtime.scheduler,'list'),status=vi.spyOn(s.runtime,'status');
   const mode=s.store.meta('telegram.mode.456');
-  for(const [index,text] of ['/status','/status@PicoBot','/status extra','/knowledge','/learn procedure | instructions','/agenda','/agenda tomorrow','/reminders','/memory','/workflows','/images','/web','/unknown','/new ephemeral','/new@PicoBot ephemeral','/new private'].entries()) {
+  for(const [index,text] of ['/status','/status@Pikobot','/status extra','/knowledge','/learn procedure | instructions','/agenda','/agenda tomorrow','/reminders','/memory','/workflows','/images','/web','/unknown','/new ephemeral','/new@Pikobot ephemeral','/new private'].entries()) {
     expect(await (channel as any).handle(update(index+2,{text},456))).toBeUndefined();
-    expect(channel.bot.api.sendMessage).toHaveBeenLastCalledWith(456,expect.stringContaining('ask Pico in chat'),expect.anything(),expect.anything());
+    expect(channel.bot.api.sendMessage).toHaveBeenLastCalledWith(456,expect.stringContaining('ask Pikobot in chat'),expect.anything(),expect.anything());
   }
   await expect((channel as any).handle(update(20,{text:'/agenda'},999))).rejects.toThrow('Unauthorized');
   await expect((channel as any).handle(update(21,{text:'/agenda',forward_origin:{type:'user',date:1,sender_user:{id:999,first_name:'External'}}}))).rejects.toThrow('evidence');
@@ -273,7 +273,7 @@ it.each([
   const run = await (channel as any).handle(update(1, body));
   expect(s.store.get<any>("SELECT text FROM messages WHERE run_id=? AND role='user'", run.id).text).toContain(expected);
 });
-it.each(['/new', '/new@PicoBot'])('starts a fresh retained chat with %s without inference, preserving history and other senders across restart', async command => {
+it.each(['/new', '/new@Pikobot'])('starts a fresh retained chat with %s without inference, preserving history and other senders across restart', async command => {
   const s = instance(), channel = adapter(s), other = s.runtime.newConversation('Other Telegram chat', false, 'telegram');
   s.store.setMeta('telegram.chat.123', other.id);
   reply(s.faux, 'Previous answer'); await channel.accept(update(1, { text: 'Previous chat message' }, 456));
@@ -301,7 +301,7 @@ it.each(['/new', '/new@PicoBot'])('starts a fresh retained chat with %s without 
 });
 it('offers /start and /help without inference, rejects forwarded commands and does not execute edited commands', async () => {
   const s = instance(), channel = adapter(s);
-  await (channel as any).handle(update(1, { text: '/start@PicoBot' })); await (channel as any).handle(update(2, { text: '/help' }));
+  await (channel as any).handle(update(1, { text: '/start@Pikobot' })); await (channel as any).handle(update(2, { text: '/help' }));
   expect(s.faux.state.callCount).toBe(0); expect(s.store.all('SELECT * FROM messages')).toEqual([]);
   expect((channel.bot.api.sendMessage as any).mock.calls.map((call: any[])=>call[1]).join('\n')).not.toMatch(/ephemeral|\/status/i);
   await expect((channel as any).handle(update(3, { text: '  /new ephemeral  ', forward_origin: { type: 'hidden_user', date: 1, sender_user_name: 'External' } }))).rejects.toThrow('evidence');
@@ -973,7 +973,7 @@ it.each(['completed', 'failed', 'cancelled'])('settles %s without a late draft o
   // Owner-facing text only: the synthetic internal error stays out of the chat delivery.
   const output = status === 'completed' ? 'Final' : status === 'cancelled'
     ? 'Final\n\nStopped before finishing; already accepted actions are not undone.'
-    : 'Final\n\nPico could not finish that request: the text above may be incomplete. Nothing was undone.';
+    : 'Final\n\nPikobot could not finish that request: the text above may be incomplete. Nothing was undone.';
   expect(channel.bot.api.sendMessage).toHaveBeenCalledExactlyOnceWith(123, output, expect.anything(), expect.anything());
   expect(channel.bot.api.sendMessageDraft).toHaveBeenCalledTimes(1);
   channel.onOutput({ type: 'delta', runId: id, data: { partial: 'Stale' } });

@@ -105,7 +105,7 @@ it('keeps private lists, prose, files and historical revisions out of shared rea
   expect(catalog.lists).toEqual([{ id: shared.id, title: 'Shared groceries', revision: 1, permission: 'read' }]);
   const result = await call(b, { action: 'read', member: 'Owner A', id: shared.id });
   expect(result.result.items[0].text).toBe('Apples');
-  expect(json(result)).not.toContain('PRIVATE PROSE'); expect(json(result)).not.toContain('pico:');
+  expect(json(result)).not.toContain('PRIVATE PROSE'); expect(json(result)).not.toContain('pikobot:');
   expect(b.store.all('SELECT * FROM documents')).toEqual([]);
   expect((await receive(a, await packet(b, a, 'read', { id: shared.id, revision: 1 }))).payload.ok).toBe(false);
   expect((await receive(a, await packet(b, a, 'read', { id: shared.id, action: 'original' }))).payload.ok).toBe(false);
@@ -311,7 +311,7 @@ it('preserves shared documents on upgrade/backup but never resurrects grants aft
   const { a, b } = await pair(), doc = a.runtime.knowledge.createNote('Keep original', '- [ ] Original', 'keep');
   await call(a, { action: 'share', member: 'Owner B', id: doc.id, permission: 'edit' });
   await call(b, { action: 'remind', member: 'Owner A', text: 'Pending', at: new Date(Date.now() + 60_000).toISOString() });
-  const snapshot = await backup(a.store), external = mkdtempSync(join(tmpdir(), 'pico-family-backup-')); cpSync(snapshot.path, external, { recursive: true });
+  const snapshot = await backup(a.store), external = mkdtempSync(join(tmpdir(), 'pikobot-family-backup-')); cpSync(snapshot.path, external, { recursive: true });
   cleanup.push(async () => rmSync(external, { recursive: true, force: true }));
   expect((exportData(a.store) as any).familyShares).toHaveLength(1);
   expect(snapshot.manifest.files.some(f => f.path === 'secrets.json')).toBe(false);

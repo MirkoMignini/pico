@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const help = `Usage: node scripts/check-family-local.mjs --run
-Starts only new disposable same-host Pico daemons; no existing instance arguments accepted.
+Starts only new disposable same-host Pikobot daemons; no existing instance arguments accepted.
 Exercises CLI pairing, signed Unix RPC, shared checklists, actual timer/SSE reminders,
 restart persistence and revocation. No model inference, real Telegram or Docker.
 Private report/logs remain under /tmp; temporary instances and owned processes are cleaned up.
@@ -20,7 +20,7 @@ const repo = fileURLToPath(new URL('../', import.meta.url)), cliPath = join(repo
 assert(existsSync(cliPath), 'Build first: pnpm build');
 const { Client } = await import('../dist/client.js');
 const { loadConfig, atomicWrite } = await import('../dist/config.js');
-const directory = mkdtempSync('/tmp/pico-family-local-');
+const directory = mkdtempSync('/tmp/pikobot-family-local-');
 mkdirSync(join(directory, 'home'), { mode: 0o700 });
 const env = { PATH: process.env.PATH, HOME: join(directory, 'home'), LANG: 'en_US.UTF-8' };
 const execute = promisify(execFile), owners = [], logs = [];

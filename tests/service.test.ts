@@ -12,7 +12,7 @@ import { setup, waitFor } from './helpers.js';
 const cleanup: (() => Promise<void> | void)[] = [];
 afterEach(async () => { for (const close of cleanup.splice(0).reverse()) await close(); vi.restoreAllMocks(); });
 function files() {
-  const home = mkdtempSync('/tmp/pico-service-home-'), root = join(home, 'owner space $x %u & "quote"'); initialize(root, 'synthetic');
+  const home = mkdtempSync('/tmp/pikobot-service-home-'), root = join(home, 'owner space $x %u & "quote"'); initialize(root, 'synthetic');
   cleanup.push(() => rmSync(home, { recursive: true, force: true })); return { home, root };
 }
 function manager() {
@@ -33,7 +33,7 @@ it.each(['linux', 'darwin'])('installs an explicit private %s service without st
   const { home, root } = files(), run = manager(), options = { home, platform, run };
   const result = await manageService(root, 'install', options); expect(result).toMatchObject({ installed: true, started: false });
   const definition = serviceDefinition(root, options); expect(lstatSync(definition.file).mode & 0o777).toBe(0o600);
-  expect(lstatSync(join(root, 'service.json')).mode & 0o777).toBe(0o600); expect(existsSync(join(root, 'pico.sqlite'))).toBe(false);
+  expect(lstatSync(join(root, 'service.json')).mode & 0o777).toBe(0o600); expect(existsSync(join(root, 'pikobot.sqlite'))).toBe(false);
   expect(run.mock.calls.some(([, args]) => args.includes('start') || args.includes('bootstrap'))).toBe(false);
   expect(await manageService(root, 'install', options)).toMatchObject({ installed: true });
   expect(await manageService(root, 'status', options)).toMatchObject({ installed: true, daemonReachable: false });
@@ -57,12 +57,12 @@ it('refuses modified/unregistered definitions and symlinked service directories 
   await expect(manageService(root, 'install', options)).rejects.toThrow('not a symlink'); expect(existsSync(join(outside, 'user'))).toBe(false);
   rmSync(join(home, '.config', 'systemd')); await manageService(root, 'install', options);
   writeFileSync(definition.file, 'externally modified service', { mode: 0o600 });
-  await expect(manageService(root, 'uninstall', { ...options, confirmStop: true })).rejects.toThrow('changed outside Pico'); expect(readFileSync(definition.file, 'utf8')).toBe('externally modified service');
+  await expect(manageService(root, 'uninstall', { ...options, confirmStop: true })).rejects.toThrow('changed outside Pikobot'); expect(readFileSync(definition.file, 'utf8')).toBe('externally modified service');
 });
 it('leaves a failed manager operation inspectable rather than claiming installation or replaying it', async () => {
   const { home, root } = files(), run = vi.fn(async () => { throw new Error('synthetic manager unavailable'); });
   await expect(manageService(root, 'install', { home, platform: 'linux', run })).rejects.toThrow('synthetic manager unavailable');
-  expect(run).toHaveBeenCalledOnce(); expect(existsSync(join(root, 'service.json'))).toBe(true); expect(existsSync(join(root, 'pico.sqlite'))).toBe(false);
+  expect(run).toHaveBeenCalledOnce(); expect(existsSync(join(root, 'service.json'))).toBe(true); expect(existsSync(join(root, 'pikobot.sqlite'))).toBe(false);
 });
 it('refuses stopping busy work, live TUI/event clients and unconfirmed ephemeral sessions before closing anything', async () => {
   const s = setup(); atomicWrite(join(s.root, 'config.json'), JSON.stringify(s.config));
@@ -77,5 +77,5 @@ it('refuses stopping busy work, live TUI/event clients and unconfirmed ephemeral
   await expect(client.rpc('daemon.stop')).rejects.toThrow('ephemeral sessions');
   expect(await client.rpc('health')).toMatchObject({ ephemeralSessions: 1 });
   expect(await client.rpc('daemon.stop', { confirmEphemeral: true })).toMatchObject({ stopping: true }); await service.done;
-  expect(existsSync(join(s.root, 'daemon.sock'))).toBe(false); expect(existsSync(join(s.root, 'pico.sqlite'))).toBe(true);
+  expect(existsSync(join(s.root, 'daemon.sock'))).toBe(false); expect(existsSync(join(s.root, 'pikobot.sqlite'))).toBe(true);
 });

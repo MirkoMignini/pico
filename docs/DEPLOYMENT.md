@@ -1,6 +1,6 @@
 # Deployment and recovery
 
-For one trusted local owner, run Pico natively. The daemon uses authenticated Unix HTTP/SSE, not a public HTTP listener. Use the explicit [per-user service helpers](INSTALLATION.md#install-an-explicit-per-user-service) for launchd/systemd, or an independently managed supervisor. Native user services start with a user login/session; they are not system-wide boot services. Versioned installs, redacted diagnostics and safe restart instructions are in [installation/operations](INSTALLATION.md).
+For one trusted local owner, run Pikobot natively. The daemon uses authenticated Unix HTTP/SSE, not a public HTTP listener. Use the explicit [per-user service helpers](INSTALLATION.md#install-an-explicit-per-user-service) for launchd/systemd, or an independently managed supervisor. Native user services start with a user login/session; they are not system-wide boot services. Versioned installs, redacted diagnostics and safe restart instructions are in [installation/operations](INSTALLATION.md).
 
 ```sh
 node dist/cli.js --instance PRIVATE_INSTANCE serve
@@ -19,19 +19,19 @@ Semantic document retrieval can download roughly 2.1 GB of private model weights
 Build explicitly; no infrastructure is provisioned during normal setup:
 
 ```sh
-docker build -f deploy/Dockerfile -t pico-app:0.1.0 .
+docker build -f deploy/Dockerfile -t pikobot-app:0.1.0 .
 ```
 
 The image uses pinned Node/pnpm, a non-root application user and a private `/data` volume. `deploy/two-owners.sh` is an **operator-managed example**, not a hosted multi-tenant service. It creates two separate owner volumes/networks, configures container callback ports, applies read-only roots/resource limits, and starts their daemons. It refuses existing containers and reuses existing identities rather than reinitializing their volumes.
 
-Read the script before authorizing it. Its names are `pico-owner-a`/`pico-owner-b`; control metadata is under `PICO_DEPLOY_ROOT` or the operator's private deployment directory. Never expose a Docker socket or broad host mount to an owner container.
+Read the script before authorizing it. Its names are `pikobot-owner-a`/`pikobot-owner-b`; control metadata is under `PIKOBOT_DEPLOY_ROOT` or the operator's private deployment directory. Never expose a Docker socket or broad host mount to an owner container.
 
 For that example:
 
 ```sh
-docker exec -it pico-owner-a node /app/dist/cli.js --instance /data chat
-docker exec pico-owner-a node /app/dist/cli.js --instance /data status
-docker logs --tail 100 pico-owner-a
+docker exec -it pikobot-owner-a node /app/dist/cli.js --instance /data chat
+docker exec pikobot-owner-a node /app/dist/cli.js --instance /data status
+docker logs --tail 100 pikobot-owner-a
 ```
 
 Logs/status can contain private data. The optional checker is **mutating**, not a production health probe:
@@ -49,7 +49,7 @@ It writes fixed-ID fixtures, activates an extension, creates a reminder and rest
 `scripts/owner-gateway.mjs` can be used as a trusted SSH forced command. The fixed owner argument belongs in operator-controlled `authorized_keys`, never client input. Owners must not receive unrestricted shell/Docker-group access or permission to edit the gateway:
 
 ```text
-restrict,pty,command="/ABSOLUTE/NODE24/bin/node /ABSOLUTE/pico/scripts/owner-gateway.mjs a" ssh-ed25519 OWNER_PUBLIC_KEY
+restrict,pty,command="/ABSOLUTE/NODE24/bin/node /ABSOLUTE/pikobot/scripts/owner-gateway.mjs a" ssh-ed25519 OWNER_PUBLIC_KEY
 ```
 
 The gateway accepts bounded chat/status/auth/RPC/backup/export/restart operations; RPC JSON travels on stdin. Do not accept client `NODE_OPTIONS`, PATH/Docker overrides, forwarding or subsystems that bypass the forced-command boundary. Review the script and SSH server policy, not just the example key line.
@@ -79,7 +79,7 @@ For the two-owner example, stop/remove only the intended containers, **never the
 
 ## Backup and restore
 
-Use `/backup` or the CLI, not a live copy of `pico.sqlite`: WAL can contain recent transactions.
+Use `/backup` or the CLI, not a live copy of `pikobot.sqlite`: WAL can contain recent transactions.
 
 ```sh
 node dist/cli.js --instance PRIVATE_INSTANCE backup
