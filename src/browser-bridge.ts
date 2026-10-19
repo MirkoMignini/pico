@@ -5,6 +5,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { Readable } from 'node:stream';
+import { fileURLToPath } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
 import { Client, type Tool, type CallToolResult, type JsonSchemaType } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { AjvJsonSchemaValidator } from '@modelcontextprotocol/client/validators/ajv';
@@ -15,6 +17,7 @@ import { validate } from './contracts.js';
 import { readRegular } from './skill-package.js';
 import { hash, json } from './store.js';
 import { BROWSER_TOOLS, bridgeUrl, browserArtifactMentioned } from './mcp-browser.js';
+import { collectedDownloads } from './browser-downloads.js';
 import { BRIDGE_FILE_BYTES, BRIDGE_RESULT_BYTES, BridgeConfigSchema, type BridgeArtifact, type BridgeConfig, type BridgePairing } from './browser-bridge-contracts.js';
 
 function checkedConfig(raw: unknown): BridgeConfig {
@@ -54,8 +57,8 @@ export async function serveBrowserBridge(root: string): Promise<{ url: string; c
   const config = browserBridgeConfig(root), { bearer, extensionToken } = await bridgeSecrets(root, config);
   const temporary = await mkdtemp('/tmp/pico-browser-bridge-'), output = privateDirectory(join(temporary, 'artifacts'));
   const controller = new AbortController(), client = new Client({ name: 'pico-browser-bridge', version: '1' }, { versionNegotiation: { mode: 'legacy' } });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [config.entrypoint, '--extension', '--browser', 'chrome', '--profile-dir-name', config.profile, '--output-dir', output, '--file-paths', 'absolute', '--caps', 'pdf', '--no-webmcp', '--codegen', 'none'], cwd: output,
-    env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: homedir(), LANG: 'en_US.UTF-8', TMPDIR: temporary, ...Object.fromEntries(['DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR'].flatMap(key => process.env[key] ? [[key, process.env[key]!]] : [])), PLAYWRIGHT_MCP_EXTENSION_TOKEN: extensionToken }, stderr: 'pipe', maxBufferSize: BRIDGE_RESULT_BYTES });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [config.entrypoint, '--extension', '--browser', 'chrome', '--profile-dir-name', config.profile, '--init-page', fileURLToPath(new URL('../dist/browser-downloads.js', import.meta.url)), '--output-dir', output, '--file-paths', 'absolute', '--caps', 'pdf', '--no-webmcp', '--codegen', 'none'], cwd: output,
+    env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: homedir(), LANG: 'en_US.UTF-8', TMPDIR: temporary, ...Object.fromEntries(['DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR'].flatMap(key => process.env[key] ? [[key, process.env[key]!]] : [])), PLAYWRIGHT_MCP_EXTENSION_TOKEN: extensionToken, PICO_BROWSER_DOWNLOAD_DIR: output }, stderr: 'pipe', maxBufferSize: BRIDGE_RESULT_BYTES });
   transport.stderr?.on('data', () => {});
   let connected = false, closing = false, activeHttp = 0, queued = 0, tail: Promise<unknown> = Promise.resolve();
   const cache = new Map<string, { metadata: BridgeArtifact; bytes: Buffer }>(); let cachedBytes = 0;
@@ -63,13 +66,24 @@ export async function serveBrowserBridge(root: string): Promise<{ url: string; c
     for (const secret of [bearer, extensionToken].sort((a, b) => b.length - a.length)) value = value.replaceAll(secret, '[redacted]').replaceAll(encodeURIComponent(secret), '[redacted]').replaceAll(JSON.stringify(secret).slice(1, -1), '[redacted]');
     return value;
   };
-  const capture = (value: CallToolResult): CallToolResult => {
+  const capture = async (value: CallToolResult, signal: AbortSignal): Promise<CallToolResult> => {
     const serialized = json(value);
     if (Buffer.byteLength(serialized) > BRIDGE_RESULT_BYTES) throw new Error('Browser result too large');
     const result = JSON.parse(redact(serialized)) as CallToolResult;
     // The backend cannot mint handles or turn its own paths into arbitrary resource reads.
     delete result.browserArtifacts;
+    delete result.browserDownloadsPending;
     if (result.isError) return result;
+    let downloads = collectedDownloads(output); const errors = [...downloads.errors], deadline = Date.now() + 31_000;
+    while (downloads.pending && Date.now() < deadline) {
+      await delay(25, undefined, { signal }); downloads = collectedDownloads(output); errors.push(...downloads.errors);
+    }
+    if (errors.length) throw new Error('Browser download capture failed; do not replay the request');
+    for (const file of downloads.files) result.content.push({ type: 'text', text: `Captured HTTP attachment response: ${JSON.stringify(redact(file.name))} [File](${file.file}). External bytes, not proof of website action completion or Chrome download acceptance.` });
+    if (downloads.pending) {
+      result.browserDownloadsPending = downloads.pending;
+      result.content.push({ type: 'text', text: 'Browser download capture still pending. Obtain a fresh snapshot to observe completion; never repeat its triggering action.' });
+    }
     const text = (result.content ?? []).filter(block => block.type === 'text').map(block => block.text).join('\n');
     const files = readdirSync(output);
     if (files.length > 512) throw new Error('Too many browser outputs');
@@ -81,9 +95,11 @@ export async function serveBrowserBridge(root: string): Promise<{ url: string; c
       receiptBytes += bytes.length;
       if (artifacts.length >= 16 || receiptBytes > 50_000_000) throw new Error('Too many browser artifacts in one result');
       while (cache.size >= 64 || cachedBytes + bytes.length > 50_000_000) { const key = cache.keys().next().value!; cachedBytes -= cache.get(key)!.bytes.length; cache.delete(key); }
-      const metadata: BridgeArtifact = { name, uri: `pico-browser-artifact:${config.id}:${randomBytes(32).toString('hex')}`, mimeType: 'application/octet-stream', bytes: bytes.length, hash: hash(bytes) };
+      const metadata: BridgeArtifact = { name, uri: `pico-browser-artifact:${config.id}:${randomBytes(32).toString('hex')}`, mimeType: redact(downloads.files.find(file => file.file === name)?.mimeType ?? 'application/octet-stream'), bytes: bytes.length, hash: hash(bytes) };
       cache.set(metadata.uri, { metadata, bytes }); cachedBytes += bytes.length; artifacts.push(metadata);
       unlinkSync(join(output, name));
+      const download = downloads.files.find(file => file.file === name);
+      if (download) unlinkSync(join(output, download.control));
     }
     return { ...result, browserArtifacts: artifacts };
   };
@@ -153,7 +169,7 @@ export async function serveBrowserBridge(root: string): Promise<{ url: string; c
         const work = tail.catch(() => {}).then(async () => {
           signal.throwIfAborted(); if (!connected) throw new Error('Browser backend disconnected');
           if (readdirSync(output).length > 512) throw new Error('Browser staging directory full; stop and inspect, do not replay prior effects');
-          try { return capture(await client.callTool({ name: definition.name, arguments: request.params.arguments ?? {} }, { signal, timeout: 90_000, toolDefinition: definition })); }
+          try { return await capture(await client.callTool({ name: definition.name, arguments: request.params.arguments ?? {} }, { signal, timeout: 90_000, toolDefinition: definition }), signal); }
           catch { return { content: [{ type: 'text' as const, text: 'Browser call or artifact capture failed; effects may have occurred. Do not automatically replay.' }], isError: true }; }
         });
         tail = work;

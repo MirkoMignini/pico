@@ -124,6 +124,19 @@ it('uses authenticated HTTP through an actual TCP forwarder and owned stdio to r
   expect(s.store.all('SELECT id FROM attachments')).toEqual([]);
 });
 
+it('pins tab-captured HTTP attachments even when the backend reports no filename, then imports exactly those receipt-bound bytes', async () => {
+  const d = await desktop(), s = await server(d);
+  const download = await invoke(s, 'call', { server: 'browser-remote', name: 'browser_navigate', arguments: { url: 'bridge-http-download' } });
+  expect(download.browserArtifacts).toHaveLength(1);
+  const file = download.browserArtifacts[0];
+  expect(file).toMatchObject({ name: expect.stringMatching(/^download-[a-f0-9-]{36}\.csv$/), mimeType: 'text/csv', bytes: 23 });
+  const imported = await invoke(s, 'import', { server: 'browser-remote', sourceId: download.originalResultSourceId, file: file.name, mime: file.mimeType });
+  expect(Buffer.from((await s.runtime.media.read(imported.attachmentId)).bytes).toString()).toBe('kind,value\nsynthetic,7\n');
+  expect(s.runtime.knowledge.document(imported.documentId).source_id).toBe(download.originalResultSourceId);
+  await expect(invoke(s, 'import', { server: 'browser-remote', sourceId: download.originalResultSourceId, file: 'report.csv' })).rejects.toThrow('Remote artifact is missing');
+  expect((await invoke(s, 'actions.list')).total).toBe(0); expect(s.faux.state.callCount).toBe(0);
+});
+
 it('refuses wrong bridge identity/credentials and never silently forwards old credentials to a replacement pairing', async () => {
   const d = await desktop(), s = await server(d);
   const settings = (await rpc(s.runtime, { op: 'extensions.setup', args: { id: 'mcp' } }) as any).settings;
