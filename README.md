@@ -207,7 +207,7 @@ Keep personal skills in the private instance, not this repository. The [English 
 | [Skills](docs/SKILLS.md) · [Extension SDK](docs/SDK.md) | Reusable packages, scripts, trusted integrations and workflows. |
 | [Security](docs/SECURITY.md) · [Deployment](docs/DEPLOYMENT.md) | Trust, retention, backups, recovery and optional containers. |
 | [Demo](docs/DEMO.md) · [Development](docs/DEVELOPMENT.md) · [Testing](docs/TESTING.md) | No-credentials examples, contributor tools, verification and its limits. |
-| [OpenClaw/Hermes assessment](docs/COMPARISON.md) | Baseline comparison, gaps, priorities and deliberate non-goals. |
+| [OpenClaw/Hermes assessment](docs/COMPARISON.md) | Current Pico capabilities against pinned upstream snapshots, remaining gaps, priorities and non-goals. |
 
 ## Contributing
 
