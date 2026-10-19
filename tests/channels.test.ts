@@ -7,7 +7,7 @@ import { Client } from '../src/client.js';
 import { serve } from '../src/daemon.js';
 import { Runtime } from '../src/runtime.js';
 import { Telegram } from '../src/features/telegram-channel.js';
-import type { NotificationDelivery, OutputEvent, PicoChannel } from '../src/contracts.js';
+import type { NotificationDelivery, OutputEvent, PikobotChannel } from '../src/contracts.js';
 import { reply, setup, waitFor } from './helpers.js';
 
 const cleanup: (() => Promise<void>)[] = [];
@@ -21,7 +21,7 @@ function adapter(id: string, destinations = [id]) {
   const sent: { text: string; id: string }[] = [], events: OutputEvent[] = [];
   const delivery: NotificationDelivery = { send: async (text, id) => { sent.push({ text, id }); return { remoteId: id }; } };
   const channel = { id, deliveries: new Map(destinations.map(destination => [destination, delivery])),
-    start: vi.fn(), close: vi.fn(), onOutput: vi.fn((event: OutputEvent) => { events.push(event); }) } satisfies PicoChannel;
+    start: vi.fn(), close: vi.fn(), onOutput: vi.fn((event: OutputEvent) => { events.push(event); }) } satisfies PikobotChannel;
   return { channel, sent, events };
 }
 

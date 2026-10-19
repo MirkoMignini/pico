@@ -41,7 +41,7 @@ const doc=()=>({
 const event=()=>({id:'event-one',etag:'"etag-one"',summary:'Synthetic meeting',start:{dateTime:'2099-10-15T10:00:00Z'},end:{dateTime:'2099-10-15T11:00:00Z'}});
 afterEach(async()=>{for(const s of instances.splice(0)){await s.runtime.close();s.store.close();rmSync(s.root,{recursive:true,force:true});}for(const directory of directories.splice(0))rmSync(directory,{recursive:true,force:true});vi.restoreAllMocks();});
 
-it('is a bundled extension with generic setup, no credentials/settings in Pico core and safe defaults',async()=>{
+it('is a bundled extension with generic setup, no credentials/settings in Pikobot core and safe defaults',async()=>{
   const s=instance(),modules=await rpc(s.runtime,{op:'extensions.list'}) as {id:string;setup:boolean}[];
   expect(modules.find(module=>module.id==='google')).toMatchObject({setup:true});expect(modules.some(module=>module.id==='gmail')).toBe(false);
   const setup=await rpc(s.runtime,{op:'extensions.setup',args:{id:'google'}}) as any;
@@ -155,13 +155,13 @@ it('erases source-dependent pending actions and prevents an old restore from res
   const context=owner(s),conversation=s.runtime.newConversation();context.conversationId=conversation.id;
   s.store.run('INSERT INTO runs(id,conversation_id,request_id,source,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)',context.runId,conversation.id,context.runId,json(context),'running',1,1);s.store.linkSource(context.runId,sourceId);
   const result=await s.runtime.availableTools(context).find(tool=>tool.name==='google_mail')!.execute('draft',{action:'prepare_send',to:['safe@example.test'],subject:'Private',text:'Synthetic'}),action=JSON.parse((result.content[0] as {text:string}).text).action;
-  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-google-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});await s.runtime.forget(memory.id);
+  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-google-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});await s.runtime.forget(memory.id);
   await expect(rpc(s.runtime,{op:'extensions.google.actions.review',args:{id:action.id}})).rejects.toThrow('forgotten');
   await s.runtime.close();s.store.close();await restore(s.root,external,true);s.store=new Store(s.root,s.config);s.runtime=new Runtime(s.store,s.runtime.models);expect(s.store.get('SELECT * FROM extension_storage WHERE key=?',`action:${action.id}`)).toBeUndefined();
 });
 it('keeps attempted action tombstones across restoration of an older pending draft',async()=>{
   const s=instance();await configure(s,settings=>{settings.mail.send=true;});const {action}=await invoke(s,'google_mail',{action:'prepare_send',to:['safe@example.test'],subject:'Restore',text:'Synthetic'});
-  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-google-attempt-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});vi.spyOn(globalThis,'fetch').mockResolvedValue(Response.json({id:'accepted-once',threadId:'thread'}));await approve(s,action);await s.runtime.close();s.store.close();await restore(s.root,external,true);s.store=new Store(s.root,s.config);s.runtime=new Runtime(s.store,s.runtime.models);
+  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-google-attempt-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});vi.spyOn(globalThis,'fetch').mockResolvedValue(Response.json({id:'accepted-once',threadId:'thread'}));await approve(s,action);await s.runtime.close();s.store.close();await restore(s.root,external,true);s.store=new Store(s.root,s.config);s.runtime=new Runtime(s.store,s.runtime.models);
   expect(s.store.get('SELECT hash FROM deletions WHERE hash=?',hash(`remote-action:google:${action.id}`))).toBeDefined();expect(await invoke(s,'google_actions',{action:'read',id:action.id})).toMatchObject({action:{status:'uncertain'}});await expect(approve(s,action)).rejects.toThrow('uncertain');
 });
 it.each([false,undefined])('reads selected document tabs and denies unselected documents unless explicitly broadened (readAll=%s)',async readAll=>{
@@ -189,7 +189,7 @@ it.each([false,true])('preserves raw Google snapshots and external provenance wi
   await s.runtime.deleteKnowledge(imported.documentId,true);await expect(invoke(s,'google_docs',{action:'import',documentId:'chosen-doc'})).rejects.toThrow('reimport denied');
 });
 it.each([false,true])('blocks forgotten remote snapshots and changed revisions after a pre-import restore (readAll=%s)',async readAll=>{
-  const s=instance();await configure(s,settings=>{settings.docs.enabled=true;settings.docs.readAll=readAll;settings.docs.documentIds=readAll?[]:['chosen-doc'];});const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-google-pre-import-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});let revision='rev-1';vi.spyOn(globalThis,'fetch').mockImplementation(async()=>Response.json({...doc(),revisionId:revision}));
+  const s=instance();await configure(s,settings=>{settings.docs.enabled=true;settings.docs.readAll=readAll;settings.docs.documentIds=readAll?[]:['chosen-doc'];});const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-google-pre-import-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});let revision='rev-1';vi.spyOn(globalThis,'fetch').mockImplementation(async()=>Response.json({...doc(),revisionId:revision}));
   const first=await invoke(s,'google_docs',{action:'import',documentId:'chosen-doc'});revision='rev-2';const second=await invoke(s,'google_docs',{action:'import',documentId:'chosen-doc'});expect(second.documentId).not.toBe(first.documentId);
   const sourceId=s.runtime.knowledge.document(first.documentId).source_id;await s.runtime.deleteKnowledge(first.documentId,true);expect(s.store.get('SELECT hash FROM deletions WHERE hash=?',hash(`source:${sourceId}`))).toBeDefined();expect(s.store.all('SELECT id FROM documents WHERE deleted_at IS NULL')).toEqual([]);
   await s.runtime.close();s.store.close();await restore(s.root,external,true);s.store=new Store(s.root,s.config);s.runtime=new Runtime(s.store,s.runtime.models);revision='rev-after-restore';await expect(invoke(s,'google_docs',{action:'import',documentId:'chosen-doc'})).rejects.toThrow('reimport denied');expect(s.store.all('SELECT * FROM attachments')).toEqual([]);

@@ -41,8 +41,8 @@ async function build(capture = false) {
   await run('pnpm', ['build'], capture);
 }
 function inside() {
-  if (process.env.HERDR_ENV !== '1' || process.env.HERDR_SESSION !== 'pico' || !process.env.HERDR_WORKSPACE_ID || !process.env.HERDR_PANE_ID) {
-    throw new Error('Layout setup must run inside the pico Herdr session. From your terminal: pnpm dev:workspace');
+  if (process.env.HERDR_ENV !== '1' || process.env.HERDR_SESSION !== 'pikobot' || !process.env.HERDR_WORKSPACE_ID || !process.env.HERDR_PANE_ID) {
+    throw new Error('Layout setup must run inside the pikobot Herdr session. From your terminal: pnpm dev:workspace');
   }
 }
 function herdr(...args) {
@@ -57,34 +57,34 @@ function herdr(...args) {
   });
 }
 async function workspace() {
-  if (process.env.HERDR_ENV === '1') throw new Error('Already inside Herdr: attach pico from an outer terminal, then run pnpm dev:up if needed.');
+  if (process.env.HERDR_ENV === '1') throw new Error('Already inside Herdr: attach pikobot from an outer terminal, then run pnpm dev:up if needed.');
   if (!process.stdin.isTTY || !process.stdout.isTTY) throw new Error('Run pnpm dev:workspace from an interactive outer terminal.');
   await build();
   const f = await files();
-  f.atomicWrite(join(state, 'herdr.toml'), `onboarding = false\n[terminal]\ndefault_shell = ${JSON.stringify(join(repo, 'scripts', 'dev.sh'))}\nshell_mode = "non_login"\n[ui]\nwindow_title = "Pico dev: {tab}"\n`);
-  const env = { ...process.env, HERDR_SESSION: 'pico' };
+  f.atomicWrite(join(state, 'herdr.toml'), `onboarding = false\n[terminal]\ndefault_shell = ${JSON.stringify(join(repo, 'scripts', 'dev.sh'))}\nshell_mode = "non_login"\n[ui]\nwindow_title = "Pikobot dev: {tab}"\n`);
+  const env = { ...process.env, HERDR_SESSION: 'pikobot' };
   delete env.HERDR_CONFIG_PATH;
   const running = () => {
-    const status = JSON.parse(execFileSync('herdr', ['--session', 'pico', 'status', 'server', '--json'], { cwd: repo, env, encoding: 'utf8', timeout: 5000 }));
+    const status = JSON.parse(execFileSync('herdr', ['--session', 'pikobot', 'status', 'server', '--json'], { cwd: repo, env, encoding: 'utf8', timeout: 5000 }));
     if (typeof status.running !== 'boolean') throw new Error('Invalid Herdr server status; refusing to attach.');
     return status.running;
   };
-  // Only the server needs Pico's pane defaults; the client reads the shared global config directly.
+  // Only the server needs Pikobot's pane defaults; the client reads the shared global config directly.
   if (!running()) {
-    const server = spawn('herdr', ['--session', 'pico', 'server'], { cwd: repo, detached: true, stdio: 'ignore',
+    const server = spawn('herdr', ['--session', 'pikobot', 'server'], { cwd: repo, detached: true, stdio: 'ignore',
       env: { ...env, HERDR_CONFIG_PATH: join(state, 'herdr.toml'), HERDR_STARTUP_CWD: repo } });
     await new Promise((resolve, reject) => { server.once('spawn', resolve); server.once('error', reject); });
     server.unref();
     const until = Date.now() + 15_000;
     while (!running()) {
-      if (server.exitCode !== null || server.signalCode !== null) throw new Error('Herdr server exited during startup; inspect pico’s Herdr server log before retrying.');
-      if (Date.now() >= until) throw new Error('Herdr startup timed out; the server may still start. Inspect pico’s Herdr server log before retrying.');
+      if (server.exitCode !== null || server.signalCode !== null) throw new Error('Herdr server exited during startup; inspect pikobot’s Herdr server log before retrying.');
+      if (Date.now() >= until) throw new Error('Herdr startup timed out; the server may still start. Inspect pikobot’s Herdr server log before retrying.');
       await sleep(100);
     }
   }
-  console.log('Opening pico with your global Herdr keys and UI. First launch provisions tabs automatically. Detach: Ctrl+b, then q.');
+  console.log('Opening pikobot with your global Herdr keys and UI. First launch provisions tabs automatically. Detach: Ctrl+b, then q.');
   // Attach-only mode cannot accidentally spawn a server with the client's global pane defaults.
-  const child = spawn('herdr', ['--session', 'pico', 'client'], { cwd: repo, stdio: 'inherit', env });
+  const child = spawn('herdr', ['--session', 'pikobot', 'client'], { cwd: repo, stdio: 'inherit', env });
   const result = await exited(child); process.exitCode = result.code ?? 1;
 }
 async function up() {
@@ -94,11 +94,11 @@ async function up() {
   if (saved && saved.workspaceId !== process.env.HERDR_WORKSPACE_ID) throw new Error('This repo already has a development layout in another workspace; use its tabs.');
   await build(true);
   const f = await files();
-  if (!existsSync(join(instance, 'config.json'))) f.initialize(instance, 'Pico developer');
+  if (!existsSync(join(instance, 'config.json'))) f.initialize(instance, 'Pikobot developer');
   else f.loadConfig(instance);
   const workspaceId = process.env.HERDR_WORKSPACE_ID;
   if (!saved) {
-    await herdr('workspace', 'rename', workspaceId, 'pico');
+    await herdr('workspace', 'rename', workspaceId, 'pikobot');
     await herdr('tab', 'rename', process.env.HERDR_TAB_ID, 'Pi');
   }
   const layout = saved ?? { workspaceId, piPane: process.env.HERDR_PANE_ID, panes: {} };
@@ -107,11 +107,11 @@ async function up() {
   for (const role of ['daemon', 'tui', 'logs', 'status', 'checks', 'shell']) {
     // shortcut: recorded closed tabs need manual reopening; reconcile live IDs if closing tabs becomes routine.
     if (layout.panes[role]) continue;
-    const result = await herdr('tab', 'create', '--workspace', workspaceId, '--cwd', repo, '--label', role === 'tui' ? 'TUI' : role[0].toUpperCase() + role.slice(1), '--env', `PICO_DEV_ROLE=${role}`, '--no-focus');
+    const result = await herdr('tab', 'create', '--workspace', workspaceId, '--cwd', repo, '--label', role === 'tui' ? 'TUI' : role[0].toUpperCase() + role.slice(1), '--env', `PIKOBOT_DEV_ROLE=${role}`, '--no-focus');
     layout.panes[role] = result.root_pane.pane_id;
     await save('layout.json', layout);
   }
-  console.log('Ready. Use /login and /model in Pico (not Pi) to configure this fresh instance.');
+  console.log('Ready. Use /login and /model in Pikobot (not Pi) to configure this fresh instance.');
   return !saved;
 }
 async function client() {
@@ -229,6 +229,7 @@ async function refresh() {
     const ready = await load('ready.json');
     const status = await (await client()).rpc('status');
     if (!ready || ready.pid !== status.pid) throw new Error('Only the workspace-managed development daemon can be refreshed.');
+    if (!existsSync(join(instance, 'pikobot.sqlite'))) throw new Error('Refresh deferred: the development database needs the offline rename procedure in docs/INSTALLATION.md. Preserve work, migrate it while stopped, then relaunch the supervisors.');
     const previous = await load('request.json'), reply = await load('reply.json');
     if (previous && previous.id !== reply?.id) throw new Error('An earlier refresh is unacknowledged; inspect Daemon and request/reply files before retrying.');
     const id = randomUUID(); await save('request.json', { id });
@@ -290,7 +291,7 @@ async function status() {
   }
 }
 async function pane() {
-  const role = process.env.PICO_DEV_ROLE;
+  const role = process.env.PIKOBOT_DEV_ROLE;
   if (!role && !(await load('layout.json'))) { if (await up()) await run('pi', []); return; }
   if (role === 'daemon') return daemon();
   if (role === 'tui') return tui();
@@ -299,7 +300,7 @@ async function pane() {
     const path = join(state, role === 'logs' ? 'daemon.log' : 'checks.log');
     appendFileSync(path, '', { mode: 0o600 }); return run('tail', ['-n', '100', '-F', path]);
   }
-  console.log('Pico dev shell: pnpm dev:refresh · pnpm dev:verify · pnpm dev:status\nInstance: ' + instance + '\nUNSAFE NATIVE extensions: full OS-user access, no isolation.');
+  console.log('Pikobot dev shell: pnpm dev:refresh · pnpm dev:verify · pnpm dev:status\nInstance: ' + instance + '\nUNSAFE NATIVE extensions: full OS-user access, no isolation.');
 }
 async function main() {
   if (process.version !== 'v24.21.0') throw new Error('Use scripts/dev.sh to select Node 24.21.0.');

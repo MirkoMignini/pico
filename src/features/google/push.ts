@@ -13,10 +13,10 @@ export class GmailPush {
   private task?:Promise<void>;
   private subscriber?:{access:string;expires:number};
   status='disabled';
-  constructor(readonly pico:ExtensionAPI,readonly account:OAuthAccount,readonly config:NonNullable<GoogleSettings['mail']['push']>,readonly email:string,readonly synchronize:(historyId:string,signal:AbortSignal)=>Promise<boolean>){}
+  constructor(readonly pikobot:ExtensionAPI,readonly account:OAuthAccount,readonly config:NonNullable<GoogleSettings['mail']['push']>,readonly email:string,readonly synchronize:(historyId:string,signal:AbortSignal)=>Promise<boolean>){}
   private async token(signal:AbortSignal):Promise<string>{
     if(this.subscriber&&this.subscriber.expires>Date.now()+60_000)return this.subscriber.access;
-    const raw=await this.pico.credentials.secret('extensions.google.subscriber');if(!raw)throw new Error('Pub/Sub subscriber credentials missing');
+    const raw=await this.pikobot.credentials.secret('extensions.google.subscriber');if(!raw)throw new Error('Pub/Sub subscriber credentials missing');
     const key=JSON.parse(raw) as ServiceKey;
     if(key.type!=='service_account'||!/^[-a-z0-9]+@[-a-z0-9]+\.iam\.gserviceaccount\.com$/.test(key.client_email)||!key.private_key)throw new Error('Invalid subscriber service account');
     const now=Math.floor(Date.now()/1000),head=Buffer.from(JSON.stringify({alg:'RS256',typ:'JWT'})).toString('base64url'),claims=Buffer.from(JSON.stringify({iss:key.client_email,scope:'https://www.googleapis.com/auth/pubsub',aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600})).toString('base64url');
@@ -31,10 +31,10 @@ export class GmailPush {
     signal.throwIfAborted();return result;
   }
   async renew(signal:AbortSignal):Promise<void>{
-    const watch=this.pico.storage.get<Watch>('watch');if(watch&&Number(watch.expiration)>Date.now()+86_400_000)return;
+    const watch=this.pikobot.storage.get<Watch>('watch');if(watch&&Number(watch.expiration)>Date.now()+86_400_000)return;
     const fresh=await this.account.request<Watch>('https://gmail.googleapis.com/gmail/v1/users/me/watch',[SCOPES.mailRead],signal,{method:'POST',body:{topicName:this.config.topic}});
     if(!/^\d+$/.test(fresh.historyId)||!Number.isFinite(Number(fresh.expiration))||Number(fresh.expiration)<=Date.now())throw new Error('Invalid Gmail watch response');
-    this.pico.storage.set('watch',fresh);
+    this.pikobot.storage.set('watch',fresh);
   }
   async once(signal:AbortSignal):Promise<void>{
     await this.renew(signal);
@@ -51,7 +51,7 @@ export class GmailPush {
   }
   start():void{
     if(this.task)return;this.controller=new AbortController();const signal=this.controller.signal;
-    this.task=(async()=>{let delay=1000;while(!signal.aborted){try{await this.once(signal);this.status='connected';delay=1000;}catch{if(signal.aborted)break;this.status='degraded; periodic Gmail reconciliation remains active';delay=Math.min(delay*2,60_000);}this.pico.setStatus('Google mail',this.status);await new Promise<void>(resolve=>{const done=()=>{clearTimeout(timer);signal.removeEventListener('abort',done);resolve();},timer=setTimeout(done,delay);signal.addEventListener('abort',done,{once:true});if(signal.aborted)done();});}})();
+    this.task=(async()=>{let delay=1000;while(!signal.aborted){try{await this.once(signal);this.status='connected';delay=1000;}catch{if(signal.aborted)break;this.status='degraded; periodic Gmail reconciliation remains active';delay=Math.min(delay*2,60_000);}this.pikobot.setStatus('Google mail',this.status);await new Promise<void>(resolve=>{const done=()=>{clearTimeout(timer);signal.removeEventListener('abort',done);resolve();},timer=setTimeout(done,delay);signal.addEventListener('abort',done,{once:true});if(signal.aborted)done();});}})();
   }
   async close():Promise<void>{this.controller?.abort();await this.task;this.task=undefined;this.status='disabled';}
 }

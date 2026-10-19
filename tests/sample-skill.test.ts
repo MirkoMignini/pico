@@ -36,7 +36,7 @@ it('supports English CLI help and JSON-only successful stdout with nonzero error
   const help = cli(['--help']); expect(help.status).toBe(0); expect(help.stdout).toContain('Text statistics');
   for (const input of ['{"text":42}', '{"text":']) { const bad = cli([], input); expect(bad.status).toBe(1); expect(bad.stdout).toBe(''); expect(bad.stderr).toContain('text string'); }
   const good = cli([], JSON.stringify({ text: 'Hello, world!' })); expect(good.status, good.stderr).toBe(0); expect(good.stderr).toBe(''); expect(JSON.parse(good.stdout)).toEqual({ characters: 13, words: 2, lines: 1 });
-  const asset = cli(['--file', 'assets/example.txt']); expect(asset.status, asset.stderr).toBe(0); expect(JSON.parse(asset.stdout)).toEqual({ characters: 27, words: 4, lines: 2 });
+  const asset = cli(['--file', 'assets/example.txt']); expect(asset.status, asset.stderr).toBe(0); expect(JSON.parse(asset.stdout)).toEqual({ characters: 30, words: 4, lines: 2 });
 });
 
 it('reads selected UTF-8 files, privately writes reports without overwriting, and refuses invalid encoding or escaping paths', () => {

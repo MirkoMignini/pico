@@ -1,6 +1,6 @@
 # Documents, notes and lists
 
-Pico preserves document originals separately from personal memory. Local conversion uses Firecrawl AnyDoc; QMD supplies rebuildable document retrieval. An uploaded file or retrieved passage is evidence, not an owner assertion or executable instruction.
+Pikobot preserves document originals separately from personal memory. Local conversion uses Firecrawl AnyDoc; QMD supplies rebuildable document retrieval. An uploaded file or retrieved passage is evidence, not an owner assertion or executable instruction.
 
 ## Daily use
 
@@ -46,7 +46,7 @@ The bundled `lists` tool manages canonical editable notes/checklists:
 | Action | Contract |
 | --- | --- |
 | `catalog`, `read` | Paginated notes; exact unique titles or actual IDs. Returns current revision, stable item IDs and counts. |
-| `create` | Title and items; Pico assigns the submission identity. |
+| `create` | Title and items; Pikobot assigns the submission identity. |
 | `add` | Atomically append the entire batch without replacing existing items or IDs. |
 | `update`, `remove` | Actual item ID and matching `expectedRevision`; stale changes fail. |
 | `delete` | Authored-list ID and matching revision, using normal source cleanup. |
@@ -91,7 +91,7 @@ Foreground startup does not search the historical archive automatically. Current
 
 ## Citations
 
-`pico:` citations bind immutable document/revision, representation hash and extracted-Markdown lines (`L`) or UTF-16 offsets (`C`, exclusive end). Resolution verifies that stored span and the original; these are not original PDF coordinates or proof of semantic accuracy.
+`pikobot:` citations bind immutable document/revision, representation hash and extracted-Markdown lines (`L`) or UTF-16 offsets (`C`, exclusive end). Resolution verifies that stored span and the original; these are not original PDF coordinates or proof of semantic accuracy.
 
 `completeDocument`/`completeSource` refer to the stored representation/window, not perfect extraction of the original. Follow cursors and read surrounding qualifications before consequential answers. Final citation checks can perform one bounded same-provider read-only repair; persistent invalid citations are withheld. Streamed drafts remain provisional until settlement.
 
@@ -99,7 +99,7 @@ Foreground startup does not search the historical archive automatically. Current
 
 Document originals/assets persist until explicit deletion/forgetting. `mediaDays` expires the intake-media cache, **not durable knowledge copies**. Ephemeral conversion stays volatile and creates no document/job or durable semantic query cache; existing authorized knowledge can be read lexically.
 
-`delete` removes the selected source and linked managed derivatives. `forget` additionally removes byte-identical imported copies and tombstones original hashes against automatic reimport. When a model-initiated deletion would remove dependent owner-visible notes/lists, Pico surfaces them and requires confirmed `cascade:true`; owner/forget paths cascade directly. Independent authored content is not semantically deduplicated away.
+`delete` removes the selected source and linked managed derivatives. `forget` additionally removes byte-identical imported copies and tombstones original hashes against automatic reimport. When a model-initiated deletion would remove dependent owner-visible notes/lists, Pikobot surfaces them and requires confirmed `cascade:true`; owner/forget paths cascade directly. Independent authored content is not semantically deduplicated away.
 
 Source tombstones and unlink journals precede physical cleanup; stale/deleted records are excluded before index maintenance finishes. Conservative derived-history scrubbing, managed-backup purge and restore guards apply. Backups include canonical records and hashed originals/assets, not credentials/models. External copies and lost deletion ledgers remain separate limits. [Security](SECURITY.md#forgetting-and-restore) · [Recovery](DEPLOYMENT.md#backup-and-restore).
 

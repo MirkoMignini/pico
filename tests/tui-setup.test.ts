@@ -32,7 +32,7 @@ async function connected(extensionSources: Record<string, string> = {}) {
   vi.spyOn(Telegram.prototype, 'start').mockImplementation(() => {});
   const service = await serve(s.root, { runtimeFactory: store => new Runtime(store, s.runtime.models) }); cleanup.push(service.close);
   const client = new Client(s.root), screen = new Screen(), ui = new ChatUI(client, screen); cleanup.push(async () => ui.close());
-  await ui.start(); await waitFor(() => screen.output.includes('PICO'));
+  await ui.start(); await waitFor(() => screen.output.includes('PIKOBOT'));
   const see = (text: string) => waitFor(() => screen.output.includes(text));
   const replace = (text: string) => { screen.input('\x05'); screen.input('\x15'); screen.input(`\x1b[200~${text}\x1b[201~`); };
   return { ...s, service, client, screen, ui, see, replace };
@@ -56,7 +56,7 @@ it('tests the selected conversation model rather than silently using a different
   const s = await connected(), conversationId = (s.ui as any).session.id;
   await s.client.rpc('model.default', { provider: 'deepseek', id: 'deepseek-flash' });
   const complete = vi.spyOn(s.service.runtime.models, 'complete');
-  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pico is connected.')])]);
+  s.faux.appendResponses([fauxAssistantMessage([fauxText('Pikobot is connected.')])]);
   const test = s.ui.submit('/auth test'); await s.see('Cancel (default)'); s.screen.input('\x1b[B'); s.screen.input('\r'); await test;
   expect(complete).toHaveBeenCalledOnce(); expect(complete.mock.calls[0]?.[2]).toEqual(JSON.parse((s.ui as any).session.model));
   expect(await s.client.rpc('readiness', { conversationId })).toMatchObject({ items: expect.arrayContaining([expect.objectContaining({ id: 'model', tested: 'passed' }), expect.objectContaining({ id: 'background-model', credential: 'missing', tested: 'not-run' })]) });
@@ -233,7 +233,7 @@ it('allows development refresh only without drafts, dialogs or active turns', as
   await waitFor(() => s.ui.canRefresh); s.ui.close(); expect(s.ui.canRefresh).toBe(false);
 });
 
-it('shows a responsive Pico startup logo and useful info without archiving it or crowding later turns', async () => {
+it('shows a responsive Pikobot startup logo and useful info without archiving it or crowding later turns', async () => {
   const s = await connected(); s.ui.tui.renderNow(true);
   const frame = () => s.ui.tui.getScreenLines().map(safeTerminal).join('\n');
   expect(frame()).toContain('____  ___  ____  ___');
@@ -242,12 +242,12 @@ it('shows a responsive Pico startup logo and useful info without archiving it or
   expect(frame()).toContain('Retained session'); expect(frame()).toContain('/setup'); expect(frame()).toContain('/model');
   expect(s.ui.editor.focused).toBe(true); expect(s.faux.state.callCount).toBe(0);
   s.screen.columns = 42; s.screen.rows = 15; s.screen.resize(); s.ui.tui.renderNow(true);
-  expect(frame()).not.toContain('____  ___  ____  ___'); expect(frame()).toContain('PICO');
+  expect(frame()).not.toContain('____  ___  ____  ___'); expect(frame()).toContain('PIKOBOT');
   expect(s.ui.tui.getScreenLines().every(line => visibleWidth(line) <= 42)).toBe(true);
   s.screen.columns = 100; s.screen.rows = 35; s.screen.resize(); s.ui.tui.renderNow(true);
   expect(frame()).toContain('____  ___  ____  ___');
   await s.ui.submit('/help'); s.ui.tui.renderNow(true);
-  expect(frame()).not.toContain('____  ___  ____  ___'); expect(frame()).toContain('PICO');
+  expect(frame()).not.toContain('____  ___  ____  ___'); expect(frame()).toContain('PIKOBOT');
   await s.ui.submit('/new'); s.ui.tui.renderNow(true);
   expect(frame()).not.toContain('____  ___  ____  ___');
   expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]);
@@ -318,14 +318,14 @@ it('keeps only basic and safety/admin commands and rejects feature shortcuts wit
   expect(COMMANDS).toEqual(['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','readiness','doctor','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit']);
   const removed = ['status','knowledge','memory','prefer','correct','learn','workflows','agenda','reminders','web','images','approve-action'];
   for (const name of removed) { expect(COMMANDS).not.toContain(name); expect(HELP).not.toContain(`/${name}`); }
-  expect(HELP).toContain('Talk to Pico'); expect(HELP).toContain('new extension builds need no confirmation'); expect(HELP).toContain('run immediately with full OS access');
+  expect(HELP).toContain('Talk to Pikobot'); expect(HELP).toContain('new extension builds need no confirmation'); expect(HELP).toContain('run immediately with full OS access');
   for (const ephemeral of [false, true]) {
     if (ephemeral) await selectLegacyEphemeral(s);
     calls.mockClear();
     for (const name of removed) for (const suffix of ['', ' synthetic argument']) {
-      await expect(s.ui.submit(`/${name}${suffix}`)).rejects.toThrow('ask Pico in chat');
+      await expect(s.ui.submit(`/${name}${suffix}`)).rejects.toThrow('ask Pikobot in chat');
     }
-    await expect(s.ui.submit('/extensions build synthetic specification')).rejects.toThrow('ask Pico in chat');
+    await expect(s.ui.submit('/extensions build synthetic specification')).rejects.toThrow('ask Pikobot in chat');
     expect(calls).not.toHaveBeenCalled();
   }
   expect(s.faux.state.callCount).toBe(0);
@@ -406,7 +406,7 @@ it.each([
   expect(assistant.render(100).join('\n')).not.toContain('\x1b[48;5;236m');
   await waitFor(() => !s.ui.editor.disableSubmit);
   const transcript = s.ui.transcript.render(100).map(safeTerminal).join('\n');
-  expect(transcript).toContain('Normal Markdown answer.'); expect(transcript).not.toMatch(/^\s*(You|Pico)\s*$/m);
+  expect(transcript).toContain('Normal Markdown answer.'); expect(transcript).not.toMatch(/^\s*(You|Pikobot)\s*$/m);
   const before = [user.render(100), assistant.render(100)];
   const session = (await s.client.rpc<{ id: string }[]>('sessions'))[0]!;
   await s.ui.submit(`/sessions ${session.id}`);
@@ -509,21 +509,21 @@ it.each([false,true])('keeps rejected citation drafts and thinking inspectable b
   const s = await connected(); if (ephemeral) await selectLegacyEphemeral(s);
   const stream = vi.spyOn(s.service.runtime.models.models,'streamSimple');
   s.faux.appendResponses([
-    fauxAssistantMessage([fauxThinking('Discarded draft reasoning.'),fauxText('Invented citation pico:nonexistent')]),
+    fauxAssistantMessage([fauxThinking('Discarded draft reasoning.'),fauxText('Invented citation pikobot:nonexistent')]),
     fauxAssistantMessage([fauxText('Repaired answer without invented sources.')])
   ]);
   await s.ui.submit('Synthetic citation check'); await waitFor(() => !s.ui.editor.disableSubmit);
   const text = s.ui.transcript.render(100).map(safeTerminal).join('\n');
-  expect(text).toContain('Pico could not verify the source citations'); expect(text).toContain('Repaired answer without invented sources.');
+  expect(text).toContain('Pikobot could not verify the source citations'); expect(text).toContain('Repaired answer without invented sources.');
   expect(text).not.toContain('Invented citation'); expect(text).not.toContain('Discarded draft reasoning.');
   s.screen.input('\x0f');
   const debug = s.ui.transcript.render(100).map(safeTerminal).join('\n');
-  expect(debug).toContain('rejected / unverified'); expect(debug).toContain('Discarded draft reasoning.'); expect(debug).toContain('Invented citation pico:nonexistent');
+  expect(debug).toContain('rejected / unverified'); expect(debug).toContain('Discarded draft reasoning.'); expect(debug).toContain('Invented citation pikobot:nonexistent');
   const session = (s.ui as any).session.id; await s.ui.submit(`/sessions ${session}`);
   expect(s.ui.transcript.render(100).map(safeTerminal).join('\n')).toContain('Discarded draft reasoning.');
   reply(s.faux,'Next normal reply.'); await s.ui.submit('Synthetic follow-up'); await waitFor(() => !s.ui.editor.disableSubmit);
   const next = JSON.stringify(stream.mock.calls.at(-1)![1]);
-  expect(next).not.toContain('Discarded draft reasoning.'); expect(next).not.toContain('Invented citation pico:nonexistent'); expect(next).not.toContain('picoInstructions'); expect(next).not.toContain('picoDisplay');
+  expect(next).not.toContain('Discarded draft reasoning.'); expect(next).not.toContain('Invented citation pikobot:nonexistent'); expect(next).not.toContain('pikobotInstructions'); expect(next).not.toContain('pikobotDisplay');
   if (ephemeral) expect(s.service.runtime.store.all('SELECT * FROM messages')).toEqual([]);
 });
 
@@ -577,7 +577,7 @@ it.each([false,true])('never renders agent instruction panels while retaining ow
     const id=assistants[index].display.instructionsId, snapshot=await s.client.rpc<{text:string}>('instructions.read',{id});
     const expected=model.mock.calls[index]![1].messages.filter(message=>message.role==='system').map((message,number)=>{const {content,...metadata}=message;return `System message ${number+1}\n${content}\n\nMessage metadata / tool declarations\n${JSON.stringify(metadata)}`;}).join('\n\n');
     expect(snapshot.text).toBe(expected); expect(snapshot.text).toContain('Current reminder state'); expect(snapshot.text).toContain('Explicit owner standing preferences');
-    expect(JSON.stringify(assistants[index])).not.toContain('picoInstructions');
+    expect(JSON.stringify(assistants[index])).not.toContain('pikobotInstructions');
   }
   uiCalls.mockClear(); s.screen.input('\x0f');
   expect(uiCalls).not.toHaveBeenCalled(); expect(text()).not.toContain('Message metadata / tool declarations');
@@ -639,8 +639,8 @@ it.each([false,true])('restores tool arguments, partial updates and final result
   const s = await connected(); if (ephemeral) await selectLegacyEphemeral(s);
   let finish!: () => void, update!: () => void;
   const gate = new Promise<void>(resolve => { finish = resolve; });
-  s.service.runtime.extensions.registerBuiltin('debug-fixture',pico => pico.registerTool({
-    name:'debug_fixture',label:'Debug fixture',description:'Synthetic streaming tool',parameters:pico.Type.Object({label:pico.Type.String()},{additionalProperties:false}),
+  s.service.runtime.extensions.registerBuiltin('debug-fixture',pikobot => pikobot.registerTool({
+    name:'debug_fixture',label:'Debug fixture',description:'Synthetic streaming tool',parameters:pikobot.Type.Object({label:pikobot.Type.String()},{additionalProperties:false}),
     async execute(_id,args,_signal,onUpdate) {
       onUpdate?.({content:[{type:'text',text:'Initial progress.'}],details:{phase:1}});
       update = () => onUpdate?.({content:[{type:'text',text:'Disconnected progress 漢字 👋.'}],details:{phase:2}});
@@ -731,7 +731,7 @@ it('sets the session thinking level and the pi-style default through /thinking',
 });
 
 it('publishes and clears extension footer status from the standard API without transcript noise', async () => {
-  const s = await connected({ 'footer-fixture': `export default function(pico){pico.on('start',()=>pico.setStatus('Telegram','connected'));}` });
+  const s = await connected({ 'footer-fixture': `export default function(pikobot){pikobot.on('start',()=>pikobot.setStatus('Telegram','connected'));}` });
   const footer = () => s.ui.footer.render(100).map(safeTerminal).join('\n');
   expect(footer()).toContain('Telegram: connected');
   s.ui.onOutput({ type: 'extension_status', data: { key: 'Telegram', text: 'disconnected' } });

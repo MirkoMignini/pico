@@ -257,7 +257,7 @@ it('forgets imported bytes, original binary receipts and approval copies, and bl
   const s = await instance(), screenshot = await approved(s, 'browser_take_screenshot');
   const args = { server: 'browser', sourceId: screenshot.sourceId, contentIndex: 1 }, image = await invoke(s, 'import', args);
   writeFileSync(join(s.root, 'browser-mcp', 'profile', 'synthetic-cookie'), 'synthetic-profile-only');
-  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pico-browser-backup-')); directories.push(external);
+  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pikobot-browser-backup-')); directories.push(external);
   cpSync(snapshot.path, external, { recursive: true });
   expect(snapshot.manifest.files.some(file => file.path.startsWith('browser-mcp/'))).toBe(false);
   await s.runtime.deleteKnowledge(image.documentId, true);

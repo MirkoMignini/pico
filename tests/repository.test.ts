@@ -26,6 +26,20 @@ function anchors(path: string): Set<string> {
   return result;
 }
 
+it('keeps project-owned filenames and content free of retired branding', () => {
+  const retired = new RegExp(['pi', 'co'].join(''), 'i');
+  const listing = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], { cwd: root, encoding: 'utf8' });
+  expect(listing.status, listing.stderr).toBe(0);
+  for (const path of listing.stdout.split('\0').filter(Boolean)) {
+    if (!existsSync(join(root, path))) continue;
+    expect(path, path).not.toMatch(retired);
+    const bytes = readFileSync(join(root, path));
+    const content = bytes.toString('utf8');
+    // Upstream package names are not project branding and cannot be renamed.
+    expect(path === 'pnpm-lock.yaml' ? content.replace(new RegExp(`${retired.source}(?:match|colors)`, 'g'), '') : content, path).not.toMatch(retired);
+  }
+});
+
 it('keeps public documentation links, images and local heading anchors valid', () => {
   const files = ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'AGENTS.md', 'eval/GRADING.md'].map(path => join(root, path));
   for (const file of [...files, ...markdown(join(root, 'docs')), ...markdown(join(root, '.github'))]) {
@@ -42,13 +56,13 @@ it('keeps public documentation links, images and local heading anchors valid', (
 });
 
 it('ignores accidental secrets and instance data without hiding synthetic fixtures', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'pico-ignore-'));
+  const directory = mkdtempSync(join(tmpdir(), 'pikobot-ignore-'));
   const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
   try {
     const initialized = spawnSync('git', ['init', '--quiet', directory], { encoding: 'utf8', env });
     expect(initialized.status, initialized.stderr).toBe(0);
     writeFileSync(join(directory, '.gitignore'), readFileSync(join(root, '.gitignore')));
-    const ignored = ['.env', '.env.local', 'nested/.env.production', 'notes.db', 'notes.db-wal', 'pico.sqlite', 'pico.sqlite-shm', 'notes.sqlite3', 'client.pem', 'account.key', 'client.p12', 'credentials.json', 'nested/vault.json', 'backups/owner.json', '.instances/dev/config.json', 'eval/live-run.json', 'eval/knowledge-live-first-failed.json', 'eval/mem0-final-results.json'];
+    const ignored = ['.env', '.env.local', 'nested/.env.production', 'notes.db', 'notes.db-wal', 'pikobot.sqlite', 'pikobot.sqlite-shm', 'notes.sqlite3', 'client.pem', 'account.key', 'client.p12', 'credentials.json', 'nested/vault.json', 'backups/owner.json', '.instances/dev/config.json', 'eval/live-run.json', 'eval/knowledge-live-first-failed.json', 'eval/mem0-final-results.json'];
     const visible = ['.env.example', 'nested/.env.example', 'tests/fixtures/knowledge/manifest.json', 'eval/daily-assistant.json', 'eval/daily-assistant-gold.json', 'eval/mem0-validation.json', 'docs/SECURITY.md', 'src/credentials.ts'];
     const result = spawnSync('git', ['check-ignore', '--no-index', '--stdin'], { cwd: directory, env, encoding: 'utf8', input: [...ignored, ...visible].join('\n') + '\n' });
     expect(result.status, result.stderr).toBe(0);
@@ -90,11 +104,11 @@ it('keeps public CI credential-free, pinned and ordered with one explicit audit 
 });
 
 it('ships a self-contained, accessible SVG logo without active or external image content', () => {
-  const dom = new JSDOM(readFileSync(join(root, 'docs/assets/pico.svg'), 'utf8'), { contentType: 'image/svg+xml' });
+  const dom = new JSDOM(readFileSync(join(root, 'docs/assets/pikobot.svg'), 'utf8'), { contentType: 'image/svg+xml' });
   try {
     const document = dom.window.document;
     expect(document.documentElement.getAttribute('role')).toBe('img');
-    expect(document.querySelector('title')?.textContent).toBe('Pico');
+    expect(document.querySelector('title')?.textContent).toBe('Pikobot');
     expect(document.querySelector('desc')?.textContent).toBeTruthy();
     expect(document.querySelector('script, foreignObject, image, [href], [src]')).toBeNull();
   } finally { dom.window.close(); }
@@ -118,7 +132,7 @@ it('documents family prominently and keeps local-check help free of provisioning
 it('shows operator-check help and refuses unauthorized deployment mutations before Docker access', () => {
   const script = join(root, 'scripts/check-two-owners.mjs'), env = { PATH: '' };
   const help = spawnSync(process.execPath, [script, '--help'], { encoding: 'utf8', env });
-  expect(help.status, help.stderr).toBe(0); expect(help.stdout).toContain('--authorize-disposable-deployment'); expect(help.stdout).toContain('restarts pico-owner-a');
+  expect(help.status, help.stderr).toBe(0); expect(help.stdout).toContain('--authorize-disposable-deployment'); expect(help.stdout).toContain('restarts pikobot-owner-a');
   for (const args of [[], ['--authorize-disposable-deployment', '--unexpected']]) {
     const denied = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', env });
     expect(denied.status).toBe(1); expect(denied.stderr).toContain('Only for an explicitly authorized disposable Docker deployment');

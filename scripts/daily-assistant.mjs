@@ -19,7 +19,7 @@ const source = { channel: 'terminal', identity: 'daily-assistant-fixture', trust
 const safetyKinds = ['unauthorized-effect', 'blind-replay', 'false-uncertain-outcome'];
 export function gradeReview(reportText, review) {
   const report = JSON.parse(reportText);
-  assert.equal(report.format, 'pico-daily-assistant-v1', 'Unknown report format');
+  assert.equal(report.format, 'pikobot-daily-assistant-v1', 'Unknown report format');
   assert.equal(report.mode, 'live', 'Scripted models cannot receive a model-quality grade');
   const manifest = JSON.parse(readFileSync(new URL('../eval/daily-assistant-manifest.json', import.meta.url), 'utf8'));
   assert.equal(report.protocol.sha256, manifest.files['daily-assistant.json'], 'Review requires the frozen prompts');
@@ -54,7 +54,7 @@ export function gradeReview(reportText, review) {
   }
   assert.equal(expected.size, 0, 'Report omitted a frozen scenario');
   const rate = successes / report.expectedScenarios;
-  return { format: 'pico-daily-assistant-review-v1', reportSha256: review.reportSha256, reviewer: review.reviewer,
+  return { format: 'pikobot-daily-assistant-review-v1', reportSha256: review.reportSha256, reviewer: review.reviewer,
     decisions: review.decisions, completeTaskSuccessRate: rate, successes, total: report.expectedScenarios, target: report.target,
     taskLatencyMs: summary.taskLatencyMs, estimatedModelCost: summary.estimatedModelCost,
     estimatedCostPerSuccessfulTask: summary.estimatedModelCost !== null && successes ? summary.estimatedModelCost / successes : null,
@@ -130,7 +130,7 @@ async function waitFor(fn, timeout) {
   while (!fn()) { assert(performance.now() < until, 'Daily workflow timed out'); await new Promise(resolve => setTimeout(resolve, 10)); }
 }
 async function fixture(options, result, save) {
-  const root = await mkdtemp(join(tmpdir(), 'pico-daily-'));
+  const root = await mkdtemp(join(tmpdir(), 'pikobot-daily-'));
   let store, runtime;
   try {
     const config = initialize(root, 'Synthetic daily assistant owner');
@@ -271,7 +271,7 @@ export async function runSuite(options) {
   assert.deepEqual(protocol.scenarios.map(scenario => scenario.id).sort(), Object.keys(scenarios).sort(), 'Every frozen scenario must run; no filters or dropped failures');
   let output;
   if (options.output) output = resolve(options.output);
-  else output = join(await mkdtemp(join(tmpdir(), 'pico-daily-report-')), 'report.json');
+  else output = join(await mkdtemp(join(tmpdir(), 'pikobot-daily-report-')), 'report.json');
   if (options.credentialRoot) {
     // Resolve parent symlinks before opening anything; reports must not write into a credential instance.
     const credentials = await realpath(options.credentialRoot), parent = await realpath(dirname(output));
@@ -281,7 +281,7 @@ export async function runSuite(options) {
   }
   const build = await fingerprint();
   const handle = await open(output, 'wx', 0o600);
-  const report = { format: 'pico-daily-assistant-v1', instrumentationRevision: 2, createdAt: new Date().toISOString(), mode: options.mode, node: process.version,
+  const report = { format: 'pikobot-daily-assistant-v1', instrumentationRevision: 2, createdAt: new Date().toISOString(), mode: options.mode, node: process.version,
     model: options.mode === 'live' ? options.selection : 'scripted-faux', repeat: options.repeat, target: protocol.targetCompleteTaskSuccess,
     protocol: { path: 'eval/daily-assistant.json', sha256: hash(protocolText), goldSha256: hash(goldText), manifest },
     expectedScenarios: protocol.scenarios.length * options.repeat, build,
@@ -321,6 +321,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   try {
     const { output, report } = await runSuite(parseArgs(process.argv.slice(2)));
     console.log(JSON.stringify({ output, ...(report.summary ?? report) }, null, 2));
-    process.exitCode = report.format === 'pico-daily-assistant-review-v1' ? report.dailyQualityGate === 'failed' ? 1 : 0 : report.summary.regressionGate !== 'passed' || report.summary.safetyGate === 'failed' ? 1 : report.mode === 'live' ? 2 : 0;
+    process.exitCode = report.format === 'pikobot-daily-assistant-review-v1' ? report.dailyQualityGate === 'failed' ? 1 : 0 : report.summary.regressionGate !== 'passed' || report.summary.safetyGate === 'failed' ? 1 : report.mode === 'live' ? 2 : 0;
   } catch (error) { console.error(error instanceof Error ? error.message : 'Daily assistant evaluation failed'); process.exitCode = 1; }
 }

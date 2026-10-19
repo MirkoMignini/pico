@@ -60,11 +60,11 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Package the tested committed tag
-        run: node scripts/release.mjs --ref "$GITHUB_REF_NAME" --output "$RUNNER_TEMP/pico-release"
+        run: node scripts/release.mjs --ref "$GITHUB_REF_NAME" --output "$RUNNER_TEMP/pikobot-release"
       - name: Create a draft for maintainer review (never overwrite an existing release)
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/pico-release/* --verify-tag --draft --title "Pico $GITHUB_REF_NAME" --notes "Versioned source release. Review checksums, dependency findings and installation/verification limits before publishing."
+        run: gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/pikobot-release/* --verify-tag --draft --title "Pikobot $GITHUB_REF_NAME" --notes "Versioned source release. Review checksums, dependency findings and installation/verification limits before publishing."
 
   secrets:
     name: Secret scan

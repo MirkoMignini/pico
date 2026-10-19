@@ -19,7 +19,7 @@ const instances: ReturnType<typeof setup>[] = [];
 const instance = () => { const s = setup('skills-fixture'); instances.push(s); return s; };
 afterEach(async () => { vi.restoreAllMocks(); for (const s of instances.splice(0)) { await s.runtime.close(); s.store.close(); rmSync(s.root, { recursive: true, force: true }); } });
 const files = (name = 'word-count', body = 'Use scripts/count.mjs with JSON stdin. Do not guess the answer.'): SkillFile[] => [
-  { path: 'SKILL.md', content: `---\nname: ${name}\ndescription: Count supplied words. Use when asked for a word count.\nlicense: MIT\ncompatibility: Requires Node.js 24\nmetadata:\n  author: Pico tests\n  version: '1.0'\nallowed-tools: Read Bash(node:*)\n---\n${body}\n` },
+  { path: 'SKILL.md', content: `---\nname: ${name}\ndescription: Count supplied words. Use when asked for a word count.\nlicense: MIT\ncompatibility: Requires Node.js 24\nmetadata:\n  author: Pikobot tests\n  version: '1.0'\nallowed-tools: Read Bash(node:*)\n---\n${body}\n` },
   { path: 'scripts/count.mjs', content: "let text='';for await(const chunk of process.stdin)text+=chunk;const input=JSON.parse(text);if(typeof input.text!=='string')throw new Error('text must be a string');console.log(JSON.stringify({words:input.text.trim()?input.text.trim().split(/\\s+/).length:0}));" },
   { path: 'references/format.md', content: 'JSON input: {"text":"hello world"}; JSON output: {"words":2}.' },
   { path: 'assets/binary.bin', content: Buffer.from([0, 255, 1, 128]).toString('base64'), encoding: 'base64' }

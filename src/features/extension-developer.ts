@@ -5,14 +5,14 @@ import { assistantText, parseModelJson } from '../models.js';
 import { json } from '../store.js';
 import { jsonTool } from './tools.js';
 
-export default function developer(pico: ExtensionAPI): void {
+export default function developer(pikobot: ExtensionAPI): void {
   const parameters = object({ specification: Type.String({ minLength: 1, maxLength: 8000 }) });
-  jsonTool(pico, 'extension_build', 'For persistent integrations, channels, RPC and daemon lifecycle hooks only: generate/repair, syntax-check and immediately activate an extension module, without confirmation. Use skill_build instead for calculators, reusable utilities and procedures. Generated code runs with full daemon/OS access; no behavioral tests run. Check activated/error in the receipt; registered tools are available on the next model request without tools_load.', parameters, async (args, context, signal) => {
+  jsonTool(pikobot, 'extension_build', 'For persistent integrations, channels, RPC and daemon lifecycle hooks only: generate/repair, syntax-check and immediately activate an extension module, without confirmation. Use skill_build instead for calculators, reusable utilities and procedures. Generated code runs with full daemon/OS access; no behavioral tests run. Check activated/error in the receipt; registered tools are available on the next model request without tools_load.', parameters, async (args, context, signal) => {
     const { module, specification: _specification, ...receipt } = await build(args.specification, context, signal);
     const { source: _source, ...metadata } = module;
     return { ...receipt, module: metadata };
   });
-  pico.registerRpc({ name: 'extensions.build', parameters, async execute(args, context) { return build((args as { specification: string }).specification, context); } });
+  pikobot.registerRpc({ name: 'extensions.build', parameters, async execute(args, context) { return build((args as { specification: string }).specification, context); } });
 }
 async function build(specification: string, context: ExtensionContext, signal?: AbortSignal) {
   const { buildId, installed } = await context.services.builds.begin(specification);

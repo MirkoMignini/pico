@@ -1,10 +1,10 @@
-# Phone-first attachment and shared-link research for Pico
+# Phone-first attachment and shared-link research for Pikobot
 
 **Research date: 17 October 2026.** Public documentation and repository review; not an implementation or a live integration certification.
 
 ## Executive recommendation
 
-Make Telegram a **personal capture inbox**, not just a URL bookmark collection. For each thing shared, Pico should preserve the supplied source, recover the content it can legitimately access, explain missing parts, and make the useful result searchable with citations. It must distinguish **“I saved the link,” “I read the text,” “I transcribed the audio,” and “I understood the visuals.”** Those are different outcomes.
+Make Telegram a **personal capture inbox**, not just a URL bookmark collection. For each thing shared, Pikobot should preserve the supplied source, recover the content it can legitimately access, explain missing parts, and make the useful result searchable with citations. It must distinguish **“I saved the link,” “I read the text,” “I transcribed the audio,” and “I understood the visuals.”** Those are different outcomes.
 
 For the four examples that motivated this research:
 
@@ -17,13 +17,13 @@ For the four examples that motivated this research:
 
 **Recommended build order:** improve the common file/media pipeline first; add safe public-page capture; add authorized video/podcast transcription; then add a small number of justified account integrations. Do not build a separate downloader for every app.
 
-This document is intentionally much broader than Pico's shipped features. **“Basic” and “advanced” below are proposed handling levels, not assertions that Pico already implements them.** Current behavior is isolated in [section 3](#3-what-pico-can-actually-do-today).
+This document is intentionally much broader than Pikobot's shipped features. **“Basic” and “advanced” below are proposed handling levels, not assertions that Pikobot already implements them.** Current behavior is isolated in [section 3](#3-what-pikobot-can-actually-do-today).
 
 ## Contents
 
 1. [Scope, research method and evidence](#1-scope-research-method-and-evidence)
 2. [What sharing from a phone actually delivers](#2-what-sharing-from-a-phone-actually-delivers)
-3. [What Pico can actually do today](#3-what-pico-can-actually-do-today)
+3. [What Pikobot can actually do today](#3-what-pikobot-can-actually-do-today)
 4. [Attachment taxonomy: formats, objects and edge cases](#4-attachment-taxonomy-formats-objects-and-edge-cases)
 5. [Reusable basic and advanced processing recipes](#5-reusable-basic-and-advanced-processing-recipes)
 6. [Social, video and audio apps](#6-social-video-and-audio-apps)
@@ -62,12 +62,12 @@ The catalog includes some desktop-origin formats because they routinely reach a 
 - Started with `README.md`, channel/document/security/testing/feature documentation, and the relevant Telegram/media source code in this repository.
 - Requested public platform docs, API references, standards and maintained tool documentation directly over HTTPS. No owner accounts, credentials, browser profiles, private messages or deployed instances were inspected.
 - Reviewed the key API and policy constraints, especially YouTube captions/downloads, Instagram API/oEmbed restrictions, Reddit data use, Spotify AI ingestion, Telegram file transfer, podcast transcripts and authenticated document export.
-- Used small public oEmbed examples to check the **shape** of YouTube/X embed responses. That does not test video access, transcription, thread completeness, Pico delivery or permission to process their content.
+- Used small public oEmbed examples to check the **shape** of YouTube/X embed responses. That does not test video access, transcription, thread completeness, Pikobot delivery or permission to process their content.
 - Some documentation URLs failed, redirected to unrelated material, or returned only JavaScript shells. These are explicitly recorded below; HTTP 200 was **not** treated as proof that a feature exists.
 
 **Evidence labels used in the catalog:**
 
-- **Documented:** the cited first-party documentation supports the described interface or restriction, not a working Pico integration.
+- **Documented:** the cited first-party documentation supports the described interface or restriction, not a working Pikobot integration.
 - **Tool-dependent:** a maintained third-party tool may handle it; actual support must be tested with an authorized example.
 - **Export-first:** a supplied file, selected text or screenshot is the dependable starting point.
 - **Proposal:** a desired processing/product behavior, not an assertion about an app API.
@@ -102,9 +102,9 @@ A Telegram bot does not receive the source app's entire internal object. The sha
 
 **Phone UX recommendation:** sharing the link plus one short instruction should be enough: “save for later,” “remember this recipe,” “what matters here?”, “compare these,” or “remind me Friday.” A caption-less share can go to an explicitly opted-in capture inbox; it must not silently become a belief, personal preference, reminder or account subscription.
 
-Android describes `ACTION_SEND`/`ACTION_SEND_MULTIPLE` and MIME-based sharing; Apple share extensions receive selected extension items, not arbitrary access to another app. Web Share likewise transfers explicitly supplied data. A custom Pico share extension is optional future work, **not necessary for the first Telegram workflow**. [ANDROID-SHARE] [APPLE-SHARE-EXT] [WEB-SHARE]
+Android describes `ACTION_SEND`/`ACTION_SEND_MULTIPLE` and MIME-based sharing; Apple share extensions receive selected extension items, not arbitrary access to another app. Web Share likewise transfers explicitly supplied data. A custom Pikobot share extension is optional future work, **not necessary for the first Telegram workflow**. [ANDROID-SHARE] [APPLE-SHARE-EXT] [WEB-SHARE]
 
-## 3. What Pico can actually do today
+## 3. What Pikobot can actually do today
 
 Repository-inspected baseline; no live Telegram or model test was performed for this research.
 
@@ -126,7 +126,7 @@ Repository-inspected baseline; no live Telegram or model test was performed for 
 
 Relevant implementation: [`src/features/telegram-input.ts`](../src/features/telegram-input.ts), [`src/features/telegram-channel.ts`](../src/features/telegram-channel.ts), [`src/media.ts`](../src/media.ts), [`src/features/web.ts`](../src/features/web.ts). Product contracts: [channels](CHANNELS.md), [documents](KNOWLEDGE.md), [web](FEATURES.md#web-search-and-research), [setup](SETUP.md#voice-transcription), [Google](GOOGLE.md), [security](SECURITY.md).
 
-**Size distinction:** Pico documents a maximum **20 MB incoming attachment**, also bounded by configuration and Telegram availability. Telegram's hosted Bot API `getFile` limit is separate from what Telegram users can upload in their own chats. A local Bot API server can download without the hosted size limit and supports uploads up to 2000 MB, but **Pico has not thereby gained a local-server integration or higher safe processing limits**. Making that change would require explicit implementation and operations work. [TG-API] [TG-FAQ]
+**Size distinction:** Pikobot documents a maximum **20 MB incoming attachment**, also bounded by configuration and Telegram availability. Telegram's hosted Bot API `getFile` limit is separate from what Telegram users can upload in their own chats. A local Bot API server can download without the hosted size limit and supports uploads up to 2000 MB, but **Pikobot has not thereby gained a local-server integration or higher safe processing limits**. Making that change would require explicit implementation and operations work. [TG-API] [TG-FAQ]
 
 ## 4. Attachment taxonomy: formats, objects and edge cases
 
@@ -210,7 +210,7 @@ These are possible inputs, not a support matrix for the present implementation. 
 | Native Telegram service/business/game/payment/story objects | Label the received reference and actual availability | Adapter-specific future work only; never infer a generic document exists behind every native object |
 | Unknown or malformed binary | Honest unsupported outcome; preserve only within policy | Add a specialized reader only when repeated need justifies it; no silent guessed text |
 
-Standards and reader references: [WEBVTT], [ICAL], [VCARD], [GEOJSON], [EMAIL], [EPUB], [WARC], [DICOM], [PDF], [EXIFTOOL], [ZIP]. These references describe formats/tools, not current Pico support.
+Standards and reader references: [WEBVTT], [ICAL], [VCARD], [GEOJSON], [EMAIL], [EPUB], [WARC], [DICOM], [PDF], [EXIFTOOL], [ZIP]. These references describe formats/tools, not current Pikobot support.
 
 ## 5. Reusable basic and advanced processing recipes
 
@@ -266,7 +266,7 @@ Align them by time. Do not count burned-in subtitles and their matching speech a
 
 ### F. Office/PDF/table
 
-**Basic:** original plus bounded text/table extraction using existing Pico converters; explicit unsupported/locked/OCR-required state.
+**Basic:** original plus bounded text/table extraction using existing Pikobot converters; explicit unsupported/locked/OCR-required state.
 
 **Advanced:** page/slide/sheet-aware locators, available comments/revisions, selective OCR, formula/cached-value distinction, table units and exported representations. For arithmetic, use actual parsed values and a deterministic check, not a prose model's approximate totals.
 
@@ -543,7 +543,7 @@ For music-first content, identifying an album to remember is usually enough. Do 
 
 ### 7.1 Telegram itself
 
-**Status:** documented API, current Pico subset inspected. References: [TG-API], [TG-FAQ], [channels](CHANNELS.md).
+**Status:** documented API, current Pikobot subset inspected. References: [TG-API], [TG-FAQ], [channels](CHANNELS.md).
 
 | Shared type | Basic | Advanced |
 | --- | --- | --- |
@@ -556,7 +556,7 @@ For music-first content, identifying an album to remember is usually enough. Do 
 | Story/paid media/protected content | Explicit unavailable/reference-only state | No purchase, unlocking, content-protection bypass or secret-chat support |
 | Edited/deleted/live-location update | Record only actually received update semantics | Version/tombstone support needs explicit implementation; no claim of a complete historical sync |
 
-Do not confuse Telegram **Saved Messages** with messages sent to Pico: the bot does not gain access to the owner's Saved Messages or other chats merely because the same person owns them. Protected-forwarding restrictions must be respected.
+Do not confuse Telegram **Saved Messages** with messages sent to Pikobot: the bot does not gain access to the owner's Saved Messages or other chats merely because the same person owns them. Protected-forwarding restrictions must be respected.
 
 ### 7.2 WhatsApp
 
@@ -564,7 +564,7 @@ Do not confuse Telegram **Saved Messages** with messages sent to Pico: the bot d
 
 | Type | Basic | Advanced |
 | --- | --- | --- |
-| Shared message/selected text | Send chosen text or screenshots to Pico; preserve sender/time if supplied | Identify decisions, dates and tasks as attributed candidates |
+| Shared message/selected text | Send chosen text or screenshots to Pikobot; preserve sender/time if supplied | Identify decisions, dates and tasks as attributed candidates |
 | Voice note/photo/video/document | Selected permitted file forwarded/shared out to Telegram | Common media/document pipeline; no account access required |
 | Chat export with/without media | Bounded chosen export and manifest | Parse chronology, message/media associations and timezone; avoid importing unrelated participants/history |
 | Status/channel/community/invite link | Reference and deliberately supplied excerpt | No joining, scraping or monitoring automatically |
@@ -579,7 +579,7 @@ WhatsApp Business APIs are not a read API for an individual's personal WhatsApp 
 | --- | --- | --- |
 | Selected text/media | Explicit selected share/copy where the device permits | Common extraction with third-party privacy labels |
 | Disappearing/view-once content | Respect intended privacy and capture restrictions | No covert recording or disappearance bypass |
-| Backup/transfer artifact | Treat as sensitive opaque data | No claim that a transfer or encrypted backup is a generic plaintext export; supported owner-controlled migration is separate from Pico ingestion |
+| Backup/transfer artifact | Treat as sensitive opaque data | No claim that a transfer or encrypted backup is a generic plaintext export; supported owner-controlled migration is separate from Pikobot ingestion |
 
 Signal does not provide this research with a verified generic personal-message ingestion API. Copying selected evidence is much narrower than granting a daemon access to a secure messenger database.
 
@@ -608,7 +608,7 @@ An optional phone Shortcut can later package **user-selected** text/file plus so
 | WeChat article/chat/mini-program card | Readable article or selected supplied text/images | Article extraction if legitimate; mini-program payload is not an executable task or readable page |
 | Viber conversation/voice | Selected copied text/media | Common pipelines; backup formats require separate verification |
 
-For all of them, a message's command-like wording belongs to its sender, not automatically to the Pico owner.
+For all of them, a message's command-like wording belongs to its sender, not automatically to the Pikobot owner.
 
 ### 7.6 Discord
 
@@ -648,7 +648,7 @@ For all of them, a message's command-like wording belongs to its sender, not aut
 
 | App/type | Basic | Advanced |
 | --- | --- | --- |
-| Gmail message/thread link | Preserve private reference; selected text/EML/PDF | Pico's explicitly configured Gmail service may read authorized messages; separate sender, forwarded bodies and attachment evidence |
+| Gmail message/thread link | Preserve private reference; selected text/EML/PDF | Pikobot's explicitly configured Gmail service may read authorized messages; separate sender, forwarded bodies and attachment evidence |
 | Outlook email / Microsoft 365 item | Selected EML/MSG/PDF or text | Scoped Microsoft Graph mail integration if implemented; tenant/organizational policy first |
 | Apple Mail message | Selected text/EML/PDF/attachments | MIME-aware threading and attachment extraction; `message:` deep links are not public URLs |
 | Proton Mail / Fastmail message | Owner-selected export/file | Supported scoped export/bridge/IMAP path only if explicitly implemented and authorized; no claim of current encrypted-mail integration |
@@ -700,7 +700,7 @@ Examples include BBC, Reuters, AP, The Guardian, New York Times, Washington Post
 | Subscriber/paywalled article | Keep link and supplied permitted excerpt | Owner-selected allowed export; no paywall bypass, credential borrowing or arbitrary mirror service |
 | News audio/video | Link + provided transcript/excerpt | Authorized media pipeline and written-source comparison |
 
-A mobile “share” preview often has only a headline and teaser. Pico must not summarize the full article from that alone.
+A mobile “share” preview often has only a headline and teaser. Pikobot must not summarize the full article from that alone.
 
 ### 8.3 Substack
 
@@ -764,7 +764,7 @@ A mobile “share” preview often has only a headline and teaser. Pico must not
 
 ### 9.1 Google Drive
 
-**Status:** documented download/export distinction. References: [GOOGLE-DRIVE], [GDRIVE-EXPORT], [GOOGLE-TAKEOUT], [Google in Pico](GOOGLE.md).
+**Status:** documented download/export distinction. References: [GOOGLE-DRIVE], [GDRIVE-EXPORT], [GOOGLE-TAKEOUT], [Google in Pikobot](GOOGLE.md).
 
 | Type | Basic | Advanced |
 | --- | --- | --- |
@@ -1212,7 +1212,7 @@ Scaling servings requires units and a deterministic arithmetic check. Food safet
 | TrainingPeaks plan/workout | Selected file/text | Distinguish planned from completed session; no editing coach plan automatically |
 | Runkeeper / Nike Run Club activity | Selected export/screenshot | Current interface verification; no silent fitness-history import |
 
-**Strava-specific finding:** the reviewed policy prohibits ordinary API data and derivatives in AI operation, context windows, embeddings, evaluation and RAG, and separately prohibits persistent retrieval indexes/archives. It documents a narrow exception for personal use through the official **Strava MCP** interface, subject to its requirements and other restrictions. That is not proof Pico has access or that indefinite memory retention is permitted. The agreement also limits disclosure to the relevant athlete and requires privacy/deletion controls. Do not bypass these limits by proxying API results through a generated export or model summary.
+**Strava-specific finding:** the reviewed policy prohibits ordinary API data and derivatives in AI operation, context windows, embeddings, evaluation and RAG, and separately prohibits persistent retrieval indexes/archives. It documents a narrow exception for personal use through the official **Strava MCP** interface, subject to its requirements and other restrictions. That is not proof Pikobot has access or that indefinite memory retention is permitted. The agreement also limits disclosure to the relevant athlete and requires privacy/deletion controls. Do not bypass these limits by proxying API results through a generated export or model summary.
 
 Workout routes expose routines/home; heart rate and performance can be health data. A local export is not a universal waiver of source terms or third-party privacy.
 
@@ -1241,7 +1241,7 @@ Do not automatically embed/index the entire health export or send it to a genera
 | Certificate/warranty/insurance/contract | Sensitive PDF/image | Expiry/due date/obligation candidates with exact clauses; not legal validation or implicit renewal/cancel |
 | Pet/vet/school/family record | Selected file | Source-aware organization and requested reminders; minimize third-party/minor data |
 
-Apple documents choices to remove location when sharing photos. Pico only knows metadata actually received; a photo share may be transformed before the bot sees it. [EXIF-PRIVACY] [EXIFTOOL]
+Apple documents choices to remove location when sharing photos. Pikobot only knows metadata actually received; a photo share may be transformed before the bot sees it. [EXIF-PRIVACY] [EXIFTOOL]
 
 ## 14. Regional, specialist and long-tail apps
 
@@ -1333,7 +1333,7 @@ These are proposed product semantics, not new commands already implemented.
 | “Track this price/event” | Explicit watch definition, if implemented | Bounded authorized periodic reads and change notifications | Start permanent polling after an ordinary bookmark |
 | Caption-less share | In an explicitly opted-in inbox, minimal saved reference/original | State unknown intent; optionally classify | Infer preference, execute embedded instructions or enable metered services |
 
-Routine local writes retain Pico's existing delegation model; this proposal does not add a confirmation prompt for every note. Ambiguous or consequential values still need clarification in later use. This research task itself does not enable capture defaults.
+Routine local writes retain Pikobot's existing delegation model; this proposal does not add a confirmation prompt for every note. Ambiguous or consequential values still need clarification in later use. This research task itself does not enable capture defaults.
 
 ### 15.3 A useful source card
 
@@ -1366,16 +1366,16 @@ Examples of the desired future UX, **not claims these integrations have been imp
 
 > Saved the article's headline and your note. The body is behind a login; I have not read the full article.
 
-Use one useful final receipt, not a flood of generic “received” messages. Pico's current typing/draft/reaction behavior remains as documented; a reaction is not a completion receipt.
+Use one useful final receipt, not a flood of generic “received” messages. Pikobot's current typing/draft/reaction behavior remains as documented; a reaction is not a completion receipt.
 
 ### 15.5 Retrieval and forgetting
 
 - Search original text **and** source-linked OCR/transcripts/notes; a short summary alone loses names, measurements and exceptions.
 - Support later questions such as “the silent reel with the wall shelf,” “the Rome restaurant I saved last month,” or “that podcast clip about sleep,” without claiming a feature is live before its representations/indexing are implemented.
-- Attach citations to real stored spans; future media citations need item/page/time/region locators. Current Pico document citations refer to extracted representation lines/offsets, not original PDF page coordinates.
+- Attach citations to real stored spans; future media citations need item/page/time/region locators. Current Pikobot document citations refer to extracted representation lines/offsets, not original PDF page coordinates.
 - Deduplicate canonical identity and byte hashes while preserving separate owner annotations and capture versions. Similar thumbnails or text are not enough to merge different posts.
-- Deleting/forgetting must cover original plus transcript/OCR/frames/embeddings/summaries, linked derived records and managed backups, using Pico's existing source/tombstone model.
-- External Telegram/provider/downloaded copies remain outside Pico's erasure guarantees. Do not silently re-fetch a forgotten URL or re-publish late job results.
+- Deleting/forgetting must cover original plus transcript/OCR/frames/embeddings/summaries, linked derived records and managed backups, using Pikobot's existing source/tombstone model.
+- External Telegram/provider/downloaded copies remain outside Pikobot's erasure guarantees. Do not silently re-fetch a forgotten URL or re-publish late job results.
 
 ## 16. Implementation plan and tool choices
 
@@ -1412,11 +1412,11 @@ No dependencies were installed and no tools were integrated for this research. T
 
 | Need | Basic/default candidate | Advanced candidate | Main trade-off |
 | --- | --- | --- | --- |
-| Office/document conversion | Pico's existing AnyDoc + native handlers | Evaluate Docling/MarkItDown/Tika for demonstrated gaps only | Avoid duplicate pipelines, different locators and unnecessary runtimes; inspect actual licenses/dependency terms |
-| Public article extraction | Existing Pico web network/extraction | Readability/Trafilatura concepts or a targeted compatible parser | Extra framework is unnecessary if current extraction works; JS pages remain different |
+| Office/document conversion | Pikobot's existing AnyDoc + native handlers | Evaluate Docling/MarkItDown/Tika for demonstrated gaps only | Avoid duplicate pipelines, different locators and unnecessary runtimes; inspect actual licenses/dependency terms |
+| Public article extraction | Existing Pikobot web network/extraction | Readability/Trafilatura concepts or a targeted compatible parser | Extra framework is unnecessary if current extraction works; JS pages remain different |
 | Media metadata/audio/frame extraction | FFmpeg + ffprobe | Bounded scene/text-aware selection around relevant changes | Mature tools, but decoders/filters/protocols are an attack surface; external fetches disabled for local-file jobs |
 | Authorized media URL acquisition | Explicit publisher download/API/export | `yt-dlp` as a reviewed, constrained acquisition tool where allowed | Extractors break; rights, credentials, JS runtime, plugins and SSRF are independent concerns |
-| Speech-to-text | Pico's existing explicitly enabled hosted transcription for supported audio | Local faster-whisper or whisper.cpp; WhisperX-style alignment/diarization only if needed | Hosted disclosure/cost vs local hardware/models/latency; language and noise quality need actual evaluation |
+| Speech-to-text | Pikobot's existing explicitly enabled hosted transcription for supported audio | Local faster-whisper or whisper.cpp; WhisperX-style alignment/diarization only if needed | Hosted disclosure/cost vs local hardware/models/latency; language and noise quality need actual evaluation |
 | OCR images/scans | Tesseract for legible local printed text | OCRmyPDF for PDF derivatives; layout/vision model for justified difficult content | OCRmyPDF creates a derivative, not semantic understanding; handwriting/tables need evaluation |
 | Complex document layout | Existing extraction and honest warnings | Evaluate Docling on a fixed representative corpus | Larger model/runtime footprint; do not silently replace current provenance/citation behavior |
 | Image/video semantic understanding | Configured bounded vision model on selected images | Multimodal timed frames + text/audio fusion | Provider disclosure/cost, hallucination and incomplete temporal coverage |
@@ -1429,7 +1429,7 @@ References: [ANYDOC], [DOCLING], [MARKITDOWN], [TIKA], [READABILITY], [TRAFILATU
 
 **Specific downloader caveat:** current `yt-dlp` documentation recommends FFmpeg/ffprobe and, for full YouTube support, `yt-dlp-ejs` plus a supported JavaScript runtime. Old “install one binary and YouTube works forever” recipes are not dependable. Do not auto-download remote runtime components/plugins or import the owner's browser cookies to repair a failure. Tool support is not a permission grant.
 
-**Specific ASR caveat:** hosted speech services have model-specific input formats, request sizes, timestamps/diarization options and billing. OpenAI's reviewed file-transcription guide states a 25 MB upload limit, but Pico's own intake remains lower and its current transcription call does not implement every advanced output. Pin/verify the chosen model's current contract rather than copy every advertised feature into Pico's capability claims. [OPENAI-STT]
+**Specific ASR caveat:** hosted speech services have model-specific input formats, request sizes, timestamps/diarization options and billing. OpenAI's reviewed file-transcription guide states a 25 MB upload limit, but Pikobot's own intake remains lower and its current transcription call does not implement every advanced output. Pin/verify the chosen model's current contract rather than copy every advertised feature into Pikobot's capability claims. [OPENAI-STT]
 
 ### 16.4 Job semantics and resources
 
@@ -1448,7 +1448,7 @@ For any future queued extraction:
 
 First version: give a helpful error and accept a shorter allowed excerpt, transcript, smaller PDF segment or explicitly supported private upload path. Do not ask the owner to paste credentials or tokenized download links into public chat.
 
-Later options require separate design: authenticated bounded uploads, explicitly configured cloud-file retrieval, or a local Telegram Bot API deployment. None bypass decoder, memory, storage, model-context, privacy or rights constraints. Telegram Premium on the phone does not increase Pico's current safe limit.
+Later options require separate design: authenticated bounded uploads, explicitly configured cloud-file retrieval, or a local Telegram Bot API deployment. None bypass decoder, memory, storage, model-context, privacy or rights constraints. Telegram Premium on the phone does not increase Pikobot's current safe limit.
 
 ## 17. Security, privacy, rights and operational failures
 
@@ -1551,7 +1551,7 @@ Use newly frozen independent validation for semantic tuning, not held-out answer
 
 All external references below were requested during this research on **17 October 2026**. “Reviewed” means readable relevant documentation was inspected directly or through targeted excerpts; it does not imply every page or linked endpoint was tested. References support only their stated scope. The much larger app catalog includes export-first proposals with **no claim of verified app API support**.
 
-Primary docs are preferred for policy/API constraints; maintained tool READMEs describe technical candidates. Neither constitutes legal permission or Pico live verification. Fast-changing policies, access tiers, export formats and product lifecycle status must be checked again before implementation.
+Primary docs are preferred for policy/API constraints; maintained tool READMEs describe technical candidates. Neither constitutes legal permission or Pikobot live verification. Fast-changing policies, access tiers, export formats and product lifecycle status must be checked again before implementation.
 
 ### 19.1 Platform and app references
 
@@ -1671,15 +1671,15 @@ Primary docs are preferred for policy/API constraints; maintained tool READMEs d
 | [YTDLP-EXTRACTORS] | Extractor inventory explicitly does not guarantee every site works |
 | [FFMPEG] | Stream selection/transcoding/filtering and format handling |
 | [FFPROBE] | Bounded stream/container metadata inspection candidate |
-| [OPENAI-STT] | File-transcription formats/size/model-specific outputs; not all implemented in Pico |
+| [OPENAI-STT] | File-transcription formats/size/model-specific outputs; not all implemented in Pikobot |
 | [WHISPER] | Reference speech-recognition implementation |
 | [FASTER-WHISPER] | Local inference candidate and hardware/precision trade-offs |
 | [WHISPERCPP] | Local C/C++ inference candidate and platform/model options |
 | [WHISPERX] | Alignment/diarization candidate with additional models/dependencies |
 | [TESSERACT] | Local OCR/language data and quality considerations |
 | [PDF] | OCRmyPDF: searchable PDF derivative, not universal text/semantic fidelity |
-| [ANYDOC] | Converter capabilities; Pico's installed version/integration defines actual shipped support |
-| [DOCLING] | Structured document/layout candidate, not an installed Pico capability |
+| [ANYDOC] | Converter capabilities; Pikobot's installed version/integration defines actual shipped support |
+| [DOCLING] | Structured document/layout candidate, not an installed Pikobot capability |
 | [MARKITDOWN] | Document-to-Markdown candidate and optional integrations |
 | [TIKA] | Broad format-detection/extraction candidate; additional runtime not justified by breadth alone |
 | [TRAFILATURA] | Public text extraction/metadata candidate |
@@ -1694,7 +1694,7 @@ Primary docs are preferred for policy/API constraints; maintained tool READMEs d
 These gaps are kept explicit rather than filled with plausible but unverified API claims:
 
 - **Reddit help overview:** returned 403. API reference and current data/developer terms were readable; exact app approval/quotas still need current onboarding verification.
-- **Bluesky:** older API reference redirected to a shell and tutorial/API-directory requests were empty. Following the official repository README located the **new canonical schemas**, which were then reviewed. Endpoint schemas are documented; actual AppView behavior/permissions and Pico ingestion remain untested.
+- **Bluesky:** older API reference redirected to a shell and tutorial/API-directory requests were empty. Following the official repository README located the **new canonical schemas**, which were then reviewed. Endpoint schemas are documented; actual AppView behavior/permissions and Pikobot ingestion remain untested.
 - **Pinterest:** main API docs returned a shell; an index response did not establish endpoint fields or permissions.
 - **Vimeo:** developer page returned a shell; a legacy help link redirected to unrelated player parameters. No Vimeo-specific API guarantee is inferred.
 - **Facebook:** old/general oEmbed paths failed or returned a not-found page; the Meta oEmbed Read feature page was readable, not a general extraction license.

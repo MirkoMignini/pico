@@ -206,7 +206,7 @@ it('honors cancellation before import and disables a factory cancelled during in
   const s = instance(), context = { ...owner(s), conversationId: s.runtime.newConversation().id }, marker = join(s.root, 'cancelled-init');
   s.store.run('INSERT INTO runs(id,conversation_id,request_id,source,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)', context.runId, context.conversationId, context.runId, JSON.stringify(context), 'running', 1, 1);
   const { buildId } = s.runtime.extensions.beginBuild('Synthetic cancellation', context);
-  const module = { ...example, source: `import fs from 'node:fs';export default async function(pico){fs.appendFileSync(${JSON.stringify(marker)},'x');await new Promise(resolve=>setTimeout(resolve,30));}` };
+  const module = { ...example, source: `import fs from 'node:fs';export default async function(pikobot){fs.appendFileSync(${JSON.stringify(marker)},'x');await new Promise(resolve=>setTimeout(resolve,30));}` };
   await expect(s.runtime.extensions.stageBuild(buildId, module, context, AbortSignal.abort(new Error('Synthetic cancellation')))).rejects.toThrow('Synthetic cancellation');
   expect(existsSync(marker)).toBe(false); expect(s.store.all('SELECT * FROM extension_artifacts')).toEqual([]);
   const controller = new AbortController(), activation = s.runtime.extensions.stageBuild(buildId, module, context, controller.signal);
@@ -257,7 +257,7 @@ it('validates inputs and denies foreign, ephemeral, scheduled and untrusted invo
 it('loads instance-local TypeScript and directory modules, rejects collisions, and runs shutdown hooks', async () => {
   const s = instance(), directory = join(s.root, 'extensions'), marker = join(s.root, 'closed');
   mkdirSync(join(directory, 'second-module'), { recursive: true });
-  writeFileSync(join(directory, 'first-module.ts'), `const label: string = 'Local'; export default function(pico: any){pico.on('shutdown',async()=>{const fs=await import('node:fs');fs.writeFileSync(${JSON.stringify(marker)},'closed');});pico.registerTool({name:'local_tool',label,description:'Local tool',parameters:pico.Type.Object({}, {additionalProperties:false}),async execute(){return {content:[{type:'text',text:String(process.pid)}],details:{pid:process.pid}};}});}`);
+  writeFileSync(join(directory, 'first-module.ts'), `const label: string = 'Local'; export default function(pikobot: any){pikobot.on('shutdown',async()=>{const fs=await import('node:fs');fs.writeFileSync(${JSON.stringify(marker)},'closed');});pikobot.registerTool({name:'local_tool',label,description:'Local tool',parameters:pikobot.Type.Object({}, {additionalProperties:false}),async execute(){return {content:[{type:'text',text:String(process.pid)}],details:{pid:process.pid}};}});}`);
   writeFileSync(join(directory, 'second-module', 'index.mjs'), example.source);
   writeFileSync(join(directory, 'zzz-collision.js'), example.source.replace('word_count', 'lists'));
   await s.runtime.start();
@@ -273,7 +273,7 @@ it('loads instance-local TypeScript and directory modules, rejects collisions, a
 it('publishes extension footer status through events and the owner status RPC, clearing it on disable', async () => {
   const s = instance(), directory = join(s.root, 'extensions'), events: { key: string; text: string | null }[] = [];
   mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, 'footer-status.ts'), `export default function(pico){pico.on('start',()=>pico.setStatus('Telegram','connected'));}`);
+  writeFileSync(join(directory, 'footer-status.ts'), `export default function(pikobot){pikobot.on('start',()=>pikobot.setStatus('Telegram','connected'));}`);
   s.runtime.events.on('output', event => { if (event.type === 'extension_status') events.push(event.data as { key: string; text: string | null }); });
   await s.runtime.start();
   expect(s.runtime.extensions.statuses).toEqual({ Telegram: 'connected' });
@@ -285,7 +285,7 @@ it('publishes extension footer status through events and the owner status RPC, c
 
 it('preserves canonical core writes, nested journals, provenance and real named-tool agent execution', async () => {
   const s = instance();
-  const module = { ...example, id: 'core-notes', source: `export default function(pico){pico.registerTool({name:'quick_list',label:'Quick list',description:'Save a list',parameters:pico.Type.Object({title:pico.Type.String()},{additionalProperties:false}),async execute(_id,params,_signal,_update,context){return context.callTool('lists',{action:'create',title:params.title,items:['One','Two']});}});}` };
+  const module = { ...example, id: 'core-notes', source: `export default function(pikobot){pikobot.registerTool({name:'quick_list',label:'Quick list',description:'Save a list',parameters:pikobot.Type.Object({title:pikobot.Type.String()},{additionalProperties:false}),async execute(_id,params,_signal,_update,context){return context.callTool('lists',{action:'create',title:params.title,items:['One','Two']});}});}` };
   await activate(s, module);
   s.faux.appendResponses([loadTools('quick_list'), fauxAssistantMessage([fauxToolCall('quick_list', { title: 'Synthetic list' }, 'save')]), fauxAssistantMessage([fauxText('Saved')])]);
   const conversation = s.runtime.newConversation(), run = await s.runtime.ingest({ requestId: 'named-extension', conversationId: conversation.id, text: 'Make a synthetic list' }, source);
@@ -322,7 +322,7 @@ it('forgetting removes source-derived native artifacts and unloads their registe
 
 it('counts asynchronous factory loading as busy work and cleans up if shutdown interrupts initialization', async () => {
   const s = instance(), marker = join(s.root, 'factory-cleanup');
-  const pending = await s.runtime.extensions.validateModule({ ...example, source: `import fs from 'node:fs';export default async function(pico){pico.on('shutdown',()=>fs.writeFileSync(${JSON.stringify(marker)},'closed'));await new Promise(resolve=>setTimeout(resolve,50));}` });
+  const pending = await s.runtime.extensions.validateModule({ ...example, source: `import fs from 'node:fs';export default async function(pikobot){pikobot.on('shutdown',()=>fs.writeFileSync(${JSON.stringify(marker)},'closed'));await new Promise(resolve=>setTimeout(resolve,50));}` });
   const activation = s.runtime.extensions.approve(pending.approvalId, pending.hash, true, owner(s));
   await waitFor(() => s.runtime.extensions.busy); expect(s.runtime.canApplySettings).toBe(false);
   await s.runtime.close(); await activation;
@@ -330,7 +330,7 @@ it('counts asynchronous factory loading as busy work and cleans up if shutdown i
 });
 
 it('cooperatively aborts calls and cleans resources on daemon close, without claiming hard termination', async () => {
-  const s = instance(); await activate(s, { ...example, source: `export default function(pico){pico.registerTool({name:'wait_tool',label:'Wait',description:'Cooperative cancellation',parameters:pico.Type.Object({},{additionalProperties:false}),async execute(_id,_args,signal){await new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));return {content:[],details:null};}});}` });
+  const s = instance(); await activate(s, { ...example, source: `export default function(pikobot){pikobot.registerTool({name:'wait_tool',label:'Wait',description:'Cooperative cancellation',parameters:pikobot.Type.Object({},{additionalProperties:false}),async execute(_id,_args,signal){await new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));return {content:[],details:null};}});}` });
   const pending = invoke(s, 'wait_tool', {}).catch(error => error);
   await waitFor(() => s.runtime.extensions.busy); expect(s.runtime.canApplySettings).toBe(false);
   await s.runtime.close(); expect(String(await pending)).toContain('Daemon stopping');
@@ -373,7 +373,7 @@ it('RPC validates the new module contract, journals invocation, and refuses acti
 it('compiled CLI runs a TypeScript tool in its actual daemon PID by default and survives settings apply', async () => {
   const s = instance(); s.config.model = { provider: 'openai', id: 'gpt-4o-mini' }; atomicWrite(join(s.root, 'config.json'), JSON.stringify(s.config));
   mkdirSync(join(s.root, 'extensions'));
-  writeFileSync(join(s.root, 'extensions', 'process-probe.ts'), `const label: string='Process';export default function(pico: any){pico.registerTool({name:'process_probe',label,description:'Synthetic process proof',parameters:pico.Type.Object({},{additionalProperties:false}),async execute(){return {content:[{type:'text',text:String(process.pid)}],details:{pid:process.pid}};}});}`);
+  writeFileSync(join(s.root, 'extensions', 'process-probe.ts'), `const label: string='Process';export default function(pikobot: any){pikobot.registerTool({name:'process_probe',label,description:'Synthetic process proof',parameters:pikobot.Type.Object({},{additionalProperties:false}),async execute(){return {content:[{type:'text',text:String(process.pid)}],details:{pid:process.pid}};}});}`);
   const child = spawn(process.execPath, ['dist/cli.js', '--instance', s.root, 'serve'], { stdio: ['ignore', 'pipe', 'pipe'] });
   let ready = false; child.stdout.on('data', data => { if (data.toString().includes('daemon_ready')) ready = true; }); child.stderr.on('data', () => {});
   const client = new Client(s.root);

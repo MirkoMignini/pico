@@ -191,7 +191,7 @@ export class Skills {
     const { skillId, version, directory, previousHash, desired } = JSON.parse(pending) as { skillId: string; version: number; directory: string; previousHash: string | null; desired: string };
     const row = this.store.get<SkillRow>(`SELECT ${columns} FROM ${tables} WHERE s.id=? AND s.version=? AND s.status='publishing'`, skillId, version);
     if (!row) { this.store.run('DELETE FROM meta WHERE key=?', key); return; }
-    const target = safeDirectory(this.store.root, directory), stage = join(dirname(target), `.pico-stage-${skillId}`), old = join(dirname(target), `.pico-old-${skillId}`);
+    const target = safeDirectory(this.store.root, directory), stage = join(dirname(target), `.pikobot-stage-${skillId}`), old = join(dirname(target), `.pikobot-old-${skillId}`);
     if (existsSync(target)) {
       const current = directoryPackage(target);
       if (current.hash !== row.content_hash && current.hash !== previousHash) throw new Error('Skill publication conflict: directory changed. Existing files were not overwritten');

@@ -28,11 +28,11 @@ function subjectHeader(subject:string):string{
   const chunks:string[]=[];let current='';for(const character of subject){if(Buffer.byteLength(current+character)>45){chunks.push(current);current='';}current+=character;}if(current)chunks.push(current);return chunks.map(chunk=>`=?UTF-8?B?${Buffer.from(chunk).toString('base64')}?=`).join('\r\n ');
 }
 export function emailMime(payload:Record<string,any>,action:Pick<RemoteAction,'id'|'createdAt'>,attachments:{metadata:SendAttachment;bytes:Uint8Array}[]):string{
-  const lines=[`From: ${payload.from}`,`To: ${payload.to.join(',\r\n ')}`,...(payload.cc?.length?[`Cc: ${payload.cc.join(',\r\n ')}`]:[]),...(payload.bcc?.length?[`Bcc: ${payload.bcc.join(',\r\n ')}`]:[]),`Subject: ${subjectHeader(payload.subject)}`,`Date: ${new Date(action.createdAt).toUTCString()}`,`Message-ID: <pico-${action.id}@pico.invalid>`,'MIME-Version: 1.0'];
+  const lines=[`From: ${payload.from}`,`To: ${payload.to.join(',\r\n ')}`,...(payload.cc?.length?[`Cc: ${payload.cc.join(',\r\n ')}`]:[]),...(payload.bcc?.length?[`Bcc: ${payload.bcc.join(',\r\n ')}`]:[]),`Subject: ${subjectHeader(payload.subject)}`,`Date: ${new Date(action.createdAt).toUTCString()}`,`Message-ID: <pikobot-${action.id}@pikobot.invalid>`,'MIME-Version: 1.0'];
   if(payload.inReplyTo)lines.push(`In-Reply-To: ${payload.inReplyTo}`);if(payload.references)lines.push(`References: ${payload.references.split(' ').join('\r\n ')}`);
   const text=['Content-Type: text/plain; charset=UTF-8','Content-Transfer-Encoding: base64','',base64(Buffer.from(payload.text))];
   if(!attachments.length)return [...lines,...text].join('\r\n');
-  const boundary=`pico-${action.id}`;lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`,'',`--${boundary}`,...text);
+  const boundary=`pikobot-${action.id}`;lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`,'',`--${boundary}`,...text);
   for(const attachment of attachments){const mime=/^[a-z0-9!#$&^_+-]+\/[a-z0-9!#$&^_+.-]+$/i.test(attachment.metadata.mime)?attachment.metadata.mime:'application/octet-stream';
     const filename=encodeURIComponent(attachment.metadata.name).replaceAll("'",'%27'),parts=filename.match(/(?:%[A-F0-9]{2}|.){1,50}/g)??[''];
     const disposition=parts.map((part,index)=>`filename*${index}*=${index===0?"UTF-8''":''}${part}`).join(';\r\n ');

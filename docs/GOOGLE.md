@@ -69,15 +69,15 @@ Tasks due dates are days, not timed reminders. **Sheets has no atomic compare-an
 
 ## Google Docs read access
 
-`docs.readAll:true` permits read or explicit import of any native Google Doc accessible to the connected account; it needs no extra scope beyond configured Docs reads. It does not bulk-download, grant Drive/Sheets/Slides access or bypass Google ACLs. Omitted/false restricts reads to selected/Pico-created documents.
+`docs.readAll:true` permits read or explicit import of any native Google Doc accessible to the connected account; it needs no extra scope beyond configured Docs reads. It does not bulk-download, grant Drive/Sheets/Slides access or bypass Google ACLs. Omitted/false restricts reads to selected/Pikobot-created documents.
 
-This never authorizes an edit. Docs writes still need their toggle, additional consent, a selected/Pico-created mutation target, exact terminal approval and revision/tab checks. Optional metadata discovery has its own Drive scope/toggle.
+This never authorizes an edit. Docs writes still need their toggle, additional consent, a selected/Pikobot-created mutation target, exact terminal approval and revision/tab checks. Optional metadata discovery has its own Drive scope/toggle.
 
 ## Exact approval for every remote write
 
 **All Google writes start disabled.** Gmail send, Docs, Calendar, Sheets and Tasks each have independent settings/scopes.
 
-1. Ask Pico to prepare an action. It records the exact sender/recipients/body/attachments or target/before/after payload, connection binding, digest and 15-minute expiry. Nothing has been sent/changed yet.
+1. Ask Pikobot to prepare an action. It records the exact sender/recipients/body/attachments or target/before/after payload, connection binding, digest and 15-minute expiry. Nothing has been sent/changed yet.
 2. Run `/integrations approve google ACTION_ID`. The scrollable terminal review shows exact JSON (including Bcc and escaped directional controls) with **Reject as default**. Model tools/content cannot approve it.
 3. Approval rechecks authenticated terminal identity, digest, account/settings/scopes, expiry, source dependencies, bytes and relevant revisions/ETags. Docs replacements must match one unique complete-tab span. Sheets rechecks cells but cannot isolate concurrent editors.
 4. Intention and a single-use attempted-action tombstone commit **before** the network effect. Interrupted/lost acceptance becomes uncertain, never an automatic retry—even after restoring an older pending backup.
@@ -100,7 +100,7 @@ Opt-in deterministic `mail.rule` filters control notifications, cooldowns, quiet
 
 - Gmail login does not enable Calendar or its scope. Explicit calendar `list` needs `calendarId`, `from`, `to`; discover selected IDs first.
 - Use the exact displayed browser URL/link. Do not edit scopes or reuse callback codes. Callback URLs contain temporary authorization secrets; never publish them.
-- Status provides fixed failure stages and allowlisted codes: invalid client credentials, invalid/expired grant, missing offline token, scope mismatch, account binding, network or local storage. A callback reaching Pico does not prove the token exchange succeeded.
+- Status provides fixed failure stages and allowlisted codes: invalid client credentials, invalid/expired grant, missing offline token, scope mismatch, account binding, network or local storage. A callback reaching Pikobot does not prove the token exchange succeeded.
 - `/extensions disable google` stops dispatch/intake without deleting records. Disconnect removes local OAuth, not Google-side authorization; revoke remotely when needed.
 - Existing root Gmail settings/`mail.*` routes remain compatible until extension-owned settings are saved; thereafter generic integration setup is authoritative. Compatibility does not broaden consent or execute retired approvals.
 

@@ -1,18 +1,18 @@
 import { defineConfig } from 'vitepress';
 
-const repository = 'https://github.com/MirkoMignini/pico';
+const repository = 'https://github.com/MirkoMignini/pikobot';
 
 export default defineConfig({
-  title: 'Pico',
+  title: 'Pikobot',
   description: 'Your space. Your assistant. Get started with a self-hosted personal assistant with memory.',
   lang: 'en-US',
-  base: '/pico/',
+  base: '/pikobot/',
   cleanUrls: true,
   lastUpdated: true,
   srcExclude: ['ATTACHMENTS-RESEARCH.md', 'COMPARISON.md'],
-  sitemap: { hostname: 'https://mirkomignini.github.io/pico/' },
+  sitemap: { hostname: 'https://mirkomignini.github.io/pikobot/' },
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/pico/favicon.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/pikobot/favicon.svg' }],
     ['meta', { name: 'theme-color', content: '#0f766e' }],
   ],
   markdown: {
@@ -40,7 +40,7 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Use Pico',
+        text: 'Use Pikobot',
         items: [
           { text: 'Everyday features', link: '/FEATURES' },
           { text: 'Memory & forgetting', link: '/MEMORY' },
@@ -82,7 +82,7 @@ export default defineConfig({
     outline: { level: [2, 3] },
     footer: {
       message: `Open source. Self-hosted. <a href="${repository}/blob/main/LICENSE">MIT licensed.</a>`,
-      copyright: 'Pico · Your space. Your assistant.',
+      copyright: 'Pikobot · Your space. Your assistant.',
     },
   },
 });

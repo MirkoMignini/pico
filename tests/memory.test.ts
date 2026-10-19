@@ -106,15 +106,15 @@ it('does not leak superseded or expired facts attached to an otherwise eligible 
 it('preserves tags through backup/restore and upgrades untagged schema-eight data without inference', async () => {
   const s = instance(), record = storedFact(s, 'My canoe is cedar.', 'canoe', 'cedar');
   s.runtime.memory.tag({ id: record.id, tags: ['hobbies', 'travel'] });
-  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pico-memory-tags-')); directories.push(external);
+  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pikobot-memory-tags-')); directories.push(external);
   cpSync(snapshot.path, external, { recursive: true });
   await s.runtime.close(); s.store.close(); instances.splice(instances.indexOf(s), 1); directories.push(s.root);
   await restore(s.root, external, true);
   const restored = new Store(s.root, s.config);
   try { expect(new Memory(restored).read(record.id).memory.tags).toEqual(['hobbies', 'travel']); } finally { restored.close(); }
-  const old = new DatabaseSync(join(external, 'pico.sqlite'));
+  const old = new DatabaseSync(join(external, 'pikobot.sqlite'));
   old.exec('DROP TABLE memory_tags; ALTER TABLE run_sources DROP COLUMN inherited; PRAGMA user_version=8'); old.close();
-  writeFileSync(join(external, 'manifest.json'), json({ ...snapshot.manifest, files: snapshot.manifest.files.map(file => file.path === 'pico.sqlite' ? { ...file, hash: hash(readFileSync(join(external, file.path))) } : file) }));
+  writeFileSync(join(external, 'manifest.json'), json({ ...snapshot.manifest, files: snapshot.manifest.files.map(file => file.path === 'pikobot.sqlite' ? { ...file, hash: hash(readFileSync(join(external, file.path))) } : file) }));
   await restore(s.root, external, true);
   const upgraded = new Store(s.root, s.config);
   try {
@@ -309,7 +309,7 @@ it('forgets contextual descendants, entity boosts and derived schedules across b
   s.store.run('INSERT INTO mem0_vectors VALUES(?,NULL,?,?,?,?,?,?)', 'entity', 'entities', embeddings.model, 2, '1', Buffer.from(new Float32Array([1, 0]).buffer), json({ user_id: s.config.ownerId, data: 'Nora' }));
   const schedule = s.runtime.scheduler.create({ text: 'Derived language instruction', timezone: 'Europe/Rome', at: new Date(Date.now() + 100000).toISOString(), kind: 'reminder', destination: 'terminal', misfire: 'once' }, 'fixture');
   s.store.run('INSERT INTO schedule_sources VALUES(?,?)', schedule.id, childSource);
-  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pico-mem0-snapshot-')); directories.push(external); cpSync(snapshot.path, external, { recursive: true });
+  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pikobot-mem0-snapshot-')); directories.push(external); cpSync(snapshot.path, external, { recursive: true });
   await s.runtime.forget(parent.id);
   expect(() => s.runtime.memory.read(child.id)).toThrow('not found'); expect(s.runtime.memory.list()).toEqual([]);
   expect(s.runtime.memory.source(childSource)?.text).toBe('She prefers Italian.'); expect(s.runtime.scheduler.list()).toEqual([]);
@@ -381,10 +381,10 @@ it('migrates legacy candidates and restores schema-seven backups without losing 
   const context = s.runtime.ownerEvidence('Which town?');
   s.store.run('INSERT INTO memory_dependencies VALUES(?,?)', record.id, context);
   pending(s, 'My bike is jade.');
-  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pico-memory-v7-')); directories.push(external); cpSync(snapshot.path, external, { recursive: true });
-  const old = new DatabaseSync(join(external, 'pico.sqlite'));
+  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pikobot-memory-v7-')); directories.push(external); cpSync(snapshot.path, external, { recursive: true });
+  const old = new DatabaseSync(join(external, 'pikobot.sqlite'));
   old.exec("UPDATE memories SET status='candidate' WHERE status='stored'; ALTER TABLE run_sources DROP COLUMN inherited; PRAGMA user_version=7"); old.close();
-  const manifest = { ...snapshot.manifest, files: snapshot.manifest.files.map(file => file.path === 'pico.sqlite' ? { ...file, hash: hash(readFileSync(join(external, file.path))) } : file) };
+  const manifest = { ...snapshot.manifest, files: snapshot.manifest.files.map(file => file.path === 'pikobot.sqlite' ? { ...file, hash: hash(readFileSync(join(external, file.path))) } : file) };
   writeFileSync(join(external, 'manifest.json'), json(manifest));
   s.store.db.exec("UPDATE memories SET status='candidate' WHERE status='stored'; ALTER TABLE run_sources DROP COLUMN inherited; PRAGMA user_version=7");
   const upgraded = new Store(s.root, s.config);

@@ -29,7 +29,7 @@ export async function initializeBrowserBridge(root: string, entrypoint: string, 
   const config = checkedConfig({ version: 1, id: randomUUID(), entrypoint, profile, port });
   if (!/^[\x21-\x7e]{16,1024}$/.test(extensionToken)) throw new Error('Invalid extension token; use its separate masked/stdin setup flow');
   privateDirectory(root);
-  if (readdirSync(root).length) throw new Error('Choose an empty private bridge directory, never a Pico owner or browser profile directory');
+  if (readdirSync(root).length) throw new Error('Choose an empty private bridge directory, never a Pikobot owner or browser profile directory');
   closeSync(openSync(join(root, '.initialized'), 'wx', 0o600));
   const credentials = new Credentials(root);
   await credentials.setSecret('browser.extensionToken', extensionToken);
@@ -52,13 +52,13 @@ export async function browserBridgePairing(root: string, url: string): Promise<B
   return { version: 1, bridgeId: config.id, url: bridgeUrl(url), token: bearer };
 }
 
-/** A browser-only MCP endpoint. It never exposes Pico owner RPC or launches a replacement backend. */
+/** A browser-only MCP endpoint. It never exposes Pikobot owner RPC or launches a replacement backend. */
 export async function serveBrowserBridge(root: string): Promise<{ url: string; close: () => Promise<void> }> {
   const config = browserBridgeConfig(root), { bearer, extensionToken } = await bridgeSecrets(root, config);
-  const temporary = await mkdtemp('/tmp/pico-browser-bridge-'), output = privateDirectory(join(temporary, 'artifacts'));
-  const controller = new AbortController(), client = new Client({ name: 'pico-browser-bridge', version: '1' }, { versionNegotiation: { mode: 'legacy' } });
+  const temporary = await mkdtemp('/tmp/pikobot-browser-bridge-'), output = privateDirectory(join(temporary, 'artifacts'));
+  const controller = new AbortController(), client = new Client({ name: 'pikobot-browser-bridge', version: '1' }, { versionNegotiation: { mode: 'legacy' } });
   const transport = new StdioClientTransport({ command: process.execPath, args: [config.entrypoint, '--extension', '--browser', 'chrome', '--profile-dir-name', config.profile, '--init-page', fileURLToPath(new URL('../dist/browser-downloads.js', import.meta.url)), '--output-dir', output, '--file-paths', 'absolute', '--caps', 'pdf', '--no-webmcp', '--codegen', 'none'], cwd: output,
-    env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: homedir(), LANG: 'en_US.UTF-8', TMPDIR: temporary, ...Object.fromEntries(['DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR'].flatMap(key => process.env[key] ? [[key, process.env[key]!]] : [])), PLAYWRIGHT_MCP_EXTENSION_TOKEN: extensionToken, PICO_BROWSER_DOWNLOAD_DIR: output }, stderr: 'pipe', maxBufferSize: BRIDGE_RESULT_BYTES });
+    env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: homedir(), LANG: 'en_US.UTF-8', TMPDIR: temporary, ...Object.fromEntries(['DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR'].flatMap(key => process.env[key] ? [[key, process.env[key]!]] : [])), PLAYWRIGHT_MCP_EXTENSION_TOKEN: extensionToken, PIKOBOT_BROWSER_DOWNLOAD_DIR: output }, stderr: 'pipe', maxBufferSize: BRIDGE_RESULT_BYTES });
   transport.stderr?.on('data', () => {});
   let connected = false, closing = false, activeHttp = 0, queued = 0, tail: Promise<unknown> = Promise.resolve();
   const cache = new Map<string, { metadata: BridgeArtifact; bytes: Buffer }>(); let cachedBytes = 0;
@@ -95,7 +95,7 @@ export async function serveBrowserBridge(root: string): Promise<{ url: string; c
       receiptBytes += bytes.length;
       if (artifacts.length >= 16 || receiptBytes > 50_000_000) throw new Error('Too many browser artifacts in one result');
       while (cache.size >= 64 || cachedBytes + bytes.length > 50_000_000) { const key = cache.keys().next().value!; cachedBytes -= cache.get(key)!.bytes.length; cache.delete(key); }
-      const metadata: BridgeArtifact = { name, uri: `pico-browser-artifact:${config.id}:${randomBytes(32).toString('hex')}`, mimeType: redact(downloads.files.find(file => file.file === name)?.mimeType ?? 'application/octet-stream'), bytes: bytes.length, hash: hash(bytes) };
+      const metadata: BridgeArtifact = { name, uri: `pikobot-browser-artifact:${config.id}:${randomBytes(32).toString('hex')}`, mimeType: redact(downloads.files.find(file => file.file === name)?.mimeType ?? 'application/octet-stream'), bytes: bytes.length, hash: hash(bytes) };
       cache.set(metadata.uri, { metadata, bytes }); cachedBytes += bytes.length; artifacts.push(metadata);
       unlinkSync(join(output, name));
       const download = downloads.files.find(file => file.file === name);
@@ -152,7 +152,7 @@ export async function serveBrowserBridge(root: string): Promise<{ url: string; c
     if (!connected || !tools.length || redact(json(tools)) !== json(tools)) throw new Error('Browser tool discovery failed');
     const validator = new AjvJsonSchemaValidator();
     handler = createMcpHandler(() => {
-      const server = new Server({ name: `pico-browser-bridge:${config.id}`, version: '1' }, { capabilities: { tools: {}, resources: {} } });
+      const server = new Server({ name: `pikobot-browser-bridge:${config.id}`, version: '1' }, { capabilities: { tools: {}, resources: {} } });
       server.setRequestHandler('tools/list', async () => { if (!connected) throw new Error('Browser backend disconnected; restart deliberately, never replay uncertain calls'); return { tools }; });
       server.setRequestHandler('resources/list', async () => ({ resources: [] }));
       server.setRequestHandler('resources/templates/list', async () => ({ resourceTemplates: [] }));

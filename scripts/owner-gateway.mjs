@@ -15,10 +15,10 @@ export function route(owner,command='chat',tty=false){
   else if(/^auth-key [a-z0-9-]{1,80}$/.test(command))args=['auth','key',command.slice(9)];
   else if(/^auth-secret (telegram\.token|openai\.mediaKey|openai\.embeddingKey|gmail\.clientSecret|brave\.searchKey|openai\.imageKey)$/.test(command))args=['auth','secret',command.slice(12)];
   else if(/^rpc [a-z][a-z0-9.-]{0,79}$/.test(command))args=['rpc',command.slice(4),'-'];
-  else if(command==='restart')return ['restart',`pico-owner-${owner}`];
-  else if(/^backup-fetch [0-9TZ.-]{20,40}-[a-f0-9-]{36}$/.test(command))return ['exec','-i',`pico-owner-${owner}`,'tar','-C',`/data/backups/${command.slice(13)}`,'-cf','-','.'];
+  else if(command==='restart')return ['restart',`pikobot-owner-${owner}`];
+  else if(/^backup-fetch [0-9TZ.-]{20,40}-[a-f0-9-]{36}$/.test(command))return ['exec','-i',`pikobot-owner-${owner}`,'tar','-C',`/data/backups/${command.slice(13)}`,'-cf','-','.'];
   else throw new Error('Allowed: chat, status, rpc operation (JSON stdin), login provider, logout provider, auth-chatgpt, auth-codex, auth-gmail, auth-key provider, auth-secret name, backup, backup-fetch id, export, restart');
-  return ['exec','-i',...(command==='chat'||tty&&/^(?:login(?: |$)|auth-(?:chatgpt|codex)$|auth-(?:key|secret) )/.test(command)?['-t']:[]),`pico-owner-${owner}`,'node','/app/dist/cli.js','--instance','/data',...args];
+  return ['exec','-i',...(command==='chat'||tty&&/^(?:login(?: |$)|auth-(?:chatgpt|codex)$|auth-(?:key|secret) )/.test(command)?['-t']:[]),`pikobot-owner-${owner}`,'node','/app/dist/cli.js','--instance','/data',...args];
 }
 if(resolve(process.argv[1]??'')===fileURLToPath(import.meta.url)){
   try{

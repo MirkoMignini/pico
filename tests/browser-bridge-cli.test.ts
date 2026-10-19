@@ -19,7 +19,7 @@ const cli = (args: string[], input = '') => new Promise<string>((resolve, reject
 afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
 
 it('keeps bridge help inert and initializes/pairs from private stdin without starting an owner daemon or disclosing extension tokens', async () => {
-  const parent = mkdtempSync(join(tmpdir(), 'pico-bridge-cli-')); directories.push(parent);
+  const parent = mkdtempSync(join(tmpdir(), 'pikobot-bridge-cli-')); directories.push(parent);
   const root = join(parent, 'bridge');
   expect(await cli(['browser-bridge', 'help', '--bridge-root', root])).toContain('private SSH tunnel');
   expect(existsSync(root)).toBe(false);

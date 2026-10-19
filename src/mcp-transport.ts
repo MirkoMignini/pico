@@ -5,7 +5,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 // The SDK probes subclasses in place instead of starting a disposable second server.
 export class McpStdioTransport extends StdioClientTransport {}
 
-export const legacyTaskCall = 'pico/internal/legacy-task-call';
+export const legacyTaskCall = 'pikobot/internal/legacy-task-call';
 export const mcpRequestSignal = new AsyncLocalStorage<AbortSignal>();
 
 // SDK v2 treats tools/call results as ordinary tool results even on legacy connections.

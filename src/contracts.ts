@@ -80,7 +80,7 @@ export interface MemoryCapture { entity: string; kind: 'fact' | 'preference' | '
 export interface EmbeddingProvider { model: string; dimensions: number; version: string; embed(texts: string[], signal?: AbortSignal, purpose?: 'query' | 'passage'): Promise<number[][]> }
 export interface ScheduleDefinition { text: string; timezone: string; at?: string; cron?: string; kind: 'reminder' | 'agent'; destination: string; misfire: 'once' | 'skip' }
 export interface NotificationDelivery { send(text: string, id: string,signal?:AbortSignal): Promise<{ remoteId: string }> }
-export interface PicoChannel {
+export interface PikobotChannel {
   readonly id: Channel;
   readonly deliveries?: ReadonlyMap<string, NotificationDelivery>;
   start(): void | Promise<void>;

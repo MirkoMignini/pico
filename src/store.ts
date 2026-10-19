@@ -1,5 +1,5 @@
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { secureFile } from './config.js';
@@ -29,7 +29,8 @@ export function textChunks(text: string, size = 1200, overlap = 160): string[] {
 export class Store {
   readonly db: DatabaseSync;
   constructor(readonly root: string, readonly config: Config) {
-    const file = join(root, 'pico.sqlite');
+    const file = join(root, 'pikobot.sqlite');
+    if (!existsSync(file) && readdirSync(root).some(name => name.endsWith('.sqlite') && name !== 'authority.sqlite')) throw new Error('Existing database has a different filename; follow the offline rename procedure in docs/INSTALLATION.md before starting Pikobot');
     this.db = new DatabaseSync(file);
     secureFile(file);
     this.db.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000; PRAGMA secure_delete=ON;');

@@ -13,7 +13,7 @@ const cases = [
   [' \t\n', { characters: 3, words: 0, lines: 1 }],
   ['Hi 👋\nBye', { characters: 8, words: 3, lines: 2 }],
   ['e\u0301', { characters: 2, words: 1, lines: 1 }],
-  [readFileSync(new URL('../assets/example.txt', import.meta.url), 'utf8'), { characters: 27, words: 4, lines: 2 }]
+  [readFileSync(new URL('../assets/example.txt', import.meta.url), 'utf8'), { characters: 30, words: 4, lines: 2 }]
 ];
 for (const [text, expected] of cases) assert.deepEqual(statistics({ text }), expected);
 const invalidInputs = [null, [], {}, 'text', 42, { text: 7 }, { text: null }, { text: 'good', extra: true }];

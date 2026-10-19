@@ -54,7 +54,7 @@ async function authPrompt(prompt: AuthPrompt): Promise<string> {
   } finally { terminal.close(); }
 }
 async function login(client: Client, providerId?: string, type?: AuthType, account = 'default'): Promise<unknown> {
-  if (!process.stdin.isTTY) throw new Error('Use login in a terminal or the Pico TUI; API keys can still use auth key with private stdin');
+  if (!process.stdin.isTTY) throw new Error('Use login in a terminal or the Pikobot TUI; API keys can still use auth key with private stdin');
   const providers = await client.rpc<AuthProvider[]>('auth.providers');
   if (!providerId) {
     type ??= await authPrompt({ type: 'select', message: 'Select authentication method', options: [{ id: 'oauth', label: 'Sign in with an account' }, { id: 'api_key', label: 'Sign in with an API key' }] }) as AuthType;
@@ -66,20 +66,20 @@ async function login(client: Client, providerId?: string, type?: AuthType, accou
   const controller = new AbortController(), cancel = () => controller.abort(); process.once('SIGINT', cancel);
   try {
     const result = await loginProvider(client, providerId, type, { signal: controller.signal, prompt: authPrompt, notify: event => process.stderr.write(safeTerminal(authEventText(event)) + '\n') }, account);
-    return { state: result.state, provider: providerId, credentials: 'Private Pico store; select a model explicitly' };
+    return { state: result.state, provider: providerId, credentials: 'Private Pikobot store; select a model explicitly' };
   } finally { process.off('SIGINT', cancel); }
 }
 async function main(): Promise<void> {
   const { values, positionals } = parseArgs({ options: { instance: { type:'string',short:'i' }, name:{type:'string'}, 'confirm-original-stopped':{type:'boolean'}, 'allow-reminders':{type:'boolean'}, help:{type:'boolean',short:'h'}, version:{type:'boolean',short:'v'}, json:{type:'boolean'}, offline:{type:'boolean'}, 'confirm-stop':{type:'boolean'}, 'bridge-root':{type:'string'}, profile:{type:'string'}, port:{type:'string'} }, allowPositionals:true, strict:true });
-  const root = resolve(values.instance ?? join(homedir(),'.local','share','pico'));
+  const root = resolve(values.instance ?? join(homedir(),'.local','share','pikobot'));
   const [command = 'chat',...args] = positionals;
   const print = (value:unknown) => process.stdout.write(JSON.stringify(value,null,2).replace(/[\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'))+'\n');
   if (command === 'browser-bridge' && (values.help || args[0] === 'help' || !args.length)) {
-    process.stdout.write('Browser-only personal Chrome bridge (macOS/Linux)\n\npico browser-bridge init /absolute/installed/@playwright/mcp/cli.js --profile "Default" [--port 8931] [--bridge-root PRIVATE_DIRECTORY]\npico browser-bridge serve [--bridge-root PRIVATE_DIRECTORY]\npico browser-bridge pair http://127.0.0.1:TUNNEL_PORT/mcp [--bridge-root PRIVATE_DIRECTORY] | ssh SERVER "pico --instance PRIVATE_INSTANCE mcp browser-remote -"\n\nInstall the official extension in the selected Chrome profile yourself. Init reads its token only through masked/stdin input; pair refuses terminal output. The authenticated MCP endpoint binds only to 127.0.0.1; use an explicitly configured private SSH tunnel. No Pico owner, existing browser profile or cookies are copied.\n'); return;
+    process.stdout.write('Browser-only personal Chrome bridge (macOS/Linux)\n\npikobot browser-bridge init /absolute/installed/@playwright/mcp/cli.js --profile "Default" [--port 8931] [--bridge-root PRIVATE_DIRECTORY]\npikobot browser-bridge serve [--bridge-root PRIVATE_DIRECTORY]\npikobot browser-bridge pair http://127.0.0.1:TUNNEL_PORT/mcp [--bridge-root PRIVATE_DIRECTORY] | ssh SERVER "pikobot --instance PRIVATE_INSTANCE mcp browser-remote -"\n\nInstall the official extension in the selected Chrome profile yourself. Init reads its token only through masked/stdin input; pair refuses terminal output. The authenticated MCP endpoint binds only to 127.0.0.1; use an explicitly configured private SSH tunnel. No Pikobot owner, existing browser profile or cookies are copied.\n'); return;
   }
-  if (values.version) { process.stdout.write(`Pico ${VERSION}\n`); return; }
+  if (values.version) { process.stdout.write(`Pikobot ${VERSION}\n`); return; }
   if (values.help || command === 'help') {
-    process.stdout.write(`Pico ${VERSION} — private personal assistant\n\nUse: pico [--instance PRIVATE_PATH] COMMAND\n\ninit --name NAME         Initialize a NEW private owner once\nchat                     Open TUI; /setup configures services with masked dialogs\nserve                    Run the daemon in the foreground\ndoctor [--offline] [--json]  Redacted checks; never starts a daemon or calls providers\nreadiness                Current setup evidence; requires an already running daemon\nstatus                   Private detailed status; never starts a daemon\nservice install|status|start  Explicit per-user launchd/systemd management\nservice stop|restart|uninstall --confirm-stop  Idle only; close TUI clients first\nbackup | export          Private owner data operations\nrestore BACKUP --confirm-original-stopped  Offline recovery\nlogin | logout | auth | knowledge | skills | extensions | family | mcp | rpc\n\nNode ${NODE_VERSION} is required. Installation/upgrade/recovery: docs/INSTALLATION.md.\nStored credentials do not prove live access. Model/connector tests are explicit and may charge.\n`); return;
+    process.stdout.write(`Pikobot ${VERSION} — private personal assistant\n\nUse: pikobot [--instance PRIVATE_PATH] COMMAND\n\ninit --name NAME         Initialize a NEW private owner once\nchat                     Open TUI; /setup configures services with masked dialogs\nserve                    Run the daemon in the foreground\ndoctor [--offline] [--json]  Redacted checks; never starts a daemon or calls providers\nreadiness                Current setup evidence; requires an already running daemon\nstatus                   Private detailed status; never starts a daemon\nservice install|status|start  Explicit per-user launchd/systemd management\nservice stop|restart|uninstall --confirm-stop  Idle only; close TUI clients first\nbackup | export          Private owner data operations\nrestore BACKUP --confirm-original-stopped  Offline recovery\nlogin | logout | auth | knowledge | skills | extensions | family | mcp | rpc\n\nNode ${NODE_VERSION} is required. Installation/upgrade/recovery: docs/INSTALLATION.md.\nStored credentials do not prove live access. Model/connector tests are explicit and may charge.\n`); return;
   }
   if (command === 'doctor') {
     if (args.length) throw new Error('Use doctor [--offline] [--json] without positional arguments');
@@ -89,8 +89,8 @@ async function main(): Promise<void> {
   if (process.versions.node !== NODE_VERSION) throw new Error(`Use the pinned Node.js ${NODE_VERSION} runtime (see .node-version)`);
   if (command !== 'browser-bridge' && [values['bridge-root'], values.profile, values.port].some(value => value !== undefined)) throw new Error('--bridge-root, --profile and --port belong only to browser-bridge');
   if (command === 'browser-bridge') {
-    if (values.instance || !['darwin', 'linux'].includes(process.platform)) throw new Error('Browser bridge uses its own private --bridge-root on macOS/Linux, not a Pico owner instance');
-    const directory = resolve(values['bridge-root'] ?? join(homedir(), '.local', 'share', 'pico-browser-bridge'));
+    if (values.instance || !['darwin', 'linux'].includes(process.platform)) throw new Error('Browser bridge uses its own private --bridge-root on macOS/Linux, not a Pikobot owner instance');
+    const directory = resolve(values['bridge-root'] ?? join(homedir(), '.local', 'share', 'pikobot-browser-bridge'));
     const bridge = await import('./browser-bridge.js');
     if (args[0] === 'init' && args.length === 2 && values.profile) {
       let token = await secretInput('Selected Chrome profile: Playwright extension token (hidden): ', undefined, 1024);
@@ -114,7 +114,7 @@ async function main(): Promise<void> {
     if (args.length) throw new Error('Use status or readiness without arguments');
     print(await new Client(root).rpc(command)); return;
   }
-  if (command === 'init') { print({initialized:true,path:root,...initialize(root,values.name ?? 'Pico')}); return; }
+  if (command === 'init') { print({initialized:true,path:root,...initialize(root,values.name ?? 'Pikobot')}); return; }
   if (command === 'restore') { if (!args[0]) throw new Error('Use restore BACKUP --confirm-original-stopped with the original stopped'); await restore(root,args[0],values['confirm-original-stopped'] ?? false); print({restored:true,credentials:'Current secret store preserved; excluded from backups'}); return; }
   if (command === 'serve') {
     const daemon = await serve(root);

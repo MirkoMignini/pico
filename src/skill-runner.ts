@@ -32,7 +32,7 @@ export async function runSkill(root: string, files: PackageFile[], request: Skil
     mkdirSync(join(directory, 'outputs'), { recursive: true, mode: 0o700 });
     const started = performance.now(), timeoutMs = request.timeoutMs ?? 30_000;
     const commandArgs = [...(node ? ['--max-old-space-size=128'] : extension === '.py' ? ['-B', '-s'] : []), join(directory, script), ...(request.args ?? [])];
-    const child = spawn(interpreter, commandArgs, { cwd: directory, detached: process.platform !== 'win32', windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: home, TMPDIR: home, XDG_CONFIG_HOME: home, XDG_CACHE_HOME: home, PYTHONNOUSERSITE: '1', PYTHONDONTWRITEBYTECODE: '1', PYTHONIOENCODING: 'utf-8', LANG: 'C.UTF-8', PICO_SKILL_ROOT: directory, PICO_SKILL_INPUTS: join(directory, 'inputs'), PICO_SKILL_OUTPUTS: join(directory, 'outputs') } });
+    const child = spawn(interpreter, commandArgs, { cwd: directory, detached: process.platform !== 'win32', windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: home, TMPDIR: home, XDG_CONFIG_HOME: home, XDG_CACHE_HOME: home, PYTHONNOUSERSITE: '1', PYTHONDONTWRITEBYTECODE: '1', PYTHONIOENCODING: 'utf-8', LANG: 'C.UTF-8', PIKOBOT_SKILL_ROOT: directory, PIKOBOT_SKILL_INPUTS: join(directory, 'inputs'), PIKOBOT_SKILL_OUTPUTS: join(directory, 'outputs') } });
     let status: SkillRunResult['status'] = 'completed', bytes = 0, outputTruncated = false, killTimer: NodeJS.Timeout | undefined, drainTimer: NodeJS.Timeout | undefined;
     const stdout: Buffer[] = [], stderr: Buffer[] = [];
     const kill = (kind: NodeJS.Signals) => {
@@ -62,7 +62,7 @@ export async function runSkill(root: string, files: PackageFile[], request: Skil
     let exit: { code: number | null; signal: NodeJS.Signals | null };
     try {
       if (signal.aborted) abort();
-      exit = await new Promise((resolve, reject) => { child.once('error', error => reject(new Error(`Could not start skill interpreter (${interpreter}): ${(error as NodeJS.ErrnoException).code ?? 'failed'}. Install its documented prerequisites explicitly; Pico does not install dependencies.`, { cause: error }))); child.once('close', (code, signal) => resolve({ code, signal })); });
+      exit = await new Promise((resolve, reject) => { child.once('error', error => reject(new Error(`Could not start skill interpreter (${interpreter}): ${(error as NodeJS.ErrnoException).code ?? 'failed'}. Install its documented prerequisites explicitly; Pikobot does not install dependencies.`, { cause: error }))); child.once('close', (code, signal) => resolve({ code, signal })); });
       if (status === 'completed' && exit.code !== 0) status = 'failed';
     } finally {
       clearTimeout(timeout); if (killTimer) clearTimeout(killTimer); if (drainTimer) clearTimeout(drainTimer);

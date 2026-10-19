@@ -7,7 +7,7 @@ import initializeDownloads, { captureResponse, collectedDownloads, type Download
 import { BRIDGE_FILE_BYTES } from '../src/browser-bridge-contracts.js';
 
 const directories: string[] = [];
-const directory = () => { const value = mkdtempSync(join(tmpdir(), 'pico-download-test-')); directories.push(value); return value; };
+const directory = () => { const value = mkdtempSync(join(tmpdir(), 'pikobot-download-test-')); directories.push(value); return value; };
 const event = () => ({ requestId: 'synthetic-request', request: { url: 'https://synthetic.invalid/file' }, resourceType: 'Document', responseStatusCode: 200, responseHeaders: [{ name: 'Content-Disposition', value: 'attachment; filename="report.csv"' }, { name: 'Content-Type', value: 'text/csv; charset=utf-8' }] });
 function session(chunks = [Buffer.from('kind,value\nsynthetic,7\n')]) {
   let index = 0;
@@ -41,7 +41,7 @@ it('captures exact bounded streamed bytes once, preserves browser delivery and p
 
 it('attaches only a tab-scoped Fetch session and never changes browser-global download behavior', async () => {
   const root = directory(), client = session(), page = { url: () => 'about:blank', _connection: { toImpl: () => ({ delegate: { _mainFrameSession: { _client: client }, _networkManager: { _protocolRequestInterceptionEnabled: false } } }) }, on: vi.fn() };
-  vi.stubEnv('PICO_BROWSER_DOWNLOAD_DIR', root);
+  vi.stubEnv('PIKOBOT_BROWSER_DOWNLOAD_DIR', root);
   await initializeDownloads({ page });
   expect(client.send).toHaveBeenCalledWith('Fetch.enable', { patterns: ['Document', 'Other'].map(resourceType => ({ urlPattern: '*', resourceType, requestStage: 'Response' })) });
   expect(client.on).toHaveBeenCalledWith('Fetch.requestPaused', expect.any(Function));
@@ -52,7 +52,7 @@ it('attaches only a tab-scoped Fetch session and never changes browser-global do
 
 it('preserves native request-stage handlers, restores them on close and never detaches the owner session', async () => {
   const root = directory(), client = session(), native = vi.fn(); client.listeners.mockReturnValue([native]); let close = () => {};
-  vi.stubEnv('PICO_BROWSER_DOWNLOAD_DIR', root);
+  vi.stubEnv('PIKOBOT_BROWSER_DOWNLOAD_DIR', root);
   const page = { url: () => 'about:blank', _connection: { toImpl: () => ({ delegate: { _mainFrameSession: { _client: client }, _networkManager: { _protocolRequestInterceptionEnabled: false } } }) }, on: (name: string, callback: () => void) => { if (name === 'close') close = callback; } };
   await initializeDownloads({ page });
   const paused = client.on.mock.calls[0]![1], request = { ...event(), responseStatusCode: undefined };
@@ -63,7 +63,7 @@ it('preserves native request-stage handlers, restores them on close and never de
 });
 
 it('refuses unsupported vendor internals or active request routing instead of broadening CDP permissions', async () => {
-  vi.stubEnv('PICO_BROWSER_DOWNLOAD_DIR', directory()); const client = session();
+  vi.stubEnv('PIKOBOT_BROWSER_DOWNLOAD_DIR', directory()); const client = session();
   await expect(initializeDownloads({ page: { url: () => 'about:blank', on: vi.fn() } })).rejects.toThrow('reviewed in-process');
   const delegate = { _mainFrameSession: { _client: client }, _networkManager: { _protocolRequestInterceptionEnabled: true } };
   const page = { url: () => 'about:blank', _connection: { toImpl: () => ({ delegate }) }, on: vi.fn() };
@@ -74,7 +74,7 @@ it('refuses unsupported vendor internals or active request routing instead of br
 
 it('installs capture after an internal Chrome tab becomes a webpage', async () => {
   const root = directory(), client = session(); let url = 'chrome://newtab', navigate = () => {};
-  vi.stubEnv('PICO_BROWSER_DOWNLOAD_DIR', root);
+  vi.stubEnv('PIKOBOT_BROWSER_DOWNLOAD_DIR', root);
   const page = { url: () => url, _connection: { toImpl: () => ({ delegate: { _mainFrameSession: { _client: client }, _networkManager: { _protocolRequestInterceptionEnabled: false } } }) }, on: vi.fn((name: string, callback: () => void) => { if (name === 'framenavigated') navigate = callback; }) };
   await initializeDownloads({ page }); expect(client.send).not.toHaveBeenCalled();
   url = 'https://synthetic.invalid/'; navigate(); await new Promise(resolve => setImmediate(resolve));
@@ -135,11 +135,11 @@ it('times out without late publication, refetch or waiting indefinitely for clea
 
 it('bounds staged transfers and rejects forged sidecar paths, identity mismatches and links', async () => {
   const root = directory(), client = session();
-  for (let i = 0; i < 16; i++) writeFileSync(join(root, `.pico-download-${randomUUID()}.pending`), '');
+  for (let i = 0; i < 16; i++) writeFileSync(join(root, `.pikobot-download-${randomUUID()}.pending`), '');
   await captureResponse(client, event(), root);
   expect(collectedDownloads(root).errors).toEqual(['queue-full']);
   expect(client.send.mock.calls.map(([method]) => method)).not.toContain('Fetch.takeResponseBodyAsStream');
-  const id = randomUUID(), control = join(root, `.pico-download-${id}.json`);
+  const id = randomUUID(), control = join(root, `.pikobot-download-${id}.json`);
   writeFileSync(control, JSON.stringify({ file: '../../secret.csv', name: 'data', mimeType: 'text/csv' }));
   expect(() => collectedDownloads(root)).toThrow('Invalid input');
   writeFileSync(control, JSON.stringify({ file: `download-${randomUUID()}.csv`, name: 'data', mimeType: 'text/csv' }));

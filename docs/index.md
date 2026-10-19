@@ -3,12 +3,12 @@ layout: home
 
 title: Your space. Your assistant.
 hero:
-  name: Pico
+  name: Pikobot
   text: Your space.<br>Your assistant.
   tagline: A self-hosted personal assistant that remembers what matters. Chat in your terminal or on Telegram. Keep your data in your own instance.
   image:
     src: /favicon.svg
-    alt: Pico, a smiling teal speech bubble with a violet spark
+    alt: Pikobot, a smiling teal speech bubble with a violet spark
   actions:
     - theme: brand
       text: Get up and running →
@@ -39,7 +39,7 @@ features:
 3. **Start small.** Ask “Create a packing checklist with passport, charger and jacket.” Use `/new` for a fresh saved conversation and `/help` for controls. Closing the terminal client leaves the daemon running.
 
 ::: warning Early development, honest limits
-Pico is not production-hardened. Self-hosted does not mean offline or sandboxed. Check sources and receipts for important work. Read the [security model](./SECURITY.md) and [verification limits](./TESTING.md) before relying on it.
+Pikobot is not production-hardened. Self-hosted does not mean offline or sandboxed. Check sources and receipts for important work. Read the [security model](./SECURITY.md) and [verification limits](./TESTING.md) before relying on it.
 :::
 
 Need it running after login? Follow [per-user services](./INSTALLATION.md#install-an-explicit-per-user-service). Want it on your phone? Set up [Telegram](./SETUP.md#telegram) when you are ready.

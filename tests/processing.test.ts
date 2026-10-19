@@ -10,7 +10,7 @@ function pdf(text:string){
  const xref=Buffer.byteLength(body);body+=`xref\n0 6\n0000000000 65535 f \n${offsets.slice(1).map(offset=>String(offset).padStart(10,'0')+' 00000 n \n').join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;return Buffer.from(body);
 }
 it('extracts an actual PDF in a bounded worker, rejects corruption and restarts cleanly',async()=>{
- const root=mkdtempSync(join(tmpdir(),'pico-pdf-')),processor=new Processor(root);
+ const root=mkdtempSync(join(tmpdir(),'pikobot-pdf-')),processor=new Processor(root);
  try{
   const text=await processor.request<string>('pdf',{bytes:pdf('Invoice total 317 euros')});expect(text).toContain('317');
   await expect(processor.request('pdf',{bytes:Buffer.from('%PDF-1.4\ncorrupt')})).rejects.toThrow();
@@ -19,7 +19,7 @@ it('extracts an actual PDF in a bounded worker, rejects corruption and restarts 
  }finally{await processor.close();rmSync(root,{recursive:true,force:true});}
 },20_000);
 it('abort terminates queued worker content, cleans listeners and allows fresh processing',async()=>{
- const root=mkdtempSync(join(tmpdir(),'pico-pdf-cancel-')),processor=new Processor(root),controller=new AbortController();
+ const root=mkdtempSync(join(tmpdir(),'pikobot-pdf-cancel-')),processor=new Processor(root),controller=new AbortController();
  try{
   const remove=vi.spyOn(controller.signal,'removeEventListener'),cancelled=processor.request('pdf',{bytes:pdf('Private cancelled content')},controller.signal).catch(error=>error.message);
   const worker=(processor as any).worker,terminate=vi.spyOn(worker,'terminate'),queued=processor.request('pdf',{bytes:pdf('Queued private content')}).catch(error=>error.message);

@@ -1,6 +1,6 @@
 # Family collaboration — first version
 
-Pico can connect **separate owner instances** for consented one-shot reminders and explicitly shared checklists. Each instance keeps its own SQLite database, owner identity, credentials, private memory and chats. “Family” is a convenient name for a set of bilateral links, not a shared owner account or a transitive group permission.
+Pikobot can connect **separate owner instances** for consented one-shot reminders and explicitly shared checklists. Each instance keeps its own SQLite database, owner identity, credentials, private memory and chats. “Family” is a convenient name for a set of bilateral links, not a shared owner account or a transitive group permission.
 
 **Version-one scope:** two or more running daemons reachable through **Unix sockets on the same host**. No public listener, discovery service, Internet federation, relay or automatic deployment is introduced. Existing private socket/directory permissions still apply. Different directories under one OS user are **not OS isolation**; mutually untrusted OS users/containers cannot simply access each other's private sockets. A separately designed restricted transport is required for cross-user/container/host deployment. Do not solve this by sharing full owner IPC tokens or broadly exposing instance directories.
 
@@ -81,7 +81,7 @@ Use actual UUIDs returned by local list creation or the remote catalog in place 
 
 ## Manual acceptance walkthrough
 
-Use **two separate Pico conversations**, one for each owner. Complete the terminal pairing above first; use the exact aliases shown by `family members`. For the prompts below those aliases are `Owner A` and `Owner B`. Both instances must be running on the same host with compatible socket permissions. Telegram trials additionally require each owner's own bot/destination and separately configured model access; the local process check below does not configure these.
+Use **two separate Pikobot conversations**, one for each owner. Complete the terminal pairing above first; use the exact aliases shown by `family members`. For the prompts below those aliases are `Owner A` and `Owner B`. Both instances must be running on the same host with compatible socket permissions. Telegram trials additionally require each owner's own bot/destination and separately configured model access; the local process check below does not configure these.
 
 Use harmless test content, not actual private information. A natural-language answer alone is not proof: read the list again from its owner's conversation, and distinguish a reminder's creation receipt from its later notification.
 

@@ -29,7 +29,7 @@ it('DeepSeek streaming wire uses only its key, non-thinking mode and reports act
  const s=instance();await rpc(s.runtime,{op:'auth.key',args:{provider:'openai',key:'fixture-openai'}});await rpc(s.runtime,{op:'auth.key',args:{provider:'deepseek',key:'fixture-deepseek'}});
  s.config.model={provider:'deepseek',id:'deepseek-flash'};const models=new ModelAccess(s.runtime.credentials,s.config);let requests=0;
  vi.stubGlobal('fetch',async(input:Request,init?:RequestInit)=>{
-  requests++;const request=input instanceof Request?input:new Request(input,init);expect(request.url).toBe('https://api.deepseek.com/chat/completions');expect(request.headers.get('authorization')).toBe('Bearer fixture-deepseek');expect(request.headers.get('user-agent')).toBe('Pico/0.1.0');
+  requests++;const request=input instanceof Request?input:new Request(input,init);expect(request.url).toBe('https://api.deepseek.com/chat/completions');expect(request.headers.get('authorization')).toBe('Bearer fixture-deepseek');expect(request.headers.get('user-agent')).toBe('Pikobot/0.1.0');
   const body=await request.json() as any;expect(body.model).toBe('deepseek-flash');expect(body.thinking).toEqual({type:'disabled'});expect(body.messages[0]).toMatchObject({role:'system',content:requests===1?'Owner-scoped rules':'Return JSON'});
   if(requests===2){expect(body.response_format).toEqual({type:'json_object'});expect(body.max_tokens).toBe(8192);}
   return new Response('data: '+JSON.stringify({id:'fixture-response',object:'chat.completion.chunk',created:1,model:'deepseek-flash',choices:[{index:0,delta:{role:'assistant',content:'Connected'},finish_reason:'stop'}],usage:{prompt_tokens:12,completion_tokens:3,total_tokens:15,prompt_tokens_details:{cached_tokens:4}}})+'\n\ndata: [DONE]\n\n',{headers:{'Content-Type':'text/event-stream'}});
@@ -100,7 +100,7 @@ it('backup hashes its deletion ledger and retention zero does not delete the new
 });
 it('restore refuses missing database or duplicate manifest entries without replacing current evidence',async()=>{
  const s=instance();s.runtime.remember('retained','must survive');const snapshot=await backup(s.store);
- for(const files of [snapshot.manifest.files.filter(file=>file.path!=='pico.sqlite'),[...snapshot.manifest.files,snapshot.manifest.files[0]!]]){
+ for(const files of [snapshot.manifest.files.filter(file=>file.path!=='pikobot.sqlite'),[...snapshot.manifest.files,snapshot.manifest.files[0]!]]){
   writeFileSync(join(snapshot.path,'manifest.json'),JSON.stringify({...snapshot.manifest,files}));await expect(restore(s.root,snapshot.path,true)).rejects.toThrow(/required backup files|Duplicate backup paths/);expect(s.runtime.memory.list()[0]?.value).toBe('must survive');
  }
 });
@@ -118,10 +118,10 @@ it('negative notification feedback pauses only its matching mail filter and reje
  await expect(rpc(s.runtime,{op:'notifications.feedback',args:{id:'mail:filter-b:missing',useful:false}})).rejects.toThrow();expect(s.store.get<any>('SELECT paused FROM notification_rules WHERE id=\'filter-b\'').paused).toBe(0);
 });
 it('forced SSH gateway never accepts a client-selected container, shell, path or owner flag',()=>{
- expect(route('a','rpc memory.search')).toEqual(['exec','-i','pico-owner-a','node','/app/dist/cli.js','--instance','/data','rpc','memory.search','-']);
+ expect(route('a','rpc memory.search')).toEqual(['exec','-i','pikobot-owner-a','node','/app/dist/cli.js','--instance','/data','rpc','memory.search','-']);
  expect(route('a','auth-gmail').slice(-3)).toEqual(['rpc','mail.auth','{}']);
  expect(route('b','auth-secret brave.searchKey',true).slice(-3)).toEqual(['auth','secret','brave.searchKey']);expect(route('b','auth-secret brave.searchKey',true)).toContain('-t');for(const command of ['auth-secret brave.searchKey inline-key','auth-secret BRAVE_API_KEY','auth-secret brave.searchKey --instance /foreign'])expect(()=>route('b',command)).toThrow();
- expect(route('b','auth-key openai',true)).toContain('-t');expect(route('a','login openai-codex',true)).toEqual(['exec','-i','-t','pico-owner-a','node','/app/dist/cli.js','--instance','/data','login','openai-codex']);expect(route('b','auth-codex',true).slice(-2)).toEqual(['auth','codex']);expect(route('a','logout openai-codex').slice(-2)).toEqual(['logout','openai-codex']);for(const command of ['sh','chat; docker exec pico-owner-b sh','rpc memory.search --instance /foreign','backup-fetch ../../secrets','restart b','login openai --instance /foreign','login openai token','auth-key groq token'])expect(()=>route('a',command)).toThrow();expect(()=>route('foreign','status')).toThrow();
+ expect(route('b','auth-key openai',true)).toContain('-t');expect(route('a','login openai-codex',true)).toEqual(['exec','-i','-t','pikobot-owner-a','node','/app/dist/cli.js','--instance','/data','login','openai-codex']);expect(route('b','auth-codex',true).slice(-2)).toEqual(['auth','codex']);expect(route('a','logout openai-codex').slice(-2)).toEqual(['logout','openai-codex']);for(const command of ['sh','chat; docker exec pikobot-owner-b sh','rpc memory.search --instance /foreign','backup-fetch ../../secrets','restart b','login openai --instance /foreign','login openai token','auth-key groq token'])expect(()=>route('a',command)).toThrow();expect(()=>route('foreign','status')).toThrow();
 });
 it('Telegram forwards are evidence, fast completed replies use fresh state, and actual sender receives replies',async()=>{
  const s=instance();s.config.telegram={allowedSenders:[123,456],destination:123};const telegram=s.runtime.channels.register(new Telegram(s.runtime,'123456:fixture-only'));const sent:any[]=[];(telegram.bot.api as any).sendMessage=async(chat:number,text:string)=>{sent.push({chat,text});return{message_id:1};};
@@ -142,7 +142,7 @@ it.each(['remember','forget'])('Telegram rejects removed /%s without inference o
   expect(remember).not.toHaveBeenCalled();expect(forget).not.toHaveBeenCalled();
   expect(s.runtime.memory.list()).toMatchObject([{id:record.id,value:'synthetic-original'}]);
   expect(s.store.all('SELECT * FROM messages')).toEqual(before);
-  expect(telegram.bot.api.sendMessage).toHaveBeenCalledWith(123,expect.stringContaining('ask Pico in chat'),expect.anything(),expect.anything());
+  expect(telegram.bot.api.sendMessage).toHaveBeenCalledWith(123,expect.stringContaining('ask Pikobot in chat'),expect.anything(),expect.anything());
  }finally{await telegram.close();remember.mockRestore();forget.mockRestore();}
 });
 it('verified voice is archived even when transcription is unavailable; stale media is discarded after erasure',async()=>{

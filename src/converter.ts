@@ -33,7 +33,7 @@ export const anydocConverter: DocumentConverter = {
       const csv=mime==='text/csv'||mime==='application/csv';
       const native = !detected && !csv && ['.md','.markdown','.txt','.json','.tsv','.html','.htm'].includes(extension);
       if (native) {
-        result.converter = { name: 'pico-native', version: '1' }; result.format = extension.slice(1);
+        result.converter = { name: 'pikobot-native', version: '1' }; result.format = extension.slice(1);
         const text = new TextDecoder('utf8', { fatal: true }).decode(bytes);
         if (text.includes('\0')) throw new Error('Binary content in native text input');
         if (extension === '.json') result.markdown = '```json\n' + JSON.stringify(JSON.parse(text), null, 2) + '\n```\n';
@@ -57,10 +57,10 @@ export const anydocConverter: DocumentConverter = {
         if (format !== 'pdf') {
           const document = await toDocument(bytes, format);
           result.assets = document.assets.map(asset => ({ ...asset, hash: hash(asset.data) }));
-          result.structure = { version: 1, schema: 'pico-anydoc-model', data: { blocks: document.blocks, notes: document.notes }, assets: result.assets.map(({ data: _data, ...asset }) => ({ ...asset, file: `assets/${asset.id}` })) };
+          result.structure = { version: 1, schema: 'pikobot-anydoc-model', data: { blocks: document.blocks, notes: document.notes }, assets: result.assets.map(({ data: _data, ...asset }) => ({ ...asset, file: `assets/${asset.id}` })) };
           result.locators.push('package_part');
           if (JSON.stringify(document.blocks).includes('"kind":"unavailable"')) result.warnings.push('One or more image references are unavailable.');
-          if (result.assets.length) result.markdown += '\n\n## Preserved assets (not interpreted)\n' + result.assets.map(asset => `[Asset ${asset.id}](pico-asset:${asset.id})`).join('\n');
+          if (result.assets.length) result.markdown += '\n\n## Preserved assets (not interpreted)\n' + result.assets.map(asset => `[Asset ${asset.id}](pikobot-asset:${asset.id})`).join('\n');
         } else result.warnings.push('PDF extracted-text locations only; original pages, layout and image assets unavailable.');
         if (['xlsx','ods'].includes(format)) result.warnings.push('Readable tables only. Original cells, formulas, hidden content and exact workbook calculations are not established.');
         if(format==='docx') {

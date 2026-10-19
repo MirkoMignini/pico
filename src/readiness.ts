@@ -67,8 +67,8 @@ export async function testModel(runtime: Runtime, conversationId?: string) {
   const selection = conversationId ? JSON.parse(runtime.conversation(conversationId).model) as Config['model'] : runtime.store.config.model;
   const identity = await binding(runtime, selection);
   try {
-    const response = await runtime.models.complete({ messages: [{ role: 'user', content: 'Reply with exactly: Pico is connected.', timestamp: Date.now() }] }, AbortSignal.timeout(30_000), selection);
-    const tested = assistantText(response).trim() === 'Pico is connected.' ? 'passed' : 'failed';
+    const response = await runtime.models.complete({ messages: [{ role: 'user', content: 'Reply with exactly: Pikobot is connected.', timestamp: Date.now() }] }, AbortSignal.timeout(30_000), selection);
+    const tested = assistantText(response).trim() === 'Pikobot is connected.' ? 'passed' : 'failed';
     probes.set(runtime, { binding: identity, tested, checkedAt: Date.now(), responded: true });
     return { completed: true, tested, content: response.content, usage: response.usage };
   } catch {

@@ -6,7 +6,7 @@ import { initialize, loadConfig, privateDirectory } from '../dist/config.js';
 import { Store, hash } from '../dist/store.js';
 import { Runtime } from '../dist/runtime.js';
 const arg=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
-const root=arg('--root')?resolve(arg('--root')):mkdtempSync(join(tmpdir(),'pico-knowledge-eval-'));
+const root=arg('--root')?resolve(arg('--root')):mkdtempSync(join(tmpdir(),'pikobot-knowledge-eval-'));
 const output=resolve(arg('--output','eval/knowledge-results.json'));
 if(!existsSync(root))mkdirSync(root,{mode:0o700,recursive:true});
 const config=existsSync(join(root,'config.json'))?loadConfig(root).config:initialize(root,'Synthetic knowledge evaluation');

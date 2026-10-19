@@ -8,7 +8,7 @@ import { Memory } from '../dist/memory.js';
 import { Mem0Operation } from '../dist/mem0.js';
 
 // Infrastructure fixture only: synthetic dense vectors, not a semantic-quality or live-provider score.
-const root = await mkdtemp(join(tmpdir(), 'pico-memory-stress-'));
+const root = await mkdtemp(join(tmpdir(), 'pikobot-memory-stress-'));
 const config = initialize(root, 'Synthetic scaling owner');
 const dimensions = 3072, count = 10000;
 const vector = Array.from({ length: dimensions }, (_, i) => Math.sin(i + 1) / Math.sqrt(dimensions));

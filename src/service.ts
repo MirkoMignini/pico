@@ -32,20 +32,20 @@ export function serviceDefinition(instance: string, options: Options = {}): Defi
   const home = safePath(resolve(options.home ?? homedir())), node = safePath(options.node ?? process.execPath);
   const entrypoint = options.cli ?? fileURLToPath(new URL('./cli.js', import.meta.url)), cli = safePath(existsSync(entrypoint) ? realpathSync(entrypoint) : entrypoint);
   safePath(root);
-  const suffix = hash(config.instanceId).slice(0, 20), label = platform === 'darwin' ? `ai.pico.${suffix}` : `pico-${suffix}.service`;
+  const suffix = hash(config.instanceId).slice(0, 20), label = platform === 'darwin' ? `ai.pikobot.${suffix}` : `pikobot-${suffix}.service`;
   let command = [node, cli];
   const release = dirname(dirname(cli)), receipt = join(release, 'installation.json');
   if (existsSync(receipt)) {
     const data = JSON.parse(readPrivate(receipt)) as { prefix?: string };
     const manifest = JSON.parse(readFileSync(join(release, 'package.json'), 'utf8')) as { version: string };
     if (typeof data.prefix !== 'string' || release !== join(data.prefix, 'releases', manifest.version)) throw new Error('Invalid managed installation receipt');
-    command = [safePath(join(data.prefix, 'bin', 'pico'))];
+    command = [safePath(join(data.prefix, 'bin', 'pikobot'))];
   }
   command.push('--instance', root, 'serve');
   const path = `${dirname(node)}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin`;
   if (platform === 'linux') {
     const file = join(home, '.config', 'systemd', 'user', label);
-    return { root, platform, label, target: label, file, content: `[Unit]\nDescription=Pico personal assistant\nStartLimitIntervalSec=60\nStartLimitBurst=3\n\n[Service]\nType=simple\nExecStart=${command.map(value => unit(value, true)).join(' ')}\nWorkingDirectory=${unit(root)}\nEnvironment=${unit(`HOME=${home}`)} ${unit(`PATH=${path}`)}\nUMask=0077\nRestart=on-failure\nRestartSec=5\nTimeoutStopSec=infinity\nSendSIGKILL=no\n\n[Install]\nWantedBy=default.target\n` };
+    return { root, platform, label, target: label, file, content: `[Unit]\nDescription=Pikobot personal assistant\nStartLimitIntervalSec=60\nStartLimitBurst=3\n\n[Service]\nType=simple\nExecStart=${command.map(value => unit(value, true)).join(' ')}\nWorkingDirectory=${unit(root)}\nEnvironment=${unit(`HOME=${home}`)} ${unit(`PATH=${path}`)}\nUMask=0077\nRestart=on-failure\nRestartSec=5\nTimeoutStopSec=infinity\nSendSIGKILL=no\n\n[Install]\nWantedBy=default.target\n` };
   }
   if (platform === 'darwin') {
     const file = join(home, 'Library', 'LaunchAgents', `${label}.plist`), logs = join(root, 'service-logs');
@@ -58,7 +58,7 @@ function registration(definition: Definition) {
   if (!existsSync(path)) return undefined;
   const value = validate<StaticRegistration>(registrationSchema, JSON.parse(readPrivate(path)));
   if (value.file !== definition.file || value.label !== definition.label || value.platform !== definition.platform) throw new Error('Service registration belongs to another platform/home; inspect it before changing services');
-  if (hash(readPrivate(value.file)) !== value.digest) throw new Error('Service definition changed outside Pico; inspect it before changing services');
+  if (hash(readPrivate(value.file)) !== value.digest) throw new Error('Service definition changed outside Pikobot; inspect it before changing services');
   return value;
 }
 type StaticRegistration = { version: 1; platform: string; file: string; label: string; digest: string };
@@ -124,7 +124,7 @@ export async function manageService(instance: string, action: ServiceAction, opt
     return { installed: true, started: false, label: definition.label, note: 'Per-user service enabled for future logins. Start explicitly with service start; installation never restarts an existing daemon.' };
   }
   if (action === 'status') return { installed: !!saved, ...(saved ? await state(definition, runner) : { loaded: false, running: false }), daemonReachable: await reachable(definition.root), note: 'No daemon is started. OS service state and authenticated daemon readiness are separate.' };
-  if (!saved) throw new Error('No Pico-managed service installed for this instance; use service install first');
+  if (!saved) throw new Error('No Pikobot-managed service installed for this instance; use service install first');
   if (action === 'stop' || action === 'restart' || action === 'uninstall') await stop(definition, runner);
   if (action === 'uninstall') {
     if (definition.platform === 'linux') await runner('systemctl', ['--user', 'disable', definition.label]);

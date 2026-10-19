@@ -1,10 +1,10 @@
 # Source-backed memory
 
-Pico uses [Mem0 OSS](https://github.com/mem0ai/mem0) through instance-local model, embedding and SQLite adapters. No hosted Mem0 account or separate vector server is required. Conversations run through Pi agent-core; memory remains source-backed evidence, not an independent authority system.
+Pikobot uses [Mem0 OSS](https://github.com/mem0ai/mem0) through instance-local model, embedding and SQLite adapters. No hosted Mem0 account or separate vector server is required. Conversations run through Pi agent-core; memory remains source-backed evidence, not an independent authority system.
 
 ## What is stored
 
-Background extraction validates facts, verbatim quotes, entities, dates and contextual dependencies, then stores them automatically. There is no memory-confirmation queue. Ask naturally what Pico remembers, correct a statement, or ask it to forget a source.
+Background extraction validates facts, verbatim quotes, entities, dates and contextual dependencies, then stores them automatically. There is no memory-confirmation queue. Ask naturally what Pikobot remembers, correct a statement, or ask it to forget a source.
 
 | Record | Meaning |
 | --- | --- |
@@ -56,7 +56,7 @@ node dist/cli.js --instance PRIVATE_INSTANCE rpc memory.tag '{"id":"MEMORY_ID","
 
 New instances default to DeepSeek Flash chat/extraction and OpenAI `text-embedding-3-small` embeddings; both can incur charges. Existing settings are preserved. Local E5 or disabled embeddings are explicit alternatives. Missing/failed hosted embeddings degrade visibly to lexical retrieval, not another provider/account. [Setup](SETUP.md#memory-embeddings).
 
-`src/mem0.ts` connects Mem0 to Pico's authoritative store and credential services; `src/memory.ts` validates evidence, namespaces, context and erasure. The pinned dependency patch disables Mem0 telemetry, independent history/default home files and unsafe JSON cleanup for Pico's adapter. Dependency upgrades need patch review and regression checks.
+`src/mem0.ts` connects Mem0 to Pikobot's authoritative store and credential services; `src/memory.ts` validates evidence, namespaces, context and erasure. The pinned dependency patch disables Mem0 telemetry, independent history/default home files and unsafe JSON cleanup for Pikobot's adapter. Dependency upgrades need patch review and regression checks.
 
 Validated source records and Mem0 derivatives commit together after source/cancellation checks. SDK additive extraction cannot silently overwrite explicit assertions. Existing retained records and legacy confirmation lineage survive migrations; no new confirmations are manufactured. Mem0's separate history store is disabled.
 

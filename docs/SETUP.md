@@ -41,7 +41,7 @@ Factory defaults:
 
 For the defaults, use `/auth key deepseek` and `/auth key openai`. Enter each key only when its masked dialog opens. Both chat/extraction and hosted embeddings can incur charges. Existing instances keep their settings. Select different services explicitly; there is no provider/account fallback or discovery of environment, `~/.pi` or another application's credentials.
 
-Pico uses the pinned Pi AI provider registry. `/login` handles multi-step provider flows; `/model` lists available choices. Availability metadata does not prove entitlement or live success. Provider terms, quotas and model IDs can change independently of Pico.
+Pikobot uses the pinned Pi AI provider registry. `/login` handles multi-step provider flows; `/model` lists available choices. Availability metadata does not prove entitlement or live success. Provider terms, quotas and model IDs can change independently of Pikobot.
 
 CLI alternatives, with hidden prompt or secure stdin entry—not secret arguments:
 
@@ -101,7 +101,7 @@ Verified incoming voice/audio can then be sent to OpenAI and supplied to chat as
 
 Use `/settings speech`, for example `{"provider":"openai","model":"gpt-4o-mini-tts","voice":"alloy"}`, and apply. `/auth secret openai.speechKey` overrides the stored OpenAI API key. `speech:null` disables it. Setup makes no speech request.
 
-Ask for one voice answer, or “Always answer in voice in this chat.” The source-linked preference is scoped to the authenticated Telegram sender and Pico conversation, survives restart and resets with `/new`; text remains the default elsewhere. A one-off text request does not change the preference.
+Ask for one voice answer, or “Always answer in voice in this chat.” The source-linked preference is scoped to the authenticated Telegram sender and Pikobot conversation, survives restart and resets with `/new`; text remains the default elsewhere. A one-off text request does not change the preference.
 
 Only the bounded synthesis text goes to OpenAI; Ogg Opus is uploaded to the actual sender without a local audio archive. The exact synthesis transcript accompanies the voice, as a caption or complete literal follow-up. One attempted generation/upload per turn; accepted voice followed by transcript failure remains uncertain and is not resent automatically. Confirmed delivery replaces duplicate final text, not failure warnings. Providers/Telegram retain their own copies and can charge even when local delivery fails.
 
@@ -118,9 +118,9 @@ Use `/mcp setup` for trusted stdio/HTTP/SSE servers, `/mcp secret SERVER` for ma
 
 ### Optional interactive browser
 
-`/mcp browser` reviews an explicitly installed Playwright MCP entrypoint and a dedicated Pico-only profile; it installs and starts nothing. Connect with `/mcp connect browser`. The preset delegates its exact browser tool allowlist for autonomous execution, including writes/sends, without per-action approval from Telegram or the TUI. Login/CAPTCHA still requires manual handoff using `/mcp pause browser` and terminal-only `/mcp resume browser`. Never point this dedicated-profile preset at an existing browser profile or paste login secrets into chat.
+`/mcp browser` reviews an explicitly installed Playwright MCP entrypoint and a dedicated Pikobot-only profile; it installs and starts nothing. Connect with `/mcp connect browser`. The preset delegates its exact browser tool allowlist for autonomous execution, including writes/sends, without per-action approval from Telegram or the TUI. Login/CAPTCHA still requires manual handoff using `/mcp pause browser` and terminal-only `/mcp resume browser`. Never point this dedicated-profile preset at an existing browser profile or paste login secrets into chat.
 
-For **personal Chrome on another computer**, explicitly install the official extension in that profile, initialize/run `pico browser-bridge` on the desktop, and pair through `/mcp browser-remote` (masked) or private CLI stdin. An authenticated loopback SSH forward connects the Pico server; Chrome logins stay on the desktop. That computer/bridge/tunnel must remain available; there is no silent fallback or per-action approval. No operational browser is connected automatically. [Installation, pairing, imports, disconnect and limits](BROWSER.md).
+For **personal Chrome on another computer**, explicitly install the official extension in that profile, initialize/run `pikobot browser-bridge` on the desktop, and pair through `/mcp browser-remote` (masked) or private CLI stdin. An authenticated loopback SSH forward connects the Pikobot server; Chrome logins stay on the desktop. That computer/bridge/tunnel must remain available; there is no silent fallback or per-action approval. No operational browser is connected automatically. [Installation, pairing, imports, disconnect and limits](BROWSER.md).
 
 ## Google and other settings
 

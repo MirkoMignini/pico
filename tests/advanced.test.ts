@@ -25,7 +25,7 @@ it('runs the real Pi TUI against authenticated daemon: multiline, streaming, res
  const service=await serve(s.root,{runtimeFactory:store=>new Runtime(store,s.runtime.models)});
  const terminal=new Screen(),client=new Client(s.root),ui=new ChatUI(client,terminal);
  try{
-  await ui.start();await waitFor(()=>terminal.output.includes('PICO'));
+  await ui.start();await waitFor(()=>terminal.output.includes('PIKOBOT'));
   terminal.input('line one');terminal.input('\x1b\r');terminal.input('line two');expect(ui.editor.getText()).toBe('line one\nline two');ui.editor.setText('');
   reply(s.faux,'Risposta italiana **in streaming**.');await ui.submit('Two lines\nfor the owner');await waitFor(()=>!ui.editor.disableSubmit&&terminal.output.includes('Risposta italiana'));expect(terminal.output).toContain('Risposta italiana');
   terminal.columns=42;terminal.rows=15;terminal.resize();await new Promise(r=>setTimeout(r,30));
@@ -120,13 +120,13 @@ it('enforces the notification cap even when multiple deliveries are ready in one
  const s=instance();s.config.limits.notificationsPerDay=1;for(let n=0;n<4;n++)s.runtime.scheduler.outbox(`Cap ${n}`,'terminal');await s.runtime.scheduler.tick();expect(s.store.all("SELECT * FROM outbox WHERE status='sent'")).toHaveLength(1);expect(s.store.all("SELECT * FROM outbox WHERE status='pending'")).toHaveLength(3);
 });
 it('upgrades a representative v1 SQLite state without losing source history',()=>{
- const root=mkdtempSync(join(tmpdir(),'pico-v1-'));try{const config=initialize(root,'legacy');const db=new DatabaseSync(join(root,'pico.sqlite'));db.exec(readFileSync(new URL('../migrations/001.sql',import.meta.url),'utf8'));db.prepare('INSERT INTO meta VALUES(?,?)').run('ownerId',config.ownerId);db.prepare('INSERT INTO meta VALUES(?,?)').run('instanceId',config.instanceId);db.exec('PRAGMA user_version=1');db.prepare('INSERT INTO conversations VALUES(?,?,?,?,?,?)').run('legacy','Legacy','terminal',JSON.stringify(config.model),'summary',1);db.close();
+ const root=mkdtempSync(join(tmpdir(),'pikobot-v1-'));try{const config=initialize(root,'legacy');const db=new DatabaseSync(join(root,'pikobot.sqlite'));db.exec(readFileSync(new URL('../migrations/001.sql',import.meta.url),'utf8'));db.prepare('INSERT INTO meta VALUES(?,?)').run('ownerId',config.ownerId);db.prepare('INSERT INTO meta VALUES(?,?)').run('instanceId',config.instanceId);db.exec('PRAGMA user_version=1');db.prepare('INSERT INTO conversations VALUES(?,?,?,?,?,?)').run('legacy','Legacy','terminal',JSON.stringify(config.model),'summary',1);db.close();
   const store=new Store(root,config);expect(store.get<any>('PRAGMA user_version').user_version).toBe(15);expect(store.get<any>('SELECT * FROM conversations').summary).toBe('summary');expect(store.all('SELECT * FROM skill_reviews')).toEqual([]);store.close();
  }finally{rmSync(root,{recursive:true,force:true});}
 });
 it('forget purges managed old snapshots and an external old snapshot cannot resurrect deleted facts',async()=>{
  const s=instance(),fact=s.runtime.remember('private code','private-code-446') as any;const snapshot=await backup(s.store);
- const external=mkdtempSync(join(tmpdir(),'pico-external-backup-'));const fs=await import('node:fs/promises');await fs.cp(snapshot.path,external,{recursive:true});
+ const external=mkdtempSync(join(tmpdir(),'pikobot-external-backup-'));const fs=await import('node:fs/promises');await fs.cp(snapshot.path,external,{recursive:true});
  try{await s.runtime.forget(fact.id);expect((await fs.readdir(join(s.root,'backups')))).toEqual([]);await restore(s.root,external,true);const check=new Store(s.root,s.config);try{expect(check.all('SELECT * FROM memories')).toEqual([]);expect(check.all('SELECT * FROM retrieval')).toEqual([]);}finally{check.close();}}
  finally{rmSync(external,{recursive:true,force:true});}
 });

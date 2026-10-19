@@ -8,7 +8,7 @@ overrides:
   node-llama-cpp>simple-git: 4.0.2
 
 patchedDependencies:
-  mem0ai@3.3.1: c1d13f63db065b332e78da1ed114554da51b6ab06e3c415ffbd5344acc864675
+  mem0ai@3.3.1: dc84f8444c65078a007439e906afa31cfeeb3d1ed16430d7e7c528c2d931fec5
 
 importers:
 
@@ -55,7 +55,7 @@ importers:
         version: 30.1.3
       mem0ai:
         specifier: 3.3.1
-        version: 3.3.1(patch_hash=c1d13f63db065b332e78da1ed114554da51b6ab06e3c415ffbd5344acc864675)(@cloudflare/workers-types@4.20260702.1)(@huggingface/transformers@4.3.1(@types/node@24.19.2))(better-sqlite3@13.0.3)(compromise@14.18.0)(ws@8.22.0)
+        version: 3.3.1(patch_hash=dc84f8444c65078a007439e906afa31cfeeb3d1ed16430d7e7c528c2d931fec5)(@cloudflare/workers-types@4.20260702.1)(@huggingface/transformers@4.3.1(@types/node@24.19.2))(better-sqlite3@13.0.3)(compromise@14.18.0)(ws@8.22.0)
       pdfjs-dist:
         specifier: 6.4.299
         version: 6.4.299
@@ -5517,7 +5517,7 @@ snapshots:
 
   mdn-data@2.27.1: {}
 
-  mem0ai@3.3.1(patch_hash=c1d13f63db065b332e78da1ed114554da51b6ab06e3c415ffbd5344acc864675)(@cloudflare/workers-types@4.20260702.1)(@huggingface/transformers@4.3.1(@types/node@24.19.2))(better-sqlite3@13.0.3)(compromise@14.18.0)(ws@8.22.0):
+  mem0ai@3.3.1(patch_hash=dc84f8444c65078a007439e906afa31cfeeb3d1ed16430d7e7c528c2d931fec5)(@cloudflare/workers-types@4.20260702.1)(@huggingface/transformers@4.3.1(@types/node@24.19.2))(better-sqlite3@13.0.3)(compromise@14.18.0)(ws@8.22.0):
     dependencies:
       '@cloudflare/workers-types': 4.20260702.1
       axios: 1.20.0

@@ -79,7 +79,7 @@ it('does not publish a preview when cancelled while reading its attachment',asyn
 it('forgets existing-image preview receipts and prevents recovery from an old backup',async()=>{
   const s=instance(),sourceId=s.runtime.ownerEvidence('Synthetic erasable image'),attachmentId=s.runtime.media.save(png,'erase.png','image/png');s.runtime.media.link(attachmentId,sourceId,s.runtime.newConversation('Source').id);
   const memory=s.runtime.memory.remember({sourceId,entity:`owner:${s.config.ownerId}`,kind:'fact',key:'image-fixture',value:'Synthetic erasable image',quote:'Synthetic erasable image',eventAt:Date.now()},false);
-  await s.runtime.invokeExtension('image_show',{attachmentId},owner(s));const conversationId=s.store.meta('extensionConversation')!,snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-preview-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
+  await s.runtime.invokeExtension('image_show',{attachmentId},owner(s));const conversationId=s.store.meta('extensionConversation')!,snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-preview-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
   await s.runtime.forget(memory.id);expect(s.runtime.images.previews(conversationId).images).toEqual([]);await expect(s.runtime.images.preview({attachmentId})).rejects.toThrow();
   await s.runtime.close();s.store.close();instances.splice(instances.indexOf(s),1);directories.push(s.root);await restore(s.root,external,true);
   const restored=new Store(s.root,s.config),runtime=new Runtime(restored,s.runtime.models);try{expect(runtime.images.previews(conversationId).images).toEqual([]);await expect(runtime.images.preview({attachmentId})).rejects.toThrow();}finally{await runtime.close();restored.close();}
@@ -111,7 +111,7 @@ it.each(['ephemeral','scheduled','review','untrusted'])('denies image generation
 });
 it('citation repair cannot start a billed image request',async()=>{
   const s=await configured(),fetch=vi.fn();vi.stubGlobal('fetch',fetch);const conversation=s.runtime.newConversation('Synthetic citation repair');
-  s.faux.appendResponses([fauxAssistantMessage([fauxText(`Invalid pico:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`)]),fauxAssistantMessage([fauxToolCall('image_generate',{prompt:'Denied repair'})],{stopReason:'toolUse'}),fauxAssistantMessage([fauxText('No grounded evidence available.')])]);
+  s.faux.appendResponses([fauxAssistantMessage([fauxText(`Invalid pikobot:web:${crypto.randomUUID()}:${'0'.repeat(64)}:L1-2`)]),fauxAssistantMessage([fauxToolCall('image_generate',{prompt:'Denied repair'})],{stopReason:'toolUse'}),fauxAssistantMessage([fauxText('No grounded evidence available.')])]);
   const run=await s.runtime.ingest({requestId:crypto.randomUUID(),conversationId:conversation.id,text:'Read existing evidence'},source);await waitFor(()=>s.runtime.run(run.id).status==='completed');
   expect(JSON.parse(s.store.get<{body:string}>("SELECT body FROM messages WHERE run_id=? AND role='toolResult'",run.id)!.body).isError).toBe(true);expect(fetch).not.toHaveBeenCalled();expect(s.store.all('SELECT * FROM generated_images')).toEqual([]);
 });
@@ -170,7 +170,7 @@ it('removes orphan files after rolled-back persistence and recovers interrupted 
 });
 
 it('preserves generated PNGs through backup/reconstruction and reapplies image tombstones on old restore',async()=>{
-  const s=await configured();vi.stubGlobal('fetch',async()=>response());const image=await invoke(s),snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-image-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});expect((exportData(s.store) as any).generatedImages).toHaveLength(1);
+  const s=await configured();vi.stubGlobal('fetch',async()=>response());const image=await invoke(s),snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-image-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});expect((exportData(s.store) as any).generatedImages).toHaveLength(1);
   await s.runtime.close();s.runtime=new Runtime(s.store,s.runtime.models);expect(Buffer.from((await s.runtime.images.read(image.attachmentId)).data,'base64')).toEqual(png);
   await rpc(s.runtime,{op:'images.forget',args:{id:image.attachmentId}});expect(existsSync(join(s.root,'attachments',image.attachmentId))).toBe(false);
   await s.runtime.close();s.store.close();instances.splice(instances.indexOf(s),1);directories.push(s.root);await restore(s.root,external,true);
@@ -179,7 +179,7 @@ it('preserves generated PNGs through backup/reconstruction and reapplies image t
 it('forgetting owner input removes dependent images and raw files, including from old backups',async()=>{
   const s=await configured();vi.stubGlobal('fetch',async()=>response());const {run,result}=await turn(s),image=JSON.parse(result.content[0].text),user=s.store.get<{id:string;text:string}>("SELECT id,text FROM messages WHERE run_id=? AND role='user'",run.id)!;
   const memory=s.runtime.memory.remember({sourceId:user.id,entity:`owner:${s.config.ownerId}`,kind:'fact',key:'synthetic-image-request',value:user.text,quote:user.text,eventAt:Date.now()},false);
-  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pico-image-input-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
+  const snapshot=await backup(s.store),external=mkdtempSync(join(tmpdir(),'pikobot-image-input-backup-'));directories.push(external);cpSync(snapshot.path,external,{recursive:true});
   await s.runtime.forget(memory.id);expect(s.store.all('SELECT * FROM generated_images')).toEqual([]);expect(existsSync(join(s.root,'attachments',image.attachmentId))).toBe(false);
   await s.runtime.close();s.store.close();instances.splice(instances.indexOf(s),1);directories.push(s.root);await restore(s.root,external,true);const restored=new Store(s.root,s.config);try{expect(restored.all('SELECT * FROM generated_images')).toEqual([]);expect(restored.all('SELECT * FROM attachments')).toEqual([]);expect(existsSync(join(s.root,'attachments',image.attachmentId))).toBe(false);}finally{restored.close();}
 });

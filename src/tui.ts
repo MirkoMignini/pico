@@ -1,7 +1,7 @@
 import { Container, Editor, Input, Image, Loader, Markdown, ProcessTerminal, ScrollView, SelectList, Text, TuiAltScreen, VStack, matchesKey, CombinedAutocompleteProvider, type Terminal, type Component, type Focusable, type MarkdownTheme, type TuiMouseEvent, truncateToWidth, visibleWidth, stripTerminalSequences } from '@earendil-works/pi-tui';
 import { Client } from './client.js';
 import { randomUUID } from 'node:crypto';
-import { ConfigSchema, SettingsSchema, SECRET_NAMES, validate, type AuthProvider, type Config, type OutputEvent, type PicoChannel, type AssistantOutput, type ToolOutput } from './contracts.js';
+import { ConfigSchema, SettingsSchema, SECRET_NAMES, validate, type AuthProvider, type Config, type OutputEvent, type PikobotChannel, type AssistantOutput, type ToolOutput } from './contracts.js';
 import type { Run } from './runtime.js';
 import type { ImageReference } from './images.js';
 import type { AuthType } from '@earendil-works/pi-ai';
@@ -18,7 +18,7 @@ const color = (code: number | string) => (value: string) => {
 const cyan = color(36), dim = color(90), bold = color(1);
 const selectTheme = { selectedPrefix: cyan, selectedText: bold, description: dim, scrollInfo: dim, noMatch: dim };
 const markdownTheme: MarkdownTheme = { heading: bold, link: cyan, linkUrl: dim, code: cyan, codeBlock: cyan, codeBlockBorder: dim, quote: dim, quoteBorder: dim, hr: dim, listBullet: cyan, bold, italic: color(3), strikethrough: color(9), underline: color(4) };
-const PICO_LOGO = String.raw` ____  ___  ____  ___
+const PIKOBOT_LOGO = String.raw` ____  ___  ____  ___
 |  _ \|_ _|/ ___|/ _ \
 | |_) || || |   | | | |
 |  __/ | || |___| |_| |
@@ -65,12 +65,12 @@ function toolResultText(result: unknown): string {
   return `${text}${details === '{}' ? '' : `\n\nMetadata\n${details}`}`;
 }
 export const COMMANDS = ['new','sessions','model','thinking','extensions','stop','help','auth','approve','skills','notifications','channels','telegram','setup','readiness','doctor','settings','reload','integrations','mcp','mail','backup','export','login','logout','quit'];
-export const HELP = `**Pico** — Enter sends when idle (drafts stay editable while working) · ↑/↓ recalls sent messages · Alt+Enter inserts a line · Ctrl+O expands/collapses all debug boxes · Ctrl+T selects a box · click a box header to toggle · PgUp/PgDn scroll · Escape interrupts/cancels dialogs · /quit exits the client (daemon stays alive)
+export const HELP = `**Pikobot** — Enter sends when idle (drafts stay editable while working) · ↑/↓ recalls sent messages · Alt+Enter inserts a line · Ctrl+O expands/collapses all debug boxes · Ctrl+T selects a box · click a box header to toggle · PgUp/PgDn scroll · Escape interrupts/cancels dialogs · /quit exits the client (daemon stays alive)
 
 /new · /sessions [id] · /model [provider/id] · /model default provider/id · /thinking [level|Ctrl+S default]
 /extensions [review approval-id|enable id|disable id|rollback id]
 /skills [read name [path]|import path|enable name|disable name|delete name|rollback name version|approve id version hash]
-Use $skill-name in chat to explicitly activate an installed skill. Drop standard packages in PRIVATE_INSTANCE/skills/NAME/SKILL.md, or ask Pico to create/import one. Prefer skills for calculators/utilities; extensions are for integrations and daemon lifecycle. Scripts run with OS-user access, not in a sandbox.
+Use $skill-name in chat to explicitly activate an installed skill. Drop standard packages in PRIVATE_INSTANCE/skills/NAME/SKILL.md, or ask Pikobot to create/import one. Prefer skills for calculators/utilities; extensions are for integrations and daemon lifecycle. Scripts run with OS-user access, not in a sandbox.
 /approve approval-id artifact-hash (after reviewing exact code and permissions)
 /setup · /readiness (local evidence, no probes) · /doctor (redacted local diagnostics) · /channels [telegram setup] · /telegram [status|check] · /settings [setting] · /reload
 /login [provider] · /logout [provider] — Pi's built-in API-key/subscription setup
@@ -78,13 +78,13 @@ Use $skill-name in chat to explicitly activate an installed skill. Drop standard
 /mcp [browser|browser-remote|setup|status|catalog|requests|actions] · /mcp [secret|connect|disconnect|pause|resume|auth|cancel|logout|ping] SERVER · /mcp [approve|respond] ID
 /integrations [setup|auth|cancel|status|actions|approve|disconnect] ID · /mail [setup|auth|cancel|sync|rules] · /backup · /export · /notifications · /stop · /quit
 
-Talk to Pico for memory, documents, notes, learning, workflows, appointments, reminders, web research and images. Routine changes and new extension builds need no confirmation; generated extensions run immediately with full OS access. Validation-only code and procedural approvals remain owner controls. Commands are only for chat controls, setup and safety/administration. Operator CLI/RPC remains available for advanced data recovery.
+Talk to Pikobot for memory, documents, notes, learning, workflows, appointments, reminders, web research and images. Routine changes and new extension builds need no confirmation; generated extensions run immediately with full OS access. Validation-only code and procedural approvals remain owner controls. Commands are only for chat controls, setup and safety/administration. Operator CLI/RPC remains available for advanced data recovery.
 
 Setup uses separate dialogs; secrets are masked and never sent to the assistant. /reload applies saved settings without leaving the TUI.
 
 Chats retain conversation history and evidence. Starting a new chat does not erase existing memory. Providers/Telegram/OS have separate retention.`;
 interface Session { id: string; title: string; model: string; ephemeral: boolean }
-export class ChatUI implements PicoChannel {
+export class ChatUI implements PikobotChannel {
   readonly id = 'terminal';
   readonly tui: TuiAltScreen; readonly transcript = new Container(); readonly header = new Text('',1,0); readonly footer = new Text('',1,0); readonly editor: Editor;
   private session?: Session; private runId?: string; private live?: AssistantOutput; private unsubscribe?: () => void; private closed = false; private reconnecting = false;
@@ -102,7 +102,7 @@ export class ChatUI implements PicoChannel {
   private inputPending = false;
   private readonly mainLayout: VStack;
   private introVisible = true;
-  private readonly intro = new Text(`${PICO_LOGO.split('\n').map(line => cyan(bold(line))).join('\n')}\n\n${dim('A small assistant for the things that matter.')}`,1,1);
+  private readonly intro = new Text(`${PIKOBOT_LOGO.split('\n').map(line => cyan(bold(line))).join('\n')}\n\n${dim('A small assistant for the things that matter.')}`,1,1);
   private readonly introTips = new Text(`${cyan('/setup')} get started · ${cyan('/model')} choose model · ${cyan('/new')} start fresh\n${dim('Enter sends · Esc interrupts · /quit detaches')}`,1,1);
   private setupBusy = false;
   private cancelDialog?: () => void;
@@ -111,7 +111,7 @@ export class ChatUI implements PicoChannel {
   constructor(readonly client: Client, terminal: Terminal = new ProcessTerminal()) {
     this.tui = new TuiAltScreen(terminal);
     this.editor = new Editor(this.tui,{ borderColor: cyan, selectList: selectTheme },{paddingX:1});
-    this.editor.setAutocompleteProvider(new CombinedAutocompleteProvider(COMMANDS.map(name => ({name,description: name})), '/nonexistent-pico-client-files'));
+    this.editor.setAutocompleteProvider(new CombinedAutocompleteProvider(COMMANDS.map(name => ({name,description: name})), '/nonexistent-pikobot-client-files'));
     this.editor.onSubmit = text => { this.editor.setText(''); void this.submit(text).catch(error => this.notice(`**Error**\n${error instanceof Error ? error.message : 'Operation failed'}`)); };
     this.editorArea.addChild(this.editor);
     const showIntro = ({width,height}: {width:number;height:number}) => this.introVisible && width >= 60 && height >= 24;
@@ -237,7 +237,7 @@ export class ChatUI implements PicoChannel {
     const selected=JSON.parse(this.session?.model??'{}');const capabilities=await this.client.rpc<{authentication:string}>('model.capabilities',{provider:selected.provider??status.model.provider,id:selected.id??status.model.model});
     this.context = this.session ? await this.client.rpc<{tokens:number|null;contextWindow:number}>('context.usage',{conversationId:this.session.id}) : undefined;
     if (this.session) this.thinkingLevel = (await this.client.rpc<{level:string}>('thinking.get',{conversationId:this.session.id})).level;
-    this.header.setText(`${cyan('PICO')}  assistant  ·  owner ${bold(safeTerminal(status.ownerName).slice(0,120))} (${status.ownerId.slice(0,8)})  ·  instance ${status.instanceId.slice(0,8)}\n${this.session?.ephemeral ? 'EPHEMERAL · volatile · lost on restart' : 'Retained session'} ${this.session?.id.slice(0,8)} · ${capabilities.authentication}${status.extensionsExecution?.mode === 'in-process' ? '\n' + bold('TRUSTED EXTENSIONS / SKILL SCRIPTS · full OS-user access') : ''}`);
+    this.header.setText(`${cyan('PIKOBOT')}  assistant  ·  owner ${bold(safeTerminal(status.ownerName).slice(0,120))} (${status.ownerId.slice(0,8)})  ·  instance ${status.instanceId.slice(0,8)}\n${this.session?.ephemeral ? 'EPHEMERAL · volatile · lost on restart' : 'Retained session'} ${this.session?.id.slice(0,8)} · ${capabilities.authentication}${status.extensionsExecution?.mode === 'in-process' ? '\n' + bold('TRUSTED EXTENSIONS / SKILL SCRIPTS · full OS-user access') : ''}`);
     if (!this.runId) for (const id of status.activeRuns) { const run=await this.client.rpc<Run>('run',{id});if(run.conversation_id===this.session?.id&&['queued','running'].includes(run.status)){this.runId=run.id;this.live=run.display??{id:`partial:${run.id}`,text:run.partial,thinking:'',intermediate:true,complete:false};this.showAssistant(this.live,run.id);for(const tool of run.tools??[])this.showTool(tool,run.id);break;} }
     this.footerStatuses = new Map(Object.entries(status.extensionStatus ?? {}));
     this.updateFooter(); this.updateActivity();
@@ -557,7 +557,7 @@ export class ChatUI implements PicoChannel {
       const [action,...details] = arg.split(' '), value = details.join(' ');
       if (['review','enable','disable','rollback'].includes(action!)) await show(`extensions.${action}`,{id:value});
       else if (!arg) await show('extensions.list');
-      else throw new Error('Use /extensions review|enable|disable|rollback ID; ask Pico in chat to build an extension'); return;
+      else throw new Error('Use /extensions review|enable|disable|rollback ID; ask Pikobot in chat to build an extension'); return;
     }
     if (name === '/auth') {
       const [action, value, ...extra] = arg.split(/\s+/);
@@ -570,7 +570,7 @@ export class ChatUI implements PicoChannel {
       else if (!value && ['status','accounts',''].includes(action!)) await show(action === 'accounts' ? 'auth.accounts' : 'auth.status');
       else throw new Error('Use /login, /logout, or /auth key provider|secret name|chatgpt|codex|accounts|select account|status|test'); return;
     }
-    throw new Error('Unknown command. /help lists basic controls; ask Pico in chat for everything else.');
+    throw new Error('Unknown command. /help lists basic controls; ask Pikobot in chat for everything else.');
   }
   private async configure(task: () => Promise<unknown>): Promise<void> {
     if (this.session?.ephemeral) throw new Error('Ephemeral mode does not save configuration or credentials. Start a retained session with /new.');
@@ -584,7 +584,7 @@ export class ChatUI implements PicoChannel {
   private async testModel(): Promise<void> {
     const choice = await this.choose([
       { value: 'no', label: 'Cancel (default)', description: 'No network request, inference or charge' },
-      { value: 'yes', label: 'Test selected conversation model once', description: 'Sends one fixed synthetic prompt via the selected Pico account; may charge. No personal context or tools.' }
+      { value: 'yes', label: 'Test selected conversation model once', description: 'Sends one fixed synthetic prompt via the selected Pikobot account; may charge. No personal context or tools.' }
     ], undefined, 'Explicit live model test — provider charges may apply');
     if (choice !== 'yes') return;
     const result = await this.client.rpc<{ tested: string }>('auth.test', { conversationId: this.session!.id });
@@ -664,7 +664,7 @@ export class ChatUI implements PicoChannel {
       await this.client.rpc('settings.update', { telegram: { allowedSenders, destination: Number(destination) } });
     } catch (error) { throw new Error(error instanceof Error && error.message.startsWith('Changing Telegram bot identity') ? error.message : 'Telegram setup was not completed. Inspect /settings before retrying; a saved token may remain pending.'); }
     finally { token = ''; }
-    this.notice('Telegram settings saved, not yet connectivity-verified. After applying, use /telegram status and /telegram check (read-only Bot API requests). Press Start in your private bot chat; Pico admits only the allowlisted owner accounts. An existing webhook or another poller prevents polling.');
+    this.notice('Telegram settings saved, not yet connectivity-verified. After applying, use /telegram status and /telegram check (read-only Bot API requests). Press Start in your private bot chat; Pikobot admits only the allowlisted owner accounts. An existing webhook or another poller prevents polling.');
     await this.applySettings();
   }
   private async login(providerId?: string, type?: AuthType): Promise<void> {
@@ -692,7 +692,7 @@ export class ChatUI implements PicoChannel {
         }
       });
       if (status.state === 'completed') {
-        this.notice(`Authenticated with ${provider.name}. Credentials are private to Pico. Select a model with /model; /auth test may incur provider charges.`);
+        this.notice(`Authenticated with ${provider.name}. Credentials are private to Pikobot. Select a model with /model; /auth test may incur provider charges.`);
         await this.refresh();
       }
     } catch (error) {
@@ -738,7 +738,7 @@ export class ChatUI implements PicoChannel {
     if (entrypoint === undefined) return;
     const current = await this.client.rpc<{ settings: unknown }>('extensions.setup', { id: 'mcp' });
     const settings = browserSettings(this.client.root, current.settings, entrypoint);
-    if (await this.reviewAction(`Trusted browser MCP preset — not a sandbox. Uses installed Chrome and a private Pico-only profile, never existing browser sessions. Delegates the selected browser tools to act autonomously without per-action approval, including writes and sends. Review this trust decision once. No browser or server starts now.\n${JSON.stringify(settings.servers.at(-1), null, 2)}`) !== 'yes') return;
+    if (await this.reviewAction(`Trusted browser MCP preset — not a sandbox. Uses installed Chrome and a private Pikobot-only profile, never existing browser sessions. Delegates the selected browser tools to act autonomously without per-action approval, including writes and sends. Review this trust decision once. No browser or server starts now.\n${JSON.stringify(settings.servers.at(-1), null, 2)}`) !== 'yes') return;
     prepareBrowserDirectories(this.client.root);
     await this.client.rpc('extensions.configure', { id: 'mcp', settings });
     this.notice('Autonomous browser preset saved. /mcp connect browser, then ask normally in Telegram or chat: selected browser actions need no per-action approval. Login/CAPTCHA must be manual: /mcp pause browser, use the dedicated browser, /mcp resume browser. Never put credentials in chat.');
@@ -823,7 +823,7 @@ export class ChatUI implements PicoChannel {
   private async gmailSetup(): Promise<void> {
     const status=await this.client.rpc<{settingsSource?:string}>('mail.status');
     if(status.settingsSource==='extension'){await this.integrationSetup('google');return;}
-    this.notice('**Gmail setup**\nCreate a Google OAuth Desktop application and enable Gmail API outside Pico. Pico requests read-only access; browser consent is still required.');
+    this.notice('**Gmail setup**\nCreate a Google OAuth Desktop application and enable Gmail API outside Pikobot. Pikobot requests read-only access; browser consent is still required.');
     const config = await this.client.rpc<Config>('settings.get');
     const clientId = await this.prompt('Google OAuth Desktop client ID — not an API key', { value: config.gmail?.clientId, required: true });
     if (clientId === undefined) return;
@@ -876,4 +876,4 @@ export class ChatUI implements PicoChannel {
   get canRefresh(): boolean { return !this.closed && !this.runId && !this.inputPending && !this.setupBusy && !this.cancelDialog && !this.loginController && !this.editor.getText(); }
   close(): void { this.closed = true; this.updateActivity(); this.loginController?.abort(); this.cancelDialog?.(); this.unsubscribe?.(); this.client.close(); this.tui.stop(); }
 }
-export async function chat(client: Client): Promise<void> { const channel: PicoChannel = new ChatUI(client); await channel.start(); }
+export async function chat(client: Client): Promise<void> { const channel: PikobotChannel = new ChatUI(client); await channel.start(); }

@@ -7,7 +7,7 @@ import { Store, acquireLock, id, json } from './store.js';
 import { Runtime } from './runtime.js';
 import { validateKnowledge } from './knowledge.js';
 import { MEMORY_READING_RULES } from './memory.js';
-import { RpcSchema, ConfigSchema, SettingsSchema, ThinkingLevelSchema, MemorySearchSchema, MemoryListSchema, MemoryTagSchema, MemoryTagsSchema, SECRET_NAMES, type Config, type MemorySearch, type ThinkingLevel, validate, type RpcRequest, type Envelope, type OutputEvent, type PicoChannel } from './contracts.js';
+import { RpcSchema, ConfigSchema, SettingsSchema, ThinkingLevelSchema, MemorySearchSchema, MemoryListSchema, MemoryTagSchema, MemoryTagsSchema, SECRET_NAMES, type Config, type MemorySearch, type ThinkingLevel, validate, type RpcRequest, type Envelope, type OutputEvent, type PikobotChannel } from './contracts.js';
 import { backup, exportData } from './backup.js';
 import { ImageListSchema, ImageIdentitySchema, ImageShowSchema } from './images.js';
 import { ScheduleSchema, ScheduleManageSchema, type ScheduleAction } from './scheduler.js';
@@ -78,7 +78,7 @@ export async function rpc(runtime: Runtime, request: RpcRequest): Promise<unknow
         if (!/^\d+:[A-Za-z0-9_-]+$/.test(input.value)) throw new Error('Invalid Telegram bot token format');
         const previous = await runtime.credentials.secret(input.name);
         // shortcut: Telegram cursors/inbox are single-bot; use another instance until per-bot namespaces exist.
-        if (previous && previous.split(':')[0] !== input.value.split(':')[0] && (runtime.store.meta('telegram.offset') !== undefined || runtime.store.config.telegram || loadConfig(runtime.store.root).config.telegram)) throw new Error('Changing Telegram bot identity would reuse another bot\'s inbox. Use a separate Pico instance for a different bot.');
+        if (previous && previous.split(':')[0] !== input.value.split(':')[0] && (runtime.store.meta('telegram.offset') !== undefined || runtime.store.config.telegram || loadConfig(runtime.store.root).config.telegram)) throw new Error('Changing Telegram bot identity would reuse another bot\'s inbox. Use a separate Pikobot instance for a different bot.');
       }
       await runtime.credentials.setSecret(input.name, input.value);
       return { saved: true, restartRequired: input.name === 'telegram.token' };
@@ -141,7 +141,7 @@ async function body(request: IncomingMessage, max: number): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 export async function serve(path: string, options: { runtimeFactory?: (store: Store) => Runtime;
-  channels?: (runtime: Runtime) => Iterable<PicoChannel> | Promise<Iterable<PicoChannel>> } = {}): Promise<{ runtime: Runtime; server: Server; close: () => Promise<void>; done: Promise<void> }> {
+  channels?: (runtime: Runtime) => Iterable<PikobotChannel> | Promise<Iterable<PikobotChannel>> } = {}): Promise<{ runtime: Runtime; server: Server; close: () => Promise<void>; done: Promise<void> }> {
   const { root, config, token, socket } = loadConfig(path);
   const unlock = acquireLock(root);
   let store: Store;
@@ -245,7 +245,7 @@ export async function serve(path: string, options: { runtimeFactory?: (store: St
         try {
           runtime = options.runtimeFactory?.(store) ?? new Runtime(store);
           await prepare(runtime); runtime.events.on('output', broadcast); await runtime.start();
-        } catch { throw new Error('The previous backend could not be restored. Correct the saved settings and ask the operator to restart Pico.'); }
+        } catch { throw new Error('The previous backend could not be restored. Correct the saved settings and ask the operator to restart Pikobot.'); }
       }
       throw new Error('Settings could not be applied. Saved settings remain pending; correct them in /settings and try again.');
     } finally { applying = false; }

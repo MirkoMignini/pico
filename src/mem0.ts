@@ -9,7 +9,7 @@ const stopWords = new Set('a an the i me my you your we our it is are was were d
 interface Entry { id: string; recordId?: string; collection: string; vector: number[]; payload: Record<string, any> }
 interface Row { id: string; kind: string; text: string; source_id: string; event_at: number; entity: string | null }
 
-// Mem0 owns extraction and ranking; this adapter keeps its effects in Pico's authoritative transaction.
+// Mem0 owns extraction and ranking; this adapter keeps its effects in Pikobot's authoritative transaction.
 export class Mem0Operation {
   readonly staged = new Map<string, Entry>();
   error?: unknown;
@@ -36,7 +36,7 @@ export class Mem0Operation {
     }
   }
   create(models?: ModelAccess, instructions?: string, inspect?: (text: string) => string): Mem0 {
-    const llm: LLM = { generateChat: async () => { throw new Error('Mem0 chat is disabled; use Pico agent-core'); }, generateResponse: async (messages: Message[]) => {
+    const llm: LLM = { generateChat: async () => { throw new Error('Mem0 chat is disabled; use Pikobot agent-core'); }, generateResponse: async (messages: Message[]) => {
       this.check();
       if (!models) throw new Error('Extraction model unavailable');
       const response = await models.complete({ systemPrompt: messages.filter(m => m.role === 'system').map(m => m.content).join('\n'),
@@ -46,13 +46,13 @@ export class Mem0Operation {
       return inspect ? inspect(text) : text;
     } };
     return new Mem0({ disableHistory: true, customInstructions: instructions,
-      embedder: { provider: 'pico', config: { apiKey: '', model: {
+      embedder: { provider: 'pikobot', config: { apiKey: '', model: {
         embed: async (text: string, action: string) => (await this.embed([text], action === 'search' ? 'query' : 'passage', !models))[0]!,
         embedBatch: (texts: string[], action: string) => this.embed(texts, action === 'search' ? 'query' : 'passage', !models)
       } } },
-      llm: { provider: 'pico', config: { apiKey: '', client: llm } },
-      vectorStore: { provider: 'pico', config: { collectionName: 'memories', dimension: this.dimensions,
-        instance: (name: string) => new PicoVectorStore(this, name.endsWith('_entities') ? 'entities' : 'memories') } }
+      llm: { provider: 'pikobot', config: { apiKey: '', client: llm } },
+      vectorStore: { provider: 'pikobot', config: { collectionName: 'memories', dimension: this.dimensions,
+        instance: (name: string) => new PikobotVectorStore(this, name.endsWith('_entities') ? 'entities' : 'memories') } }
     });
   }
   where(): { sql: string; args: SQLInputValue[] } {
@@ -100,7 +100,7 @@ export class Mem0Operation {
   }
 }
 
-class PicoVectorStore implements VectorStore {
+class PikobotVectorStore implements VectorStore {
   constructor(readonly op: Mem0Operation, readonly collection: string) {}
   async initialize(): Promise<void> { this.op.check(); }
   async getUserId(): Promise<string> { return this.op.store.config.ownerId; }
@@ -165,8 +165,8 @@ class PicoVectorStore implements VectorStore {
     return row ? { id, payload: JSON.parse(row.payload) } : null;
   }
   async update(id: string, vector: number[], payload: Record<string, any>): Promise<void> { await this.insert([vector], [id], [payload]); }
-  async delete(): Promise<void> { throw new Error('Erasure must use Pico source-backed forgetting'); }
-  async deleteCol(): Promise<void> { throw new Error('Reset must use Pico source-backed forgetting'); }
+  async delete(): Promise<void> { throw new Error('Erasure must use Pikobot source-backed forgetting'); }
+  async deleteCol(): Promise<void> { throw new Error('Reset must use Pikobot source-backed forgetting'); }
   async list(filters?: SearchFilters, topK = 100): Promise<[VectorStoreResult[], number]> {
     this.op.check();
     const rows = this.op.store.all<{ id: string; payload: string }>('SELECT id,payload FROM mem0_vectors WHERE collection=?', this.collection)

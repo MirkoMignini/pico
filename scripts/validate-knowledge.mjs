@@ -18,12 +18,12 @@ assert(!output.startsWith(resolve(credentialRoot)+'/'));
 const modelCache=arg('--model-cache');
 const credentials=new Credentials(credentialRoot);
 const source={channel:'terminal',identity:'synthetic-live-owner',trustedOwner:true};
-const report={at:new Date().toISOString(),node:process.version,fixtureManifestHash:hash(readFileSync('tests/fixtures/knowledge/manifest.json')),protocolHash:existsSync('eval/knowledge-gold.json')?hash(readFileSync('eval/knowledge-gold.json')):null,models:[],providers:[],note:'Real Pico Runtime foreground tool workflow, synthetic stores, explicit existing credential service. No operational database migrations or connector sends. Strict checks require manual factuality review.'};
+const report={at:new Date().toISOString(),node:process.version,fixtureManifestHash:hash(readFileSync('tests/fixtures/knowledge/manifest.json')),protocolHash:existsSync('eval/knowledge-gold.json')?hash(readFileSync('eval/knowledge-gold.json')):null,models:[],providers:[],note:'Real Pikobot Runtime foreground tool workflow, synthetic stores, explicit existing credential service. No operational database migrations or connector sends. Strict checks require manual factuality review.'};
 const save=()=>writeFileSync(output,JSON.stringify(report,null,2)+'\n',{mode:0o600});
 const wait=async runtime=>{const until=Date.now()+240_000;while(runtime.hasPendingRuns){assert(Date.now()<until,'Foreground timeout');await new Promise(resolve=>setTimeout(resolve,30));}};
 for(const selection of selections) {
   assert.equal((await credentials.read(selection.provider))?.type,'api_key',`Configured ${selection.provider} API account required; no fallback`);
-  const root=mkdtempSync(join(tmpdir(),'pico-knowledge-live-')),config=initialize(root,'Synthetic knowledge live owner');config.model=selection;delete config.embeddings;
+  const root=mkdtempSync(join(tmpdir(),'pikobot-knowledge-live-')),config=initialize(root,'Synthetic knowledge live owner');config.model=selection;delete config.embeddings;
   let store=new Store(root,config),models=new ModelAccess(credentials,config),runtime=new Runtime(store,models);
   const model=models.model(selection);assert.equal(model.provider,selection.provider);assert.equal(model.id,selection.id);report.models.push({provider:model.provider,id:model.id,baseUrl:model.baseUrl,input:model.input});
   const provider={model:selection,scenarios:[],usage:[],index:null,requests:0};report.providers.push(provider);save();
@@ -31,7 +31,7 @@ for(const selection of selections) {
     const catalogHints=runtime.knowledge.list(0,20,'needs_ocr'),initialRetrieval=[],search=runtime.knowledge.search.bind(runtime.knowledge);
     runtime.knowledge.search=async(...args)=>{const result=await search(...args);initialRetrieval.push({query:args[0],strategy:result.strategy,sourceIds:result.results.map(record=>record.documentId)});return result;};
     provider.requests++;const t=performance.now(),c=runtime.newConversation(`Live scenario ${provider.requests}`);
-    const receipt=await rpc(runtime,{op:'input',args:{conversationId:c.id,requestId:`live:${provider.requests}`,text:question+'\nUse Pico tools to check durable evidence. Cite the returned pico source citation for document claims. Do not guess unavailable facts.'}});
+    const receipt=await rpc(runtime,{op:'input',args:{conversationId:c.id,requestId:`live:${provider.requests}`,text:question+'\nUse Pikobot tools to check durable evidence. Cite the returned pikobot source citation for document claims. Do not guess unavailable facts.'}});
     await wait(runtime);const row=runtime.run(receipt.id),tools=store.all('SELECT tool,status,result FROM operations WHERE run_id=?',row.id);
     const usage=store.all("SELECT body FROM messages WHERE run_id=? AND role='assistant'",row.id).map(row=>JSON.parse(row.body).usage);provider.usage.push(...usage);
     runtime.knowledge.search=search;
@@ -41,7 +41,7 @@ for(const selection of selections) {
   };
   const add=async(file)=>{const upload=await rpc(runtime,{op:'attachments.upload',args:{name:file,mime:'application/octet-stream',data:readFileSync(join('tests/fixtures/knowledge',file)).toString('base64')}});const doc=await rpc(runtime,{op:'knowledge',args:{action:'import',attachmentId:upload.id,submission:`live:${file}`}});await runtime.knowledge.work();return doc;};
   const evidenceCheck=(result,aliases,ids,abstain=false)=>{
-    const citations=[...result.answer.matchAll(/pico:[a-f0-9-]{36}:r\d+:md:[a-f0-9]{64}:[LC]\d+-\d+/g)].map(match=>match[0]);
+    const citations=[...result.answer.matchAll(/pikobot:[a-f0-9-]{36}:r\d+:md:[a-f0-9]{64}:[LC]\d+-\d+/g)].map(match=>match[0]);
     const valid=citations.every(citation=>{try{return !!runtime.knowledge.resolve(citation);}catch{return false;}});
     const citationIds=citations.map(c=>c.split(':')[1]);
     return {validCitations:valid,citations,aliasPass:aliases.every(alias=>result.answer.toLowerCase().includes(alias.toLowerCase())),sourcePass:abstain||ids.every(id=>citationIds.includes(id)),abstains:!abstain||/(?:do not|don't|cannot|can't|could not|couldn't) (?:know|find|determine|tell)|not (?:available|recorded|provided|found)|no (?:evidence|information)|unknown|non (?:so|ho)|does not (?:contain|include)|not have/i.test(result.answer),toolPass:result.tools.some(t=>t.tool==='documents'&&t.status==='completed')||result.initialRetrieval.some(read=>read.sourceIds.length>0)||abstain&&result.catalogHints.total>0,completed:result.status==='completed'};

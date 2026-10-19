@@ -18,9 +18,9 @@ Empty text is valid and returns three zeroes. Missing/non-string text, arrays, e
 
 ## Files and attachments
 
-Use `--file assets/example.txt` for the bundled UTF-8 sample. It has 27 characters, four words and two lines, including its two LF characters in the character count.
+Use `--file assets/example.txt` for the bundled UTF-8 sample. It has 30 characters, four words and two lines, including its two LF characters in the character count.
 
-To analyze an existing uploaded attachment through Pico:
+To analyze an existing uploaded attachment through Pikobot:
 
 ```json
 {
@@ -32,9 +32,9 @@ To analyze an existing uploaded attachment through Pico:
 }
 ```
 
-Select the actual retained attachment ID; never invent one. Document originals can use `documentId` with an optional immutable `revision` instead. Explicit input files are copied by Pico into `inputs/`; no host-directory scan or upload occurs inside this script.
+Select the actual retained attachment ID; never invent one. Document originals can use `documentId` with an optional immutable `revision` instead. Explicit input files are copied by Pikobot into `inputs/`; no host-directory scan or upload occurs inside this script.
 
-The optional `--output outputs/report.json` saves the same JSON printed on stdout. Pico can retain that file as an owner-scoped attachment. Output files use private permissions and are not overwritten. Relative paths cannot traverse out of the named resource folders; this path validation is not an OS sandbox.
+The optional `--output outputs/report.json` saves the same JSON printed on stdout. Pikobot can retain that file as an owner-scoped attachment. Output files use private permissions and are not overwritten. Relative paths cannot traverse out of the named resource folders; this path validation is not an OS sandbox.
 
 ## Standalone use
 

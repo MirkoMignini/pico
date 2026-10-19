@@ -30,7 +30,7 @@ async function artifact(core: Runtime, server: McpServer, file: string, result: 
   if (!browserArtifactMentioned(text, file)) throw new Error('The selected artifact must be a single non-hidden filename reported in the original MCP receipt, never a host path or URL');
   if (server.browserBridgeId) {
     const entries = validate<BridgeArtifact[]>(Type.Array(BridgeArtifactSchema, { maxItems: 16 }), result.browserArtifacts ?? []);
-    const matches = entries.filter(entry => entry.name === file && entry.uri.startsWith(`pico-browser-artifact:${server.browserBridgeId}:`));
+    const matches = entries.filter(entry => entry.name === file && entry.uri.startsWith(`pikobot-browser-artifact:${server.browserBridgeId}:`));
     if (!remote || matches.length !== 1 || !result.mcpBridgeBinding) throw new Error('Remote artifact is missing, ambiguous or not bound to this bridge receipt');
     return remote(matches[0]!, result.mcpBridgeBinding);
   }
@@ -78,6 +78,6 @@ export async function importMcpArtifact(core: Runtime, server: McpServer, args: 
       const actionId = /:mcp-approved:([a-f0-9-]{36})$/.exec(operationId)?.[1];
       if (actionId) core.store.run('INSERT OR IGNORE INTO storage_sources SELECT extension_id,key,? FROM extension_storage WHERE extension_id=? AND key=?', args.sourceId, 'mcp', `action:${actionId}`);
     }
-    return { attachmentId, documentId: document.id, sourceId: args.sourceId, origin: `external:mcp:${server.id}`, hash: hash(bytes), bytes: bytes.length, warning: 'Imported current artifact bytes, not proof of remote authenticity. The browser profile and server output copies remain outside Pico forgetting.' };
+    return { attachmentId, documentId: document.id, sourceId: args.sourceId, origin: `external:mcp:${server.id}`, hash: hash(bytes), bytes: bytes.length, warning: 'Imported current artifact bytes, not proof of remote authenticity. The browser profile and server output copies remain outside Pikobot forgetting.' };
   } catch (error) { await core.media.discardUnlinked(attachmentId); throw error; }
 }

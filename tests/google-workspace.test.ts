@@ -95,7 +95,7 @@ it('refuses a Drive result admitted before source erasure instead of publishing 
   await expect(invoke(s,'google_drive',{action:'import',fileId:'file'})).rejects.toThrow('invalidated by erasure');expect(s.store.all('SELECT * FROM attachments')).toEqual([]);expect(s.store.all('SELECT * FROM documents')).toEqual([]);
 });
 it('tombstones forgotten integration files across a pre-import backup and changed remote versions',async()=>{
-  const s=await instance(),snapshot=await backup(s.store),path=mkdtempSync(join(tmpdir(),'pico-drive-restore-'));directories.push(path);cpSync(snapshot.path,path,{recursive:true});const fetch=driveFetch();
+  const s=await instance(),snapshot=await backup(s.store),path=mkdtempSync(join(tmpdir(),'pikobot-drive-restore-'));directories.push(path);cpSync(snapshot.path,path,{recursive:true});const fetch=driveFetch();
   const saved=await invoke(s,'google_drive',{action:'import',fileId:'file'});await s.runtime.deleteKnowledge(saved.documentId,true);expect(s.store.get('SELECT hash FROM deletions WHERE hash=?',hash('source:google:drive:file'))).toBeDefined();
   await s.runtime.close();s.store.close();await restore(s.root,path,true);const store=new Store(s.root,s.config),runtime=new Runtime(store,s.runtime.models);s.store=store;s.runtime=runtime;
   fetch.mockImplementation(async url=>new URL(String(url)).searchParams.get('alt')==='media'?new Response('Changed remote bytes'):Response.json({id:'file',name:'Changed.txt',mimeType:'text/plain',version:'2'}));
@@ -156,7 +156,7 @@ it('lists Google task lists/tasks with pagination, completion filters and date-o
   expect(await invoke(s,'google_tasks',{action:'list',taskListId:'list',includeCompleted:true})).toMatchObject({items:[{id:'task'}],note:expect.stringContaining('dates')});const u=new URL(String(fixture.fetch.mock.calls[1]![0]));expect(u.searchParams.get('showCompleted')).toBe('true');expect(u.searchParams.get('showHidden')).toBe('true');expect(u.searchParams.get('showDeleted')).toBe('false');
   expect(await invoke(s,'google_tasks',{action:'read',taskListId:'list',taskId:'task'})).toMatchObject({task:{etag:'"v1"'}});expect(fixture.mutations).not.toHaveBeenCalled();
 });
-it('creates a date-only task once after exact approval, never a timed Pico reminder',async()=>{
+it('creates a date-only task once after exact approval, never a timed Pikobot reminder',async()=>{
   const s=await instance(settings=>{settings.tasks!.write=true;}),fixture=tasksFetch();const {action}=await invoke(s,'google_tasks',{action:'create',taskListId:'@default',title:'Synthetic',dueDate:'2099-10-15'});
   expect(action.payload.body).toEqual({title:'Synthetic',due:'2099-10-15T00:00:00.000Z'});expect(fixture.fetch).not.toHaveBeenCalled();expect(await approve(s,action)).toMatchObject({status:'accepted',result:{task:{id:'created-task'}}});await expect(approve(s,action)).rejects.toThrow('consumed');expect(fixture.mutations).toHaveBeenCalledTimes(1);expect(s.store.all('SELECT * FROM schedules')).toEqual([]);
 });

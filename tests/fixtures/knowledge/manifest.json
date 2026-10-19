@@ -341,8 +341,8 @@
     },
     {
       "file": "unsupported.bin",
-      "hash": "563da99347e0b596e9fd075565947a050cd893a038fab1aec227b46551b399e9",
-      "bytes": 18,
+      "hash": "fb4d9d258d9d89a02c661054417bb8c80ab55b566d3e3d0531e49c707db1575f",
+      "bytes": 21,
       "expectedText": "",
       "expectedOutcome": "unsupported_extraction"
     },

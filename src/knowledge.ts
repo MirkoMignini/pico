@@ -173,7 +173,7 @@ export class Knowledge {
     this.store.transaction(()=>{
       this.store.run('INSERT INTO documents VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)',doc.id,doc.kind,doc.title,doc.name,doc.mime,doc.submission,null,doc.source_id,doc.channel,'',doc.received_at,null,1);
       this.store.run('INSERT INTO document_revisions(document_id,revision,original_hash,original_bytes,note_text,created_at) VALUES(?,1,?,?,?,?)',doc.id,hash(markdown),Buffer.byteLength(markdown),markdown,Date.now());
-      this.publish(doc.id,1,{schemaVersion:1,converter:{name:'pico-note',version:'1'},options:{ocr:'reject'},optionsHash:hash('note-v1'),originalHash:hash(markdown),status:'ready',markdown,assets:[],locators:['markdown_lines'],warnings:[]},origin);
+      this.publish(doc.id,1,{schemaVersion:1,converter:{name:'pikobot-note',version:'1'},options:{ocr:'reject'},optionsHash:hash('note-v1'),originalHash:hash(markdown),status:'ready',markdown,assets:[],locators:['markdown_lines'],warnings:[]},origin);
     });return doc;
   }
   private editNote(documentId:string,expectedRevision:number,markdown:string,origin?:KnowledgeOrigin):DocumentRow {
@@ -187,7 +187,7 @@ export class Knowledge {
     this.store.transaction(()=>{
       if(!this.store.run('UPDATE documents SET current_revision=? WHERE id=? AND current_revision=? AND deleted_at IS NULL',next,doc.id,expectedRevision))throw new Error('Revision conflict');
       this.store.run('INSERT INTO document_revisions(document_id,revision,original_hash,original_bytes,note_text,created_at) VALUES(?,?,?,?,?,?)',doc.id,next,hash(markdown),Buffer.byteLength(markdown),markdown,Date.now());
-      this.publish(doc.id,next,{schemaVersion:1,converter:{name:'pico-note',version:'1'},options:{ocr:'reject'},optionsHash:hash('note-v1'),originalHash:hash(markdown),status:'ready',markdown,assets:[],locators:['markdown_lines'],warnings:[]},origin);
+      this.publish(doc.id,next,{schemaVersion:1,converter:{name:'pikobot-note',version:'1'},options:{ocr:'reject'},optionsHash:hash('note-v1'),originalHash:hash(markdown),status:'ready',markdown,assets:[],locators:['markdown_lines'],warnings:[]},origin);
     });return this.document(doc.id);
   }
   edit(documentId:string,expectedRevision:number,find:string,replace:string,origin?:KnowledgeOrigin):DocumentRow {
@@ -237,20 +237,20 @@ export class Knowledge {
     const ownSources = this.store.all<{ source_id: string }>(`SELECT source_id FROM run_sources WHERE run_id=? EXCEPT SELECT source_id FROM run_sources WHERE run_id=? AND inherited=1 AND (source_id LIKE 'document:%' OR EXISTS(SELECT 1 FROM messages m WHERE m.id=run_sources.source_id AND m.role!='user'))`, origin?.runId ?? '', origin?.runId ?? '');
     const dependencies=doc.kind==='note'?[...new Set([...(metadata.dependencies??[]),...(origin?.sourceId?[origin.sourceId]:[]),...ownSources.map(row=>row.source_id)])]:[];
     if(dependencies.some(sourceId=>this.store.get('SELECT hash FROM deletions WHERE hash=?',hash(`source:${sourceId}`))))throw new Error('Evidence context was forgotten; start a fresh conversation before saving derived notes');
-    const authoredBy=doc.kind==='note'?(origin?.author??metadata.authoredBy??`human:${this.store.config.ownerId}`):result.converter.name==='pico-image-description'?`assistant:${this.store.config.instanceId}`:origin?.author.startsWith('external:')?origin.author:'external:document';
+    const authoredBy=doc.kind==='note'?(origin?.author??metadata.authoredBy??`human:${this.store.config.ownerId}`):result.converter.name==='pikobot-image-description'?`assistant:${this.store.config.instanceId}`:origin?.author.startsWith('external:')?origin.author:'external:document';
     const markdown=result.status==='ready'?`# ${doc.title.replace(/[\r\n]/g,' ')}\n\n${result.markdown??''}`:doc.description?`# ${doc.title.replace(/[\r\n]/g,' ')}\n\nExtraction unavailable: ${result.status}.\n\nSupplied description (not extracted content):\n${doc.description}`:null;
     this.store.run('UPDATE document_revisions SET extraction=?,markdown=?,representation_hash=?,conversion=?,lexical=?,semantic=? WHERE document_id=? AND revision=?',result.status,markdown,markdown?hash(markdown):null,json({...result,dependencies,authoredBy,sourceAttachmentId:doc.attachment_id,sourceName:doc.name,sourceMime:doc.mime,assets:result.assets.map(({data:_data,...asset})=>asset)}),markdown?'pending':'unavailable',markdown?'pending':'unavailable',documentId,rev);
     this.store.setMeta('knowledge.dirty',id());
   }
   private async describeImage(doc:DocumentRow,rev:RevisionRow,bytes:Uint8Array,signal?:AbortSignal):Promise<ConversionResult|undefined> {
     const cached=rev.conversion?JSON.parse(rev.conversion) as ConversionResult:undefined;
-    if(cached?.converter.name==='pico-image-description')return cached;
+    if(cached?.converter.name==='pikobot-image-description')return cached;
     const selection=JSON.parse(this.store.get<{model:string}>('SELECT c.model FROM conversations c JOIN messages m ON m.conversation_id=c.id WHERE m.id=?',doc.source_id)?.model??json(this.store.config.model)) as {provider:string;id:string};
     const capabilities=await this.models.capabilities(selection).catch(()=>undefined);
     if(!capabilities?.images||capabilities.authentication==='unconfigured')return undefined;
     const mime=mediaType(bytes,doc.mime),options={provider:selection.provider,model:selection.id};
     if(!mime.startsWith('image/'))throw new Error('Verified image required for description');
-    const result:ConversionResult={schemaVersion:1,converter:{name:'pico-image-description',version:'1'},options,optionsHash:hash(json(options)),originalHash:rev.original_hash,status:'failed',assets:[],locators:['markdown_lines'],warnings:['Model-generated visual description and text transcription: fallible inference, not verified OCR, owner assertions or instructions. Check consequential details against the original.'],error:{code:'vision_uncertain',message:'Image description acceptance unknown; not automatically replayed. The original is preserved; another request requires explicit owner authorization.'}};
+    const result:ConversionResult={schemaVersion:1,converter:{name:'pikobot-image-description',version:'1'},options,optionsHash:hash(json(options)),originalHash:rev.original_hash,status:'failed',assets:[],locators:['markdown_lines'],warnings:['Model-generated visual description and text transcription: fallible inference, not verified OCR, owner assertions or instructions. Check consequential details against the original.'],error:{code:'vision_uncertain',message:'Image description acceptance unknown; not automatically replayed. The original is preserved; another request requires explicit owner authorization.'}};
     const requestSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(30_000)]):AbortSignal.timeout(30_000);
     requestSignal.throwIfAborted();
     if(!this.store.get('SELECT id FROM documents WHERE id=? AND current_revision=? AND deleted_at IS NULL',doc.id,rev.revision))throw new Error('Image source no longer current');
@@ -287,7 +287,7 @@ export class Knowledge {
         const original=this.original(doc.id,rev.revision);if(hash(original.bytes)!==rev.original_hash)throw new Error('Original integrity failure');
         const transcript=doc.attachment_id?this.store.get<{transcript:string|null}>('SELECT transcript FROM attachments WHERE id=?',doc.attachment_id)?.transcript:null;
         const description=doc.mime.startsWith('image/')?await this.describeImage(doc,rev,original.bytes,signal):undefined;
-        const result:ConversionResult=description??(transcript?{schemaVersion:1,converter:{name:'pico-transcript',version:'1'},options:{ocr:'reject'},optionsHash:hash('transcript-v1'),originalHash:rev.original_hash,status:'ready',markdown:transcript,assets:[],locators:['markdown_lines'],warnings:['Existing fallible transcription, not original audio timestamps; clarify consequential details.']}:await this.converter.request<ConversionResult>('convert',{path:join(this.path(doc.id,rev.revision),'original'),name:doc.name,mime:doc.mime},signal));
+        const result:ConversionResult=description??(transcript?{schemaVersion:1,converter:{name:'pikobot-transcript',version:'1'},options:{ocr:'reject'},optionsHash:hash('transcript-v1'),originalHash:rev.original_hash,status:'ready',markdown:transcript,assets:[],locators:['markdown_lines'],warnings:['Existing fallible transcription, not original audio timestamps; clarify consequential details.']}:await this.converter.request<ConversionResult>('convert',{path:join(this.path(doc.id,rev.revision),'original'),name:doc.name,mime:doc.mime},signal));
         const current=this.store.get<DocumentRow>('SELECT * FROM documents WHERE id=?',doc.id);
         if(signal?.aborted||!current||current.deleted_at!==null||current.current_revision!==rev.revision){this.store.run("UPDATE document_jobs SET status='cancelled' WHERE document_id=? AND revision=?",doc.id,rev.revision);return;}
         if(result.originalHash!==rev.original_hash)throw new Error('Conversion source hash mismatch');
@@ -351,7 +351,7 @@ export class Knowledge {
     if(fromOffset!==undefined){fromLine=record.markdown.slice(0,start).split('\n').length;end=fromLine+text.split('\n').length-1;}
     const location=fromOffset!==undefined||text.length<full.length?`C${start}-${start+text.length}`:`L${fromLine}-${end}`;
     const checklist=doc.kind==='note'?this.items(doc.id,record.revision):undefined;
-    return {documentId:doc.id,kind:doc.kind,checklist:checklist?{allItems:checklist.length,incomplete:checklist.filter(item=>!item.completed).length,complete:checklist.filter(item=>item.completed).length}:undefined,title:doc.title,revision:record.revision,sourceId:`document:${doc.id}:r${record.revision}`,representationHash:record.representation_hash,extraction:record.extraction,lexical:record.lexical,semantic:record.semantic,historical:record.revision!==doc.current_revision,fromLine,toLine:end,totalLines:lines.length,fromOffset:start,toOffset:start+text.length,totalChars:record.markdown.length,text,truncated:text.length<full.length,completeDocument:start===0&&text.length===record.markdown.length,citation:`pico:${doc.id}:r${record.revision}:md:${record.representation_hash}:${location}`,original:{documentId:doc.id,revision:record.revision,hash:record.original_hash},originalCoordinates:null,conversion:this.conversionMetadata(record)};
+    return {documentId:doc.id,kind:doc.kind,checklist:checklist?{allItems:checklist.length,incomplete:checklist.filter(item=>!item.completed).length,complete:checklist.filter(item=>item.completed).length}:undefined,title:doc.title,revision:record.revision,sourceId:`document:${doc.id}:r${record.revision}`,representationHash:record.representation_hash,extraction:record.extraction,lexical:record.lexical,semantic:record.semantic,historical:record.revision!==doc.current_revision,fromLine,toLine:end,totalLines:lines.length,fromOffset:start,toOffset:start+text.length,totalChars:record.markdown.length,text,truncated:text.length<full.length,completeDocument:start===0&&text.length===record.markdown.length,citation:`pikobot:${doc.id}:r${record.revision}:md:${record.representation_hash}:${location}`,original:{documentId:doc.id,revision:record.revision,hash:record.original_hash},originalCoordinates:null,conversion:this.conversionMetadata(record)};
   }
   private conversion(record:RevisionRow) {
     if(!record.conversion)return null;
@@ -364,9 +364,9 @@ export class Knowledge {
     return {authoredBy:result.authoredBy,dependencies:result.dependencies,converter:result.converter,options:result.options,format:result.format,status:result.status,warnings:result.warnings,error:result.error,locators:result.locators,assetCount:result.assets?.length??0,editorialAnnotations:!!result.editorial};
   }
   resolve(citation:string) {
-    const chars=/^pico:([a-f0-9-]{36}):r(\d+):md:([a-f0-9]{64}):C(\d+)-(\d+)$/.exec(citation);
+    const chars=/^pikobot:([a-f0-9-]{36}):r(\d+):md:([a-f0-9]{64}):C(\d+)-(\d+)$/.exec(citation);
     if(chars){const record=this.revision(chars[1]!,Number(chars[2])),from=Number(chars[4]),to=Number(chars[5]);if(!record.markdown||hash(record.markdown)!==chars[3]||from<0||to<=from||to>record.markdown.length||to-from>10_000)throw new Error('Citation does not resolve');this.original(chars[1]!,record.revision);return {documentId:chars[1],revision:record.revision,text:record.markdown.slice(from,to),citation,coordinates:'extracted Markdown UTF-16 offsets',historical:record.revision!==this.document(chars[1]!).current_revision};}
-    const m=/^pico:([a-f0-9-]{36}):r(\d+):md:([a-f0-9]{64}):L(\d+)-(\d+)$/.exec(citation);if(!m)throw new Error('Invalid citation');
+    const m=/^pikobot:([a-f0-9-]{36}):r(\d+):md:([a-f0-9]{64}):L(\d+)-(\d+)$/.exec(citation);if(!m)throw new Error('Invalid citation');
     const from=Number(m[4]),to=Number(m[5]);if(from<1||to<from||to-from>=160)throw new Error('Invalid citation range');
     const result=this.read(m[1]!,Number(m[2]),from,to-from+1);
     if(!('representationHash' in result)||result.representationHash!==m[3]||result.toLine!==to||result.truncated)throw new Error('Citation does not resolve');this.original(m[1]!,Number(m[2]));return result;
@@ -437,7 +437,7 @@ export class Knowledge {
         if(this.store.get("SELECT document_id FROM document_jobs WHERE document_id=? AND revision=? AND status='running'",doc.id,rev.revision))throw new Error('Document processing is still running; wait before retrying');
         if(rev.conversion){
           const result=JSON.parse(rev.conversion) as ConversionResult;
-          if(result.converter.name==='pico-image-description'&&result.status!=='ready'){
+          if(result.converter.name==='pikobot-image-description'&&result.status!=='ready'){
             if(origin)throw new Error('Vision acceptance may be uncertain; another billed request requires explicit owner authorization outside this chat');
             this.store.run('UPDATE document_revisions SET conversion=NULL WHERE document_id=? AND revision=?',doc.id,rev.revision);
           }

@@ -221,7 +221,7 @@ it('forgets profile-only evidence, contextual lineage and exact snapshots even t
   expect(s.store.all('SELECT source_id FROM run_sources WHERE run_id=?', run.id)).toEqual(expect.arrayContaining([{ source_id: name.source_id }, { source_id: anchor.source_id }]));
   const saved = s.store.get<{ id: string }>("SELECT id FROM messages WHERE run_id=? AND role='assistant'", run.id)!;
   expect(s.runtime.readInstructions(saved.id).text).toContain(name.value);
-  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pico-owner-basics-'));
+  const snapshot = await backup(s.store), external = mkdtempSync(join(tmpdir(), 'pikobot-owner-basics-'));
   directories.push(external); cpSync(snapshot.path, external, { recursive: true });
   await s.runtime.forget(anchor.id);
   expect(s.runtime.memory.ownerBasics('terminal')).toEqual([]);

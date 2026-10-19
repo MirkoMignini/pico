@@ -320,7 +320,7 @@ describe('authoritative runtime',()=>{
   it.each([false,true])('history exposes only visible thinking, not redacted blocks or opaque signatures (ephemeral=%s)',ephemeral=>{
     const {runtime,store}=instance(),session=runtime.newConversation('Private reasoning',ephemeral);
     const message=fauxAssistantMessage([fauxThinking('Visible summary'),{type:'thinking',thinking:'Redacted secret',thinkingSignature:'encrypted-payload',redacted:true},fauxText('Public reply')]);
-    Object.assign(message,{picoDisplay:{thinking:'Must not resurrect redacted content'}});
+    Object.assign(message,{pikobotDisplay:{thinking:'Must not resurrect redacted content'}});
     if(ephemeral)(runtime as any).volatile.get(session.id).messages.push(message);
     else store.run('INSERT INTO messages VALUES(?,?,?,?,?,?,?,?,?)',id(),session.id,null,'assistant:fixture','assistant','Public reply',JSON.stringify(message),message.timestamp,Date.now());
     const history=runtime.history(session.id);
@@ -343,7 +343,7 @@ describe('authoritative runtime',()=>{
     faux.appendResponses([fauxAssistantMessage([fauxToolCall('memory_read',{id:memory.id})],{stopReason:'toolUse'}),fauxAssistantMessage([fauxText('Synthetic reply.')])]);const run=await runtime.ingest({requestId:'instruction-retention',conversationId:session.id,text:'Synthetic inspection'},source);
     await waitFor(()=>runtime.run(run.id).status==='completed');
     const message=(runtime.history(session.id) as any[]).find(row=>row.role==='assistant'),snapshot=runtime.readInstructions(message.display.instructionsId);
-    expect(snapshot.text).toContain('You are Pico, personal assistant.');expect(snapshot.text).toContain('Current reminder state');
+    expect(snapshot.text).toContain('You are Pikobot, personal assistant.');expect(snapshot.text).toContain('Current reminder state');
     const restored=new Runtime(store,runtime.models);
     try{if(ephemeral)expect(()=>restored.readInstructions(snapshot.id)).toThrow('not recorded');else expect(restored.readInstructions(snapshot.id)).toEqual(snapshot);}finally{await restored.close();}
     await runtime.forget(memory.id);expect(()=>runtime.readInstructions(snapshot.id)).toThrow('not recorded');
@@ -383,11 +383,11 @@ describe('authoritative runtime',()=>{
     await waitFor(()=>runtime.run(run.id).status==='completed');
     expect(store.get<{n:number}>('SELECT count(*) AS n FROM messages')!.n).toBe(0);
     expect(store.get<{n:number}>('SELECT count(*) AS n FROM runs')!.n).toBe(0);
-    expect(readFileSync(join(root,'pico.sqlite')).includes(Buffer.from('secret-question-991'))).toBe(false);
+    expect(readFileSync(join(root,'pikobot.sqlite')).includes(Buffer.from('secret-question-991'))).toBe(false);
     expect((await runtime.status() as any).usage).toHaveLength(0);
   });
   it('keeps same names distinct and rejects forged ownership at input contract',async()=>{
-    const {runtime,config}=instance('Pico');const conversation=runtime.newConversation();
+    const {runtime,config}=instance('Pikobot');const conversation=runtime.newConversation();
     await expect(runtime.ingest({requestId:'forged',conversationId:conversation.id,text:'hello',owner_id:'someone-else'},source)).rejects.toThrow('Invalid input');
     const record=runtime.remember('favorite drink','tea') as any;
     expect(record.entity).toBe(`owner:${config.ownerId}`);expect(runtime.memory.read(record.id).evidence).toMatchObject({actor:`human:${config.ownerId}`});

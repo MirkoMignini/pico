@@ -93,10 +93,10 @@ export class OAuthLogin {
         const commit=await this.config.prepareGrant?.(tokens.access_token,controller.signal);
         failure.stage='credential-storage';
         await this.credentials.modify(this.config.credentialKey,async()=>{controller.signal.throwIfAborted();commit?.();return {type:'oauth',access:tokens.access_token,refresh:tokens.refresh_token!,expires:Date.now()+tokens.expires_in*1000,scopes} satisfies Credential;});
-        controller.signal.throwIfAborted();this.status='completed';response.end('Pico integration connected. You can close this page.');
+        controller.signal.throwIfAborted();this.status='completed';response.end('Pikobot integration connected. You can close this page.');
       }catch{
         if(!controller.signal.aborted){this.status='failed';this.failure=failure;}
-        response.writeHead(400,{'content-type':'text/plain; charset=utf-8','cache-control':'no-store'}).end(`Integration login failed at ${failure.stage}${failure.code?`: ${failure.code}`:''}${failure.httpStatus?` (HTTP ${failure.httpStatus})`:''}. Inspect integration status in Pico. Existing credentials were not intentionally replaced.`);
+        response.writeHead(400,{'content-type':'text/plain; charset=utf-8','cache-control':'no-store'}).end(`Integration login failed at ${failure.stage}${failure.code?`: ${failure.code}`:''}${failure.httpStatus?` (HTTP ${failure.httpStatus})`:''}. Inspect integration status in Pikobot. Existing credentials were not intentionally replaced.`);
       }
       finally{if(this.abort===controller)this.close();}
     });

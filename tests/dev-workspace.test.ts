@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, copyFileSync, symlinkSync, writeFileSync, readF
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { request } from 'node:http';
+import { createServer, request } from 'node:http';
 import { initialize, atomicWrite } from '../src/config.js';
 import { Client } from '../src/client.js';
 import { waitFor } from './helpers.js';
@@ -21,7 +21,7 @@ afterEach(async () => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 function fixture() {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'pico-dev-'))); roots.push(root);
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'pikobot-dev-'))); roots.push(root);
   for (const dir of ['scripts', 'bin']) mkdirSync(join(root, dir));
   for (const script of ['dev.mjs', 'dev.sh']) copyFileSync(join(repo, 'scripts', script), join(root, 'scripts', script));
   for (const dir of ['dist', 'node_modules']) symlinkSync(join(repo, dir), join(root, dir));
@@ -54,20 +54,20 @@ console.log(JSON.stringify({result:{root_pane:{pane_id:'fixture:p'+n}}}));
   return { root, state, instance, start };
 }
 
-it('keeps unrelated Herdr spaces in their own directory without entering the Pico launcher', () => {
+it('keeps unrelated Herdr spaces in their own directory without entering the Pikobot launcher', () => {
   const f = fixture(), other = join(f.root, 'forma'), shell = join(f.root, 'bin', 'fixture-shell');
   mkdirSync(other);
   writeFileSync(shell, '#!/bin/sh\nprintf "shell:%s\\n" "$PWD"\n', { mode: 0o755 });
   for (const args of [[], ['pane']]) {
     const result = spawnSync('/bin/bash', [join(f.root, 'scripts', 'dev.sh'), ...args], { cwd: other,
-      env: { ...process.env, PATH: '/bin:/usr/bin', SHELL: shell, PICO_DEV_ROLE: '' }, encoding: 'utf8' });
+      env: { ...process.env, PATH: '/bin:/usr/bin', SHELL: shell, PIKOBOT_DEV_ROLE: '' }, encoding: 'utf8' });
     expect(result.status).toBe(0); expect(result.stderr).toBe('');
     expect(result.stdout).toBe(`shell:${other}\n`);
     expect(existsSync(f.state)).toBe(false);
   }
 });
 
-it('still enters the Pico repository for its panes, explicit commands and assigned development roles', () => {
+it('still enters the Pikobot repository for its panes, explicit commands and assigned development roles', () => {
   const f = fixture(), other = join(f.root, 'forma'), shell = join(f.root, 'bin', 'fixture-shell');
   mkdirSync(other);
   writeFileSync(shell, '#!/bin/sh\nprintf "shell:%s\\n" "$PWD"\n', { mode: 0o755 });
@@ -75,14 +75,14 @@ it('still enters the Pico repository for its panes, explicit commands and assign
   writeFileSync(join(f.root, 'bin', 'pnpm'), '#!/bin/sh\necho 11.2.2\n', { mode: 0o755 });
   for (const [cwd, args, role] of [[f.root, [], ''], [other, ['status'], ''], [other, [], 'daemon']] as const) {
     const result = spawnSync('/bin/bash', [join(f.root, 'scripts', 'dev.sh'), ...args], { cwd,
-      env: { ...process.env, PATH: `${join(f.root, 'bin')}:/bin:/usr/bin`, SHELL: shell, PICO_DEV_ROLE: role }, encoding: 'utf8' });
+      env: { ...process.env, PATH: `${join(f.root, 'bin')}:/bin:/usr/bin`, SHELL: shell, PIKOBOT_DEV_ROLE: role }, encoding: 'utf8' });
     expect(result.status).toBe(0); expect(result.stderr).toBe('');
     expect(result.stdout).toContain(`node:${f.root}:scripts/dev.mjs ${args[0] ?? 'pane'}\n`);
     if (!args.length) expect(result.stdout).toContain(`shell:${f.root}\n`);
   }
 });
 
-it('uses Pico defaults only for the server and reads the same global client config on every attach', async () => {
+it('uses Pikobot defaults only for the server and reads the same global client config on every attach', async () => {
   const f = fixture(), globalPath = join(f.root, 'config', 'herdr', 'config.toml');
   mkdirSync(join(f.root, 'config', 'herdr'), { recursive: true });
   const globalConfig = '[theme]\nname = "catppuccin"\n[keys]\nnext_tab = "cmd+right"\n[ui.sidebar.agents]\nrows = [["state_icon", "workspace"]]\n';
@@ -90,23 +90,23 @@ it('uses Pico defaults only for the server and reads the same global client conf
   const result = await f.start('workspace', { HERDR_CONFIG_PATH: join(f.root, 'ignored.toml') }, true).done;
   expect(result.code).toBe(0);
   const calls = () => readFileSync(join(f.root, 'herdr-configs.jsonl'), 'utf8').trim().split('\n').map(line => JSON.parse(line));
-  const server = calls().find(call => call.args.join(' ') === '--session pico server');
+  const server = calls().find(call => call.args.join(' ') === '--session pikobot server');
   expect(server.configPath).toBe(join(f.state, 'herdr.toml'));
   expect(server.config).toContain(`default_shell = "${join(f.root, 'scripts', 'dev.sh')}"`);
   expect(server.config).toContain('shell_mode = "non_login"');
-  expect(server.config).toContain('window_title = "Pico dev: {tab}"');
+  expect(server.config).toContain('window_title = "Pikobot dev: {tab}"');
   expect(server.config).not.toContain('[keys]');
   expect(server.config).not.toContain('[theme]');
   expect(server.startupCwd).toBe(f.root);
   const client = calls().find(call => call.args.at(-1) === 'client');
-  expect(client.args).toEqual(['--session', 'pico', 'client']);
+  expect(client.args).toEqual(['--session', 'pikobot', 'client']);
   expect(client.configPath).toBe(globalPath); expect(client.config).toBe(globalConfig);
   expect(readFileSync(globalPath, 'utf8')).toBe(globalConfig);
   expect(statSync(join(f.state, 'herdr.toml')).mode & 0o777).toBe(0o600);
   expect(existsSync(join(f.instance, 'config.json'))).toBe(false);
   const updated = globalConfig.replace('cmd+right', 'cmd+left'); writeFileSync(globalPath, updated);
   expect((await f.start('workspace', {}, true).done).code).toBe(0);
-  expect(calls().filter(call => call.args.join(' ') === '--session pico server')).toHaveLength(1);
+  expect(calls().filter(call => call.args.join(' ') === '--session pikobot server')).toHaveLength(1);
   expect(calls().at(-1).config).toBe(updated);
   expect(readFileSync(globalPath, 'utf8')).toBe(updated);
 });
@@ -120,7 +120,7 @@ it.each([
   const result = await f.start('workspace', {}, true).done;
   expect(result.code).toBe(1); expect(result.output).toContain(message);
   const calls = readFileSync(join(f.root, 'herdr-calls.jsonl'), 'utf8').trim().split('\n').map(line => JSON.parse(line) as string[]);
-  expect(calls.every(args => args.at(-1) !== 'client' && args[0] === '--session' && args[1] === 'pico')).toBe(true);
+  expect(calls.every(args => args.at(-1) !== 'client' && args[0] === '--session' && args[1] === 'pikobot')).toBe(true);
 });
 
 it('preserves the Herdr client exit code without stopping the persistent server', async () => {
@@ -140,9 +140,9 @@ it('refuses a noninteractive workspace launch before building or starting Herdr'
 it('refuses layout control outside Herdr and provisions explicit, no-focus tabs once with a mocked CLI', async () => {
   const f = fixture();
   const denied = await f.start('up').done;
-  expect(denied.code).toBe(1); expect(denied.output).toContain('inside the pico Herdr session');
+  expect(denied.code).toBe(1); expect(denied.output).toContain('inside the pikobot Herdr session');
   expect(existsSync(join(f.root, 'herdr-calls.jsonl'))).toBe(false);
-  const context = { HERDR_ENV: '1', HERDR_SESSION: 'pico', HERDR_WORKSPACE_ID: 'fixture', HERDR_PANE_ID: 'fixture:caller', HERDR_TAB_ID: 'fixture:tab' };
+  const context = { HERDR_ENV: '1', HERDR_SESSION: 'pikobot', HERDR_WORKSPACE_ID: 'fixture', HERDR_PANE_ID: 'fixture:caller', HERDR_TAB_ID: 'fixture:tab' };
   const provisioned = await f.start('up', context).done; expect(provisioned).toMatchObject({ code: 0 });
   const calls = readFileSync(join(f.root, 'herdr-calls.jsonl'), 'utf8').trim().split('\n').map(line => JSON.parse(line) as string[]);
   const tabs = calls.filter(args => args[0] === 'tab' && args[1] === 'create');
@@ -163,6 +163,22 @@ it('can stop the TUI supervisor while it is waiting for an offline daemon', asyn
   tui.child.kill('SIGTERM');
   expect((await tui.done).code).toBe(0);
 }, 5000);
+
+it('defers a pre-rename workspace refresh before requesting a build or stopping its backend', async () => {
+  const f = fixture(); initialize(f.instance, 'Synthetic legacy developer');
+  mkdirSync(f.state, { mode: 0o700 });
+  atomicWrite(join(f.state, 'ready.json'), JSON.stringify({ pid: 123 }));
+  writeFileSync(join(f.instance, 'legacy.sqlite'), 'synthetic legacy database');
+  const server = createServer((_request, response) => response.end(JSON.stringify({ ok: true, result: { pid: 123 } })));
+  await new Promise<void>(resolve => server.listen(join(f.instance, 'daemon.sock'), resolve));
+  try {
+    const result = await f.start('refresh').done;
+    expect(result.code).toBe(1); expect(result.output).toContain('offline rename procedure');
+    expect(existsSync(join(f.state, 'request.json'))).toBe(false);
+    expect(existsSync(join(f.state, 'checks.log'))).toBe(false);
+    expect(readFileSync(join(f.instance, 'legacy.sqlite'), 'utf8')).toBe('synthetic legacy database');
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
 
 it('refreshes only its managed child, preserves synthetic memory and fails safely on drafts, requests and compile errors', async () => {
   const f = fixture();
