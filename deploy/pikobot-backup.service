@@ -1,0 +1,12 @@
+[Unit]
+Description=Pikobot local application backup (credentials excluded)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/stacks/pikobot
+ExecStart=/usr/bin/docker compose --env-file /srv/stacks/pikobot/deployment.env -f /srv/stacks/pikobot/deploy/compose.yaml exec -T pikobot node --input-type=module -e "import { Client } from '/app/dist/client.js'; await new Client('/data').rpc('backup');"
+UMask=0077
+StandardOutput=null
+TimeoutStartSec=30min

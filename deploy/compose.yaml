@@ -1,0 +1,41 @@
+name: pikobot
+
+services:
+  pikobot:
+    image: ${PIKOBOT_IMAGE:?Set PIKOBOT_IMAGE to a reviewed unique image tag}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    user: '1000:1000'
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 2.0
+    mem_limit: 6g
+    memswap_limit: 6g
+    pids_limit: 256
+    stop_grace_period: 2m
+    environment:
+      HOME: /data
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=256m,mode=1777
+    volumes:
+      - type: bind
+        source: /srv/appdata/pikobot
+        target: /data
+        bind:
+          create_host_path: false
+    healthcheck:
+      # Readiness never starts a daemon or probes providers; missing credentials are not a crash.
+      test: [CMD, node, /app/dist/cli.js, --instance, /data, readiness]
+      interval: 1m
+      timeout: 15s
+      start_period: 1m
+      retries: 3
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
