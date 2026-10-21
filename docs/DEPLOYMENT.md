@@ -16,6 +16,8 @@ Semantic document retrieval can download roughly 2.1 GB of private model weights
 
 ## Optional Docker examples
 
+For one owner alongside other home-server services, use the [single-owner Compose guide](HOMESERVER.md): separate persistent data, bounded resources/logs, SSH-only administration and an optional local application-backup timer. It does not provision Home Assistant, configure credentials or establish off-device recovery.
+
 Build explicitly; no infrastructure is provisioned during normal setup:
 
 ```sh

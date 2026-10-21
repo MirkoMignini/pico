@@ -1,6 +1,8 @@
 minimumReleaseAgeExclude:
   - cron-parser@5.10.2
 overrides:
+  # shortcut: QMD pins a vulnerable MCP server; remove when QMD upgrades its dependency.
+  '@tobilu/qmd>@modelcontextprotocol/server': 2.3.1
   'node-llama-cpp>simple-git': 4.0.2
   # shortcut: VitePress 1 pins vulnerable Vite 5; remove when VitePress ships a patched dependency.
   'vitepress>vite': 6.4.4

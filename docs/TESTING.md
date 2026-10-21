@@ -145,6 +145,8 @@ A decisions file contains `reportSha256`, an identified `reviewer`, and one `{id
 
 ## Deployment checks
 
+`tests/deployment.test.ts` checks the single-owner Compose resource/mount/network defaults and local-backup unit contract as static fixtures, plus the compiled backup client's failure without starting a replacement when IPC is absent. `docker compose -f deploy/compose.yaml config` (with an explicit `PIKOBOT_IMAGE`) and `systemd-analyze verify` provide separate configuration checks, not a running-container, boot, restore, isolation or live-integration trial. See the [home-server operator guide](HOMESERVER.md).
+
 The optional `scripts/check-two-owners.mjs` **writes fixtures, activates code, creates a reminder and restarts a container**. It requires explicit disposable-deployment authorization; it is not a read-only health check. Read [deployment](DEPLOYMENT.md) first. Do not use it against valuable owner data.
 
 Real provider authentication, Google permissions/writes, Telegram receipt/rendering/playback, whole-owner isolation, physical UI behavior and production upgrades require separately authorized verification. None is established by a local test count.
